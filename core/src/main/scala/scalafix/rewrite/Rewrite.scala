@@ -21,7 +21,10 @@ object Rewrite {
     VolatileLazyVal,
     NoPostfix
   )
-  val semanticRewrites: Seq[Rewrite] = Seq(ExplicitImplicit)
+  val semanticRewrites: Seq[Rewrite] = Seq(
+    ExplicitImplicit,
+    NoAny2StringAdd
+  )
   val allRewrites: Seq[Rewrite] = syntaxRewrites ++ semanticRewrites
   val name2rewrite: Map[String, Rewrite] =
     allRewrites.map(x => x.toString -> x).toMap

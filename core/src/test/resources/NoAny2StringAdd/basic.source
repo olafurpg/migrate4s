@@ -1,0 +1,13 @@
+// foo
+<<< any2stringadd
+import Predef.any2stringadd
+class A {
+  val x = new A
+  x + "banana"
+}
+>>>
+import Predef.any2stringadd
+class A {
+  val x = new A
+  s"${x}banana"
+}

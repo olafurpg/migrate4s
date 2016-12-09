@@ -1,7 +1,9 @@
 package scalafix.rewrite
 
 import scala.meta.Defn
+import scala.meta.Tree
 import scala.meta.Type
+import scala.meta.parsers.Parse
 
 /** A custom semantic api for scalafix rewrites.
   *
@@ -18,4 +20,7 @@ trait SemanticApi {
 
   /** Returns the type annotation for given val/def. */
   def typeSignature(defn: Defn): Option[Type]
+
+  /** Returns the desugared representation of this tree */
+  def desugared[T <: Tree](tree: T)(implicit parse: Parse[T]): Option[T]
 }

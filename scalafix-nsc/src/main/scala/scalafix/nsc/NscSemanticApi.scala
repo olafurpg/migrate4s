@@ -2,6 +2,7 @@ package scalafix.nsc
 
 import scala.collection.mutable
 import scala.meta.Dialect
+import scala.meta.Tree
 import scala.meta.Type
 import scala.reflect.internal.util.SourceFile
 import scala.{meta => m}
@@ -96,12 +97,23 @@ trait NscSemanticApi extends ReflectToolkit {
     evaluate(SemanticContext("", Nil), gtree)
     builder
   }
+  private def collect[T](gtree: g.Tree)(
+      pf: PartialFunction[g.Tree, T]): Seq[T] = {
+    val builder = Seq.newBuilder[T]
+    val f = pf.lift
+    def iter(gtree: g.Tree): Unit = {
+      f(gtree).foreach(builder += _)
+      gtree.children.foreach(iter)
+    }
+    iter(gtree)
+    builder.result()
+  }
 
   private def getSemanticApi(unit: g.CompilationUnit,
                              config: ScalafixConfig): SemanticApi = {
-    val offsets = offsetToType(unit.body, config.dialect)
     new SemanticApi {
       override def typeSignature(defn: m.Defn): Option[m.Type] = {
+        val offsets = offsetToType(unit.body, config.dialect)
         defn match {
           case m.Defn.Val(_, Seq(pat), _, _) =>
             offsets.get(pat.pos.start.offset)
@@ -110,6 +122,21 @@ trait NscSemanticApi extends ReflectToolkit {
           case _ =>
             None
         }
+      }
+
+      /** Returns the desugared representation of this tree */
+      override def desugared[T <: Tree](tree: T)(
+          implicit parse: m.parsers.Parse[T]): Option[T] = {
+        collect[Option[T]](unit.body) {
+          case t
+              if t.pos.isDefined &&
+                t.pos.start == tree.pos.start.offset =>
+            import scala.meta._
+            parse(m.Input.String(t.toString()), config.dialect) match {
+              case Parsed.Success(x) => Some(x)
+              case _ => None
+            }
+        }.flatten.headOption
       }
     }
   }
