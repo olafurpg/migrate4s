@@ -14,11 +14,18 @@ class TokenList(tokens: Tokens) {
     map.result()
   }
 
-  def find(start: Token)(f: Token => Boolean): Option[Token] = {
+  def find(start: Token)(f: Token => Boolean): Option[Token] =
+    genericFind(next)(start)(f)
+
+  def revFind(start: Token)(f: Token => Boolean): Option[Token] =
+    genericFind(prev)(start)(f)
+
+  def genericFind(step: Token => Token)(start: Token)(
+      f: Token => Boolean): Option[Token] = {
     def loop(curr: Token): Option[Token] = {
       if (f(curr)) Option(curr)
       else {
-        val iter = next(curr)
+        val iter = step(curr)
         if (iter == curr) None // reached EOF
         else loop(iter)
       }

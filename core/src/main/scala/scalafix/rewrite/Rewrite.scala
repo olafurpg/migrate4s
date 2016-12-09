@@ -16,7 +16,11 @@ object Rewrite {
     t.map(x => x.source -> x.value).toMap
   }
 
-  val syntaxRewrites: Seq[Rewrite] = Seq(ProcedureSyntax, VolatileLazyVal)
+  val syntaxRewrites: Seq[Rewrite] = Seq(
+    ProcedureSyntax,
+    VolatileLazyVal,
+    NoPostfix
+  )
   val semanticRewrites: Seq[Rewrite] = Seq(ExplicitImplicit)
   val allRewrites: Seq[Rewrite] = syntaxRewrites ++ semanticRewrites
   val name2rewrite: Map[String, Rewrite] =

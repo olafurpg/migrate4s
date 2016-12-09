@@ -1,0 +1,5 @@
+// foo
+<<< postfix 1
+class A { List(1, 2) tail }
+>>>
+class A { List(1, 2).tail }
