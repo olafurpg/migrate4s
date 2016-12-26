@@ -131,7 +131,8 @@ class Circe
       ItTest(
         name = "circe",
         repo = "https://github.com/circe/circe.git",
-        hash = "717e1d7d5d146cbd0455770771261e334f419b14"
+        hash = "717e1d7d5d146cbd0455770771261e334f419b14",
+        rewrites = Seq(ExplicitImplicit)
       ),
       skip = false
     )
