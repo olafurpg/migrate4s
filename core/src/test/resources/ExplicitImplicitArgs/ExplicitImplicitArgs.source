@@ -1,4 +1,4 @@
-ONLY rewrites = [ExplicitImplicitArgs]
+rewrites = [ExplicitImplicitArgs]
 <<< can build from
 class A {
   List(1, 2).map(_ + 1)
@@ -23,13 +23,28 @@ class A {
 class A {
   List(1).scan(0)(_ + _)(List.canBuildFrom[Int])
 }
-<<< evidence
+<<< SKIP double
+trait Order[T]
+class A {
+  def iteratorCompare[A](xs: Iterator[A], ys: Iterator[A])(implicit ev: Order[A]): Int = ???
+  def foo(implicit ev: Order[Int]) =
+    iteratorCompare(List(1).toIterator, List(2).toIterator)
+}
+>>>
+class A { val lst = List(1); lst.map(_ + 1) }
+<<< SKIP evidence
 trait Foo[T]
 object Foo {
   implicit val IntFoo = new Foo[Int] {}
 }
 class A {
-  def bimap[T:Foo](f: T => Int)(g: T => Int) = ???
+  implicit val x = 2
+  def bimap3[T](f: T => Int)(g: T => Int)(implicit ev: Foo[T], num: Int) = ???
+  def bimap2[T:Foo](f: T => Int)(g: T => Int) = ???
+  def bimap[T:Foo](f: T => Int)(g: T => Int) = {
+    bimap2[T](f)(g)
+    bimap3[T](f)(g)
+  }
   bimap[Int](_ + 2)(_ + 3)
 }
 >>>
@@ -38,6 +53,12 @@ object Foo {
   implicit val IntFoo = new Foo[Int] {}
 }
 class A {
-  def bimap[T:Foo](f: T => Int)(g: T => Int) = ???
+  implicit val x = 2
+  def bimap3[T](f: T => Int)(g: T => Int)(implicit ev: Foo[T], num: Int) = ???
+  def bimap2[T:Foo](f: T => Int)(g: T => Int) = ???
+  def bimap[T:Foo](f: T => Int)(g: T => Int) = {
+    bimap2[T](f)(g)
+    bimap3[T](f)(g)(implicitly, x)
+  }
   bimap[Int](_ + 2)(_ + 3)(Foo.IntFoo)
 }
