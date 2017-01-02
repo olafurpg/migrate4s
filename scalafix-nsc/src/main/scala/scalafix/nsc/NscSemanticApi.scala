@@ -134,6 +134,7 @@ trait NscSemanticApi extends ReflectToolkit {
         "This option is necessary for the semantic API to function"
       sys.error(s"$instructions. $explanation")
     }
+    logger.elem(unit.source.file)
     new SemanticApi {
       override def typeSignature(defn: m.Defn): Option[m.Type] = {
         defn match {

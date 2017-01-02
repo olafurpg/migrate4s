@@ -166,10 +166,10 @@ class Cats
         name = "cats",
         repo = "https://github.com/typelevel/cats.git",
         hash = "31080daf3fd8c6ddd80ceee966a8b3eada578198",
-        cmds = Seq(
-          Command("kernelJVM/test:compile"),
-          Command("kernelJS/test:compile")
-        ),
+//        cmds = Seq(
+//          Command("kernelJVM/test:compile"),
+//          Command("kernelJS/test:compile")
+//        ),
         rewrites = Seq(ExplicitImplicitArgs)
       )
     )

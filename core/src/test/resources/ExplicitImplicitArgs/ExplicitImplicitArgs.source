@@ -62,3 +62,13 @@ class A {
   }
   bimap[Int](_ + 2)(_ + 3)(Foo.IntFoo)
 }
+<<< ONLY conforms
+class A {
+  def foo[A, B](a: A, b: B)(implicit ev: A <:< B) = true
+  foo(1, 2)
+}
+>>>
+class A {
+  def foo[A, B](a: A, b: B)(implicit ev: A <:< B) = true
+  foo(1, 2)(Predef.$conforms[Int])
+}

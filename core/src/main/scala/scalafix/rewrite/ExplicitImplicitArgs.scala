@@ -20,8 +20,7 @@ case object ExplicitImplicitArgs extends Rewrite {
       case original: Term.Apply =>
         DTerm
           .unapply(original)
-          .toSeq
-          .flatMap {
+          .collect {
             case desugared: Term.Apply =>
               val desugaredArgss = desugared.argss
               val originalArgss = original.argss
@@ -38,12 +37,14 @@ case object ExplicitImplicitArgs extends Rewrite {
                   case Term.Name(EvidenceParam(id)) => q"implicitly"
                   case t => t
                 }
-                logger.elem(original -> desugaredArgss.head)
+//                logger.elem(original -> desugaredArgss.head)
                 Seq(
                   Patch(tok, tok, s"$tok(${implicitArgs.mkString(", ")})")
                 )
               } else Nil
           }
+          .toSeq
+          .flatten
     }.flatten
   }
 }
