@@ -4,7 +4,6 @@ import scala.util.matching.Regex
 import scalafix.rewrite.ExplicitImplicit
 import scalafix.rewrite.Rewrite
 import scalafix.util.logger
-
 import java.io.File
 
 import ammonite.ops.Path
@@ -13,6 +12,8 @@ import org.scalatest.FunSuite
 import org.scalatest.concurrent.TimeLimits
 import org.scalatest.time.Minutes
 import org.scalatest.time.Span
+
+import scalafix.rewrite.ExplicitImplicitArgs
 
 object ItTest {
   val root: Path = pwd / "target" / "it"
@@ -142,9 +143,10 @@ class Slick
       ItTest(
         name = "slick",
         repo = "https://github.com/slick/slick.git",
-        hash = "bd3c24be419ff2791c123067668c81e7de858915"
+        hash = "bd3c24be419ff2791c123067668c81e7de858915",
+        rewrites = Seq(ExplicitImplicitArgs)
       ),
-      skip = true
+      skip = false
     )
 
 class Scalaz
