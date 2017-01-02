@@ -168,6 +168,7 @@ class SemanticTests extends FunSuite {
       ignore(dt.fullName) {}
     } else {
       test(dt.fullName) {
+        logger.elem(dt.config.rewrites)
         check(dt.original, dt.expected, dt)
       }
     }

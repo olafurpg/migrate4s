@@ -84,7 +84,7 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
       write.over(
         t.workingPath / "project" / "plugin-coursier.sbt",
         """addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.0-M15")
-        """.stripMargin
+          |""".stripMargin
       )
     }
     write.over(
@@ -92,8 +92,8 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
       s"""rewrites = [${t.rewrites.mkString(", ")}]
          |""".stripMargin
     )
-    write.append(
-      t.workingPath / "project" / "plugins.sbt",
+    write.over(
+      t.workingPath / "project" / "plugins-scalafix.sbt",
       s"""
          |addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "${scalafix.Versions.version}")
          |""".stripMargin
@@ -144,6 +144,7 @@ class Slick
         name = "slick",
         repo = "https://github.com/slick/slick.git",
         hash = "bd3c24be419ff2791c123067668c81e7de858915",
+        addCoursier = false,
         rewrites = Seq(ExplicitImplicitArgs)
       ),
       skip = false
@@ -164,20 +165,23 @@ class Cats
       ItTest(
         name = "cats",
         repo = "https://github.com/typelevel/cats.git",
-        hash = "31080daf3fd8c6ddd80ceee966a8b3eada578198"
-      ))
+        hash = "31080daf3fd8c6ddd80ceee966a8b3eada578198",
+        rewrites = Seq(ExplicitImplicitArgs)
+      )
+    )
 
 class Monix
     extends IntegrationPropertyTest(
       ItTest(
         name = "monix",
         repo = "https://github.com/monix/monix.git",
-        hash = "45c15b5989685668f5ad7ec886af6b74b881a7b4"
+        hash = "45c15b5989685668f5ad7ec886af6b74b881a7b4",
+        rewrites = Seq(ExplicitImplicitArgs)
       ),
       // monix fails on reporter info messages and scala.meta has a parser bug.
       // Pipe.scala:32: error: identifier expected but ] found
       // [error] extends ObservableLike[O, ({type ?[+?] = Pipe[I, ?]})#?] {
-      skip = true
+      skip = false
     )
 
 class ScalaJs

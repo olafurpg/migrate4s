@@ -24,6 +24,14 @@ trait NscSemanticApi extends ReflectToolkit {
     }
   }
 
+  def stripRedundantThis[T <: Tree]: T => T =
+    _.transform {
+      case m.Term.Select(m.Term.This(m.Name.Indeterminate(_)), qual) =>
+        qual
+      case m.Type.Select(m.Term.This(m.Name.Indeterminate(_)), qual) =>
+        qual
+    }.asInstanceOf[T]
+
   /** Returns a map from byte offset to type name at that offset. */
   private def offsetToType(gtree: g.Tree,
                            dialect: Dialect): mutable.Map[Int, m.Type] = {
@@ -36,13 +44,6 @@ trait NscSemanticApi extends ReflectToolkit {
     def add(gtree: g.Tree, ctx: SemanticContext): Unit = {
 
       /** Removes redudant Foo.this.ActualType prefix from a type */
-      val stripRedundantThis: m.Type => m.Type = _.transform {
-        case m.Term.Select(m.Term.This(m.Name.Indeterminate(_)), qual) =>
-          qual
-        case m.Type.Select(m.Term.This(m.Name.Indeterminate(_)), qual) =>
-          qual
-      }.asInstanceOf[m.Type]
-
       val stripImportedPrefix: m.Type => m.Type = _.transform {
         case prefix @ m.Type.Select(_, name)
             if ctx.inScope.contains(prefix.syntax) =>
@@ -56,7 +57,7 @@ trait NscSemanticApi extends ReflectToolkit {
       }.asInstanceOf[m.Type]
 
       val cleanUp: (Type) => Type =
-        stripRedundantThis andThen
+        stripRedundantThis[m.Type] andThen
           stripImportedPrefix andThen
           stripEnclosingPackage
 
@@ -126,6 +127,13 @@ trait NscSemanticApi extends ReflectToolkit {
   private def getSemanticApi(unit: g.CompilationUnit,
                              config: ScalafixConfig): SemanticApi = {
     val offsets = offsetToType(unit.body, config.dialect)
+    if (!g.settings.Yrangepos.value) {
+      val instructions =
+        "Please re-compile with the scalac option -Yrangepos enabled"
+      val explanation =
+        "This option is necessary for the semantic API to function"
+      sys.error(s"$instructions. $explanation")
+    }
     new SemanticApi {
       override def typeSignature(defn: m.Defn): Option[m.Type] = {
         defn match {
@@ -141,15 +149,15 @@ trait NscSemanticApi extends ReflectToolkit {
       override def desugared[T <: Tree](tree: T)(
           implicit parse: Parse[T]): Option[T] = {
         val result = collect[Option[T]](unit.body) {
-//          case t if { logger.elem(t.toString(), g.showRaw(t)); false } => None
-          case t if t.pos.matches(tree.pos) =>
+          case matches if matches.pos.matches(tree.pos) =>
             import scala.meta._
-            parse(m.Input.String(t.toString()), config.dialect) match {
-              case m.parsers.Parsed.Success(x) => Some(x)
-              case _ => None
+            val input = matches.toString()
+            parse(m.Input.String(input), config.dialect) match {
+              case m.parsers.Parsed.Success(x) => Some(stripRedundantThis[T](x))
+              case error =>
+                None
             }
         }.flatten
-//        logger.elem(result)
         result.headOption
       }
     }

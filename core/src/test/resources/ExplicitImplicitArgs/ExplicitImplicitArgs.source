@@ -1,0 +1,43 @@
+ONLY rewrites = [ExplicitImplicitArgs]
+<<< can build from
+class A {
+  List(1, 2).map(_ + 1)
+}
+>>>
+class A {
+  List(1, 2).map(_ + 1)(List.canBuildFrom[Int])
+}
+<<< can build from with curly brace
+class A {
+  List(1, 2).map(_ + 1)
+}
+>>>
+class A {
+  List(1, 2).map(_ + 1)(List.canBuildFrom[Int])
+}
+<<< curried
+class A {
+  List(1).scan(0)(_ + _)
+}
+>>>
+class A {
+  List(1).scan(0)(_ + _)(List.canBuildFrom[Int])
+}
+<<< evidence
+trait Foo[T]
+object Foo {
+  implicit val IntFoo = new Foo[Int] {}
+}
+class A {
+  def bimap[T:Foo](f: T => Int)(g: T => Int) = ???
+  bimap[Int](_ + 2)(_ + 3)
+}
+>>>
+trait Foo[T]
+object Foo {
+  implicit val IntFoo = new Foo[Int] {}
+}
+class A {
+  def bimap[T:Foo](f: T => Int)(g: T => Int) = ???
+  bimap[Int](_ + 2)(_ + 3)(Foo.IntFoo)
+}

@@ -21,7 +21,7 @@ trait SemanticApi {
 
   def desugared[A <: Tree](tree: A)(implicit parse: Parse[A]): Option[A]
 
-  class Desugared[T <: Tree: Parse] {
+  class Desugared[T <: Tree](implicit parse: Parse[T]) {
     def unapply(original: T): Option[T] = desugared(original)
   }
 

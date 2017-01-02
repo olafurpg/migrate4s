@@ -22,4 +22,11 @@ package object syntax {
     }
   }
 
+  implicit class ApplyPimp(t: Term.Apply) {
+    def argss: Seq[Seq[Term.Arg]] = t.fun match {
+      case tt: Term.Apply => t.args +: tt.argss
+      case _ => Seq(t.args)
+    }
+  }
+
 }

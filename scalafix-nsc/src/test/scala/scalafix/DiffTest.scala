@@ -22,7 +22,7 @@ object DiffTest {
     val split = content.split("\n<<< ")
 
     val style: ScalafixConfig = {
-      val firstLine = split.head
+      val firstLine = stripPrefix(split.head)
       ScalafixConfig.fromString(firstLine) match {
         case Right(x) => x
         case Left(e) => throw new IllegalArgumentException(e)

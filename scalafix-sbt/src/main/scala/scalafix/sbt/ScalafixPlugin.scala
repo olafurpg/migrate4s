@@ -83,6 +83,8 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
               case _ =>
                 Def.task(None)
             }
+          List(1).map(_  + 12)
+          List(1).foldRight()
           }
           .value,
       scalafixEnabled in Global := false,
@@ -102,6 +104,7 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
             .map { jar =>
               Seq(
                 Some(s"-Xplugin:${jar.getAbsolutePath}"),
+                Some("-Yrangepos"),
                 config
               ).flatten
             }

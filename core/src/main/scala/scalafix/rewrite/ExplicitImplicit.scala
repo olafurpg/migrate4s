@@ -3,6 +3,7 @@ package scalafix.rewrite
 import scala.{meta => m}
 import scalafix.util.Patch
 import scalafix.util.Whitespace
+import scalafix.util.logger
 
 case object ExplicitImplicit extends Rewrite {
   // Don't explicitly annotate vals when the right-hand body is a single call

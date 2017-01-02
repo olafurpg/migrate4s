@@ -1,9 +1,0 @@
-rewrites = [ExplicitImplicitArgs]
-<<< SKIP can build from
-class A {
-  List(1, 2).map(_ + 1)
-}
->>>
-class A {
-  List(1, 2).map(_ + 1)(immutable.this.List.canBuildFrom[Int])
-}
