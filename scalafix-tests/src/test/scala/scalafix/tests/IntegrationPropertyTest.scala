@@ -1,50 +1,13 @@
 package scalafix.tests
 
-import scala.util.matching.Regex
 import scalafix.rewrite.ExplicitImplicit
-import scalafix.rewrite.Rewrite
 import scalafix.util.logger
 
-import java.io.File
-
-import ammonite.ops.Path
 import ammonite.ops._
 import org.scalatest.FunSuite
 import org.scalatest.concurrent.TimeLimits
 import org.scalatest.time.Minutes
 import org.scalatest.time.Span
-
-object ItTest {
-  val root: Path = pwd / "target" / "it"
-}
-
-object Command {
-  val testCompile =
-    Command("test:compile", optional = true)
-  val scalafixTask =
-    Command("scalafix", optional = true)
-  def default: Seq[Command] = Seq(
-    scalafixTask
-  )
-  val RepoName: Regex = ".*/([^/].*).git".r
-}
-case class Command(cmd: String, optional: Boolean = false)
-
-case class ItTest(name: String,
-                  repo: String,
-                  hash: String,
-                  cmds: Seq[Command] = Command.default,
-                  rewrites: Seq[Rewrite] = Rewrite.defaultRewrites,
-                  addCoursier: Boolean = true) {
-  def repoName: String = repo match {
-    case Command.RepoName(x) => x
-    case _ =>
-      throw new IllegalArgumentException(
-        s"Unable to parse repo name from repo: $repo")
-  }
-  def workingPath: Path = ItTest.root / repoName
-  def parentDir: File = workingPath.toIO.getParentFile
-}
 
 // Clones the repo, adds scalafix as a plugin and tests that the
 // following commands success:
@@ -89,6 +52,8 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
     write.over(
       t.workingPath / ".scalafix.conf",
       s"""rewrites = [${t.rewrites.mkString(", ")}]
+         |fatalWarnings = true
+         |${t.config}
          |""".stripMargin
     )
     write.append(
@@ -162,6 +127,7 @@ class Cats
       ItTest(
         name = "cats",
         repo = "https://github.com/typelevel/cats.git",
+        config = ItTest.catsImportConfig,
         hash = "31080daf3fd8c6ddd80ceee966a8b3eada578198"
       ))
 

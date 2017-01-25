@@ -88,6 +88,13 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
           }
           .value,
       scalafixEnabled in Global := false,
+      scalacOptions in ThisBuild --= {
+        if ((scalafixEnabled in Global).value)
+          Seq(
+            "-Xfatal-warnings"
+          )
+        else Nil
+      },
       scalacOptions ++= {
         // scalafix should not affect compilations outside of the scalafix task.
         // The approach taken here is the same as scoverage uses, see:
@@ -97,7 +104,8 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
         } else {
           val config =
             scalafixConfig.value.map { x =>
-              if (!x.isFile) streams.value.log.warn(s"File does not exist: $x")
+              if (!x.isFile)
+                streams.value.log.warn(s"File does not exist: $x")
               s"-P:scalafix:${x.getAbsolutePath}"
             }
           scalafixInternalJar.value

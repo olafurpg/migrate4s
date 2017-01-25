@@ -48,6 +48,7 @@ lazy val commonSettings = Seq(
   triggeredMessage in ThisBuild := Watched.clearWhenTriggered,
   scalacOptions := compilerOptions,
   scalacOptions in (Compile, console) := compilerOptions :+ "-Yrepl-class-based",
+  test in assembly := {},
   testOptions in Test += Tests.Argument("-oD")
 )
 
@@ -146,10 +147,7 @@ lazy val core = project
       "com.typesafe"   % "config"        % "1.3.1",
       "com.lihaoyi"    %% "sourcecode"   % "0.1.3",
       "org.scalameta"  %% "scalameta"    % Build.metaV,
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      // Test dependencies
-      "org.scalatest"                  %% "scalatest" % Build.testV % "test",
-      "com.googlecode.java-diff-utils" % "diffutils"  % "1.3.0"     % "test"
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     )
   )
   .enablePlugins(BuildInfoPlugin)
@@ -160,9 +158,11 @@ lazy val `scalafix-nsc` = project
     scalaVersion := "2.11.8",
     crossScalaVersions := crossVersions,
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalameta"  %% "scalameta"     % Build.metaV % "provided",
-      "org.scalatest"  %% "scalatest"     % Build.testV % Test
+      "org.scala-lang"                 % "scala-compiler"      % scalaVersion.value,
+      "org.scalameta"                  %% "scalameta"          % Build.metaV % "provided",
+      "com.googlecode.java-diff-utils" % "diffutils"           % "1.3.0" % "test",
+      "org.typelevel"                  %% "catalysts-platform" % "0.0.5" % Test, // tests
+      "org.scalatest"                  %% "scalatest"          % Build.testV % Test
     ),
     // sbt does not fetch transitive dependencies of compiler plugins.
     // to overcome this issue, all transitive dependencies are included

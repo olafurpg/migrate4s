@@ -1,0 +1,9 @@
+rewrites = []
+imports.organize = true
+imports.expandRelative = true
+<<< relative imports
+import scalafix._
+import rewrite.ExplicitImplicit
+>>>
+import scalafix._
+import scalafix.rewrite.ExplicitImplicit

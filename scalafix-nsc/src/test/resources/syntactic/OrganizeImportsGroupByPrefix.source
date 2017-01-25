@@ -1,0 +1,15 @@
+rewrites = []
+imports.organize = true
+imports.removeUnused = false
+imports.groupByPrefix = true
+<<< Basic
+import scala.collection.immutable.{Seq, Map, List => L}
+>>>
+import scala.collection.immutable.{ List => L, Map, Seq }
+<<< ONLY relative imports
+import scalafix.rewrite.{ ExplicitImplicit, ProcedureSyntax }
+import ExplicitImplicit.rewrite
+>>>
+import scalafix.rewrite.{ ExplicitImplicit, ProcedureSyntax }
+
+import ExplicitImplicit.rewrite
