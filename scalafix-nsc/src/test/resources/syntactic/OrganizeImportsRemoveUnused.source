@@ -1,6 +1,7 @@
 rewrites = []
 imports.organize = true
 imports.removeUnused = true
+imports.expandRelative = false
 <<< duplicate
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ListBuffer

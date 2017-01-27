@@ -158,11 +158,16 @@ lazy val `scalafix-nsc` = project
     scalaVersion := "2.11.8",
     crossScalaVersions := crossVersions,
     libraryDependencies ++= Seq(
-      "org.scala-lang"                 % "scala-compiler"      % scalaVersion.value,
-      "org.scalameta"                  %% "scalameta"          % Build.metaV % "provided",
-      "com.googlecode.java-diff-utils" % "diffutils"           % "1.3.0" % "test",
-      "org.typelevel"                  %% "catalysts-platform" % "0.0.5" % Test, // tests
-      "org.scalatest"                  %% "scalatest"          % Build.testV % Test
+      "org.scala-lang"                 % "scala-compiler" % scalaVersion.value,
+      "org.scalameta"                  %% "scalameta"     % Build.metaV % "provided",
+      "com.googlecode.java-diff-utils" % "diffutils"      % "1.3.0" % "test",
+      "org.scalatest"                  %% "scalatest"     % Build.testV % Test,
+      // integration property tests
+      "org.typelevel"      %% "catalysts-platform" % "0.0.5"    % Test,
+      "com.typesafe.slick" %% "slick"              % "3.2.0-M2" % Test,
+      "io.circe"           %% "circe-core"         % "0.6.0"    % Test,
+      "org.typelevel"      %% "cats-core"          % "0.7.2"    % Test,
+      "org.scalacheck"     %% "scalacheck"         % "1.13.4"   % Test
     ),
     // sbt does not fetch transitive dependencies of compiler plugins.
     // to overcome this issue, all transitive dependencies are included

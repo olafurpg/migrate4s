@@ -192,7 +192,12 @@ trait NscSemanticApi extends ReflectToolkit with HijackImportInfos {
 
       /** Returns the fully qualified name of this name, or none if unable to find it */
       override def fqn(name: m.Ref): Option[m.Ref] =
-        find(unit.body, name.pos).map(_.symbol).flatMap(symbolToRef)
+        find(unit.body, name.pos)
+          .map { x =>
+//            logger.elem(x.symbol.alias, x.symbol, x.symbol.fullName, x)
+            x.toString()
+          }
+          .flatMap(fullNameToRef)
 
       def isUnusedImport(importee: m.Importee): Boolean =
         unused.exists(_.namePos == importee.pos.start.offset)

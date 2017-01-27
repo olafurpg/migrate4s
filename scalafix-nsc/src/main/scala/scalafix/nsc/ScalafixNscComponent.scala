@@ -7,6 +7,7 @@ import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
 import scala.tools.nsc.typechecker.Contexts
 import scala.util.control.NonFatal
+import scalafix.Failure.ParseError
 import scalafix.ScalafixConfig
 import scalafix.util.FileOps
 import scalafix.util.logger
@@ -46,7 +47,7 @@ class ScalafixNscComponent(plugin: Plugin,
         try {
           runOn(unit)
         } catch {
-          case NonFatal(e) =>
+          case NonFatal(e) if !e.isInstanceOf[ParseError] =>
             val config = getConfig()
             val err: (String) => Unit =
               if (config.fatalWarning)

@@ -19,15 +19,19 @@ object OrganizeImports {
       case imp @ Import(importers) =>
         implicit val currentImport = imp
         importers.flatMap { importer =>
-          val unimports = importer.importees.collect {
-            case i: Importee.Unimport => i
-          }
           val ref = importer.ref //  fqnRef.getOrElse(importer.ref)
-          importer.importees.collect {
-            case wildcard: Importee.Wildcard =>
-              CanonicalImport(ref, wildcard, unimports)
-            case i if !i.is[Importee.Unimport] =>
-              CanonicalImport(ref, i)
+          val wildcard = importer.importees.collectFirst {
+            case wildcard: Importee.Wildcard => wildcard
+          }
+          wildcard.fold(importer.importees.map(i => CanonicalImport(ref, i))) {
+            wildcard =>
+              val unimports = importer.importees.collect {
+                case i: Importee.Unimport => i
+              }
+              val renames = importer.importees.collect {
+                case i: Importee.Rename => i
+              }
+              List(CanonicalImport(ref, wildcard, unimports, renames))
           }
         }
     }.flatten
@@ -86,17 +90,21 @@ object OrganizeImports {
     }
   }
 
-  def groupImports(imports: Seq[CanonicalImport])(
+  def groupImports(imports0: Seq[CanonicalImport])(
       implicit ctx: RewriteCtx): Seq[Seq[Import]] = {
     val config = ctx.config.imports
+    def fullyQualify(imp: CanonicalImport): Option[Term.Ref] =
+      for {
+        semantic <- ctx.semantic
+        fqnRef <- semantic.fqn(imp.ref)
+        if fqnRef.is[Term.Ref]
+      } yield fqnRef.asInstanceOf[Term.Ref]
+    val imports =
+      imports0.map(imp => imp.withFullyQualifiedRef(fullyQualify(imp)))
     val (fullyQualifiedImports, relativeImports) =
       imports.partition { imp =>
-        val fqnRef = for {
-          semantic <- ctx.semantic
-          fqnRef <- semantic.fqn(imp.ref)
-          if fqnRef.is[Term.Ref]
-        } yield fqnRef.asInstanceOf[Term.Ref]
-        fqnRef.exists(_.syntax == imp.ref.syntax)
+        ctx.config.imports.expandRelative ||
+        fullyQualify(imp).exists(_.syntax == imp.ref.syntax)
       }
     val groupById =
       config.groups.zipWithIndex.toMap
@@ -105,7 +113,7 @@ object OrganizeImports {
       fullyQualifiedImports
         .groupBy { imp =>
           config.groups
-            .find(_.matches(imp.ref.syntax))
+            .find(_.matches(imp.refSyntax))
             .getOrElse(config.groups.last)
         } + (FilterMatcher("relative") -> relativeImports)
     val inOrder =
@@ -121,8 +129,8 @@ object OrganizeImports {
           .to[Seq]
           .map {
             case (_, importers) =>
-              Import(
-                Seq(Importer(importers.head.ref, importers.map(_.importee))))
+              Import(Seq(
+                Importer(importers.head.actualRef, importers.map(_.importee))))
 
           }
       } else {

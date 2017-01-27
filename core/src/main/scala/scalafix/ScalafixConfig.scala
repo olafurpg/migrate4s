@@ -14,20 +14,16 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
 case class ImportsConfig(
-    expandRelative: Boolean = false,
+    expandRelative: Boolean = true,
     spaceAroundCurlyBrace: Boolean = false,
-    organize: Boolean = false,
-    removeUnused: Boolean = false,
-    alwaysUsed: Seq[Ref] = Seq(
-      q"catalysts.Platform", // macro that expands to bool literal
-      q"acyclic.file"
-    ),
+    organize: Boolean = true,
+    removeUnused: Boolean = true,
+    alwaysUsed: Seq[Ref] = Seq(),
     groups: Seq[FilterMatcher] = Seq(
       FilterMatcher("scala.language.*"),
       FilterMatcher("(scala|scala\\..*)$"),
       FilterMatcher("(java|java\\..*)$"),
-      FilterMatcher(".*"),
-      FilterMatcher("relative")
+      FilterMatcher(".*")
     ),
     groupByPrefix: Boolean = false
 )
@@ -38,7 +34,7 @@ case class ScalafixConfig(
     rewrites: Seq[Rewrite] = Rewrite.defaultRewrites,
     parser: Parse[_ <: Tree] = Parse.parseSource,
     imports: ImportsConfig = ImportsConfig(),
-    fatalWarning: Boolean = false,
+    fatalWarning: Boolean = true,
     dialect: Dialect = Scala211
 )
 
@@ -82,10 +78,6 @@ object ScalafixConfig {
     if (config.hasPath("rewrites"))
       fromNames(config.getStringList("rewrites").asScala.toList).right
         .map(rewrites => base.copy(rewrites = rewrites))
-    else if (!config.root().unwrapped().isEmpty)
-      Left(s"""Invalid config: ${config.root().unwrapped()}
-              |Only valid key is "rewrites"
-       """.stripMargin)
     else Right(ScalafixConfig())
   }
 

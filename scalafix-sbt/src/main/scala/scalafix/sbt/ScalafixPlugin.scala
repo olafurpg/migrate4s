@@ -88,13 +88,6 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
           }
           .value,
       scalafixEnabled in Global := false,
-      scalacOptions in ThisBuild --= {
-        if ((scalafixEnabled in Global).value)
-          Seq(
-            "-Xfatal-warnings"
-          )
-        else Nil
-      },
       scalacOptions ++= {
         // scalafix should not affect compilations outside of the scalafix task.
         // The approach taken here is the same as scoverage uses, see:

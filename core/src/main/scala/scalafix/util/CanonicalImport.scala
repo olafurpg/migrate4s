@@ -1,18 +1,15 @@
 package scalafix.util
 
 import scala.collection.immutable.Seq
-import scala.meta.Import
-import scala.meta.Importee
-import scala.meta.Importee.Wildcard
-import scala.meta.Importer
-import scala.meta.Term
+import scala.meta._
 import scala.meta.tokens.Token.Comment
 import scalafix.rewrite.RewriteCtx
 
 object CanonicalImport {
   def apply(ref: Term.Ref,
-            wildcard: Wildcard,
-            unimports: Seq[Importee.Unimport])(
+            wildcard: Importee.Wildcard,
+            unimports: Seq[Importee.Unimport],
+            renames: Seq[Importee.Rename])(
       implicit ctx: RewriteCtx,
       ownerImport: Import
   ): CanonicalImport =
@@ -20,9 +17,11 @@ object CanonicalImport {
       ref,
       wildcard,
       unimports,
+      renames,
       leadingComments = ctx.comments.leading(ownerImport),
       trailingComments = ctx.comments.trailing(ownerImport) ++
-          (wildcard +: unimports).flatMap(ctx.comments.trailing)
+          (wildcard +: unimports).flatMap(ctx.comments.trailing),
+      None
     ) {}
   def apply(ref: Term.Ref, importee: Importee)(
       implicit ctx: RewriteCtx,
@@ -32,9 +31,11 @@ object CanonicalImport {
       ref,
       importee,
       Nil,
+      Nil,
       leadingComments = ctx.comments.leading(ownerImport),
       trailingComments = ctx.comments.trailing(ownerImport) ++
-          ctx.comments.trailing(importee)
+          ctx.comments.trailing(importee),
+      None
     ) {}
 }
 
@@ -42,14 +43,32 @@ sealed case class CanonicalImport(
     ref: Term.Ref,
     importee: Importee,
     unimports: Seq[Importee.Unimport],
+    renames: Seq[Importee.Rename],
     leadingComments: Set[Comment],
-    trailingComments: Set[Comment]
+    trailingComments: Set[Comment],
+    fullyQualifiedRef: Option[Term.Ref]
 ) {
+
+  def isRootImport: Boolean =
+    ref.collect {
+      case q"_root_.$_" => true
+    }.nonEmpty
+
+  def addRootImport(ref: Term.Ref): Term.Ref =
+    if (!isRootImport) ref
+    else {
+      ("_root_." + ref.syntax).parse[Term].get.asInstanceOf[Term.Ref]
+    }
+
+  def withFullyQualifiedRef(fqnRef: Option[Term.Ref]): CanonicalImport =
+    copy(fullyQualifiedRef = fqnRef.map(addRootImport))
+
   def isSpecialImport: Boolean = {
     val base = ref.syntax
     base.startsWith("scala.language") ||
     base.startsWith("scala.annotation")
   }
+  private def extraImportees = renames ++ unimports
   def withoutLeading(leading: Set[Comment]): CanonicalImport =
     copy(leadingComments = leadingComments.filterNot(leading))
   def tree: Import = Import(Seq(Importer(ref, unimports :+ importee)))
@@ -62,13 +81,19 @@ sealed case class CanonicalImport(
     if (trailingComments.isEmpty) ""
     else trailingComments.mkString(" ", "\n", "")
   def importerSyntax(implicit ctx: RewriteCtx): String =
-    s"$ref.$importeeSyntax"
+    s"$refSyntax.$importeeSyntax"
   private def curlySpace(implicit ctx: RewriteCtx) =
     if (ctx.config.imports.spaceAroundCurlyBrace) " "
     else ""
+
+  def actualRef(implicit ctx: RewriteCtx): Term.Ref =
+    if (ctx.config.imports.expandRelative) fullyQualifiedRef.getOrElse(ref)
+    else ref
+  def refSyntax(implicit ctx: RewriteCtx): String =
+    actualRef.syntax
   def importeeSyntax(implicit ctx: RewriteCtx): String =
-    if (unimports.nonEmpty)
-      s"""{$curlySpace${unimports
+    if (extraImportees.nonEmpty)
+      s"""{$curlySpace${extraImportees
         .map(_.syntax)
         .mkString(", ")}, $importee$curlySpace}"""
     else
@@ -81,6 +106,7 @@ sealed case class CanonicalImport(
     case i: Importee.Wildcard => (0, i.syntax)
     case i => (1, i.syntax)
   }
-  def sortOrder: (String, (Int, String)) = (ref.syntax, importeeOrder)
+  def sortOrder(implicit ctx: RewriteCtx): (String, (Int, String)) =
+    (refSyntax, importeeOrder)
   def structure: String = Importer(ref, Seq(importee)).structure
 }

@@ -21,8 +21,7 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
   private val isCi = sys.props.contains("CI")
   private val maxTime = Span(20, Minutes) // just in case.
 
-  val hardClean = false
-  val comprehensiveTest = false
+  val hardClean = true
 
   // Clones/cleans/checkouts
   def setup(t: ItTest): Unit = {
@@ -32,6 +31,7 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
     }
     if (hardClean) {
       %%("git", "clean", "-fd")(t.workingPath)
+      %%("git", "checkout", t.hash)(t.workingPath)
     } else {
       %%("git", "checkout", "--", ".")(t.workingPath)
     }
@@ -91,15 +91,25 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
   check()
 }
 
+class Akka
+    extends IntegrationPropertyTest(
+      ItTest(
+        name = "akka",
+        repo = "https://github.com/akka/akka.git",
+        hash = "3936883e9ae9ef0f7a3b0eaf2ccb4c0878fcb145",
+        rewrites = Seq()
+      ),
+      skip = false
+    )
 class Circe
     extends IntegrationPropertyTest(
       ItTest(
         name = "circe",
         repo = "https://github.com/circe/circe.git",
         hash = "717e1d7d5d146cbd0455770771261e334f419b14",
-        rewrites = Seq(ExplicitImplicit)
+        rewrites = Seq()
       ),
-      skip = true
+      skip = false
     )
 
 class Slick
@@ -107,9 +117,10 @@ class Slick
       ItTest(
         name = "slick",
         repo = "https://github.com/slick/slick.git",
+        rewrites = Seq(),
         hash = "bd3c24be419ff2791c123067668c81e7de858915"
       ),
-      skip = true
+      skip = false
     )
 
 class Scalaz

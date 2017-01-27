@@ -1,5 +1,7 @@
 rewrites = []
 imports.organize = true
+imports.removeUnused = false
+imports.expandRelative = false
 <<< Basic
 import scala.collection.immutable.{Seq, Map, List => L}
 >>>
@@ -63,3 +65,9 @@ object a { ListBuffer(1) }
 >>>
 import scala.collection.mutable._
 object a { ListBuffer(1) }
+<<< rename + wildcard
+import java.sql.{Array => SQLArray, _}
+object a { val x: Array[Int] = Array(1) }
+>>>
+import java.sql.{Array => SQLArray, _}
+object a { val x: Array[Int] = Array(1) }
