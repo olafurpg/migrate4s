@@ -3,6 +3,11 @@ import scala.language.higherKinds
 
 import scala.tools.nsc.typechecker.Contexts
 
+/** Workaround to access private lazy fields in scalac's global analyzer.
+  *
+  * Those private lazy fields are used to support -Ywarn-unused-import.
+  * Scalafix uses the private lazy fields to remove unused imports.
+  */
 trait HijackImportInfos { self: ReflectToolkit =>
   val allUsedSelectors: NonRemovableMap[g.analyzer.ImportInfo,
                                         Set[g.ImportSelector]] =

@@ -179,8 +179,8 @@ private[this] class OrganizeImports private (implicit ctx: RewriteCtx) {
     toRemove.getOrElse(Nil)
   }
 
-  def cleanUpImports(globalImports: Seq[CanonicalImport],
-                     patches: Seq[ImportPatch]): Seq[CanonicalImport] = {
+  def evaluatePatches(globalImports: Seq[CanonicalImport],
+                      patches: Seq[ImportPatch]): Seq[CanonicalImport] = {
     def combine(is: Seq[CanonicalImport],
                 patch: ImportPatch): Seq[CanonicalImport] =
       patch match {
@@ -199,15 +199,15 @@ private[this] class OrganizeImports private (implicit ctx: RewriteCtx) {
     } else {
       val oldImports = getGlobalImports(code)
       val globalImports = oldImports.flatMap(getCanonicalImports)
-      val cleanedUpImports = cleanUpImports(globalImports, patches)
-      val tokens = code.tokens
+      val finalImports = evaluatePatches(globalImports, patches)
+      val oldTokens = code.tokens
       val tokenToEdit =
         oldImports.headOption
           .map(_.tokens.head)
-          .getOrElse(tokens.head)
-      val toInsert = prettyPrint(cleanedUpImports)
+          .getOrElse(oldTokens.head)
+      val toInsert = prettyPrint(finalImports)
       TokenPatch.AddLeft(tokenToEdit, toInsert) +:
-        getRemovePatches(oldImports, tokens)
+        getRemovePatches(oldImports, oldTokens)
     }
   }
 }

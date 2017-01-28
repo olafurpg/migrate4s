@@ -157,6 +157,7 @@ trait NscSemanticApi extends ReflectToolkit with HijackImportInfos {
     }
   }
 
+  // an adaptation of the warnUnusedImports implementation in scalac.
   private def getUnusedImports(
       unit: g.CompilationUnit
   ): List[g.ImportSelector] = {
@@ -168,6 +169,8 @@ trait NscSemanticApi extends ReflectToolkit with HijackImportInfos {
       used = allUsedSelectors(imp)
       s <- imp.tree.selectors
       if !isMask(s) && !used(s)
+      // clean up after ourselves as is done in warnUnusedImports
+      // to avoid this map from growing too big.
       _ = imps.foreach(allUsedSelectors.customRemove)
     } yield s
   }
@@ -177,7 +180,6 @@ trait NscSemanticApi extends ReflectToolkit with HijackImportInfos {
     assertSettingsAreValid()
     val offsets = offsetToType(unit.body, config.dialect)
     val unused = getUnusedImports(unit)
-
     new SemanticApi {
       override def typeSignature(defn: m.Defn): Option[m.Type] = {
         defn match {
@@ -192,17 +194,18 @@ trait NscSemanticApi extends ReflectToolkit with HijackImportInfos {
 
       /** Returns the fully qualified name of this name, or none if unable to find it */
       override def fqn(name: m.Ref): Option[m.Ref] =
-        find(unit.body, name.pos)
-          .map { x =>
-//            logger.elem(x.symbol.alias, x.symbol, x.symbol.fullName, x)
-            x.toString()
-          }
-          .flatMap(fullNameToRef)
+        for {
+          matchingGTree <- find(unit.body, name.pos)
+          fullyQualified = matchingGTree.toString()
+          if fullyQualified.endsWith(name.syntax)
+          fullyQualifiedMTree <- fullNameToRef(fullyQualified)
+        } yield fullyQualifiedMTree
 
       def isUnusedImport(importee: m.Importee): Boolean =
         unused.exists(_.namePos == importee.pos.start.offset)
+
+      // TODO(olafur) use this for something good or remove.
       def usedFqns: Seq[m.Ref] = {
-        logger.elem(unused)
         val builder = Seq.newBuilder[m.Ref]
         new g.Traverser {
           override def traverse(tree: g.Tree): Unit = tree match {

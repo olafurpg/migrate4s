@@ -25,6 +25,7 @@ class ScalafixNscComponent(plugin: Plugin,
   // if fatal warnings is also enabled.
   g.settings.warnUnusedImport.tryToSetFromPropertyValue("true")
   g.settings.fatalWarnings.tryToSetFromPropertyValue("false")
+  // TODO(olafur) hijack reporter to avoid cluttering the console output while running scalafix.
 
   override val phaseName: String = "scalafix"
   override val runsAfter: List[String] = "typer" :: Nil
