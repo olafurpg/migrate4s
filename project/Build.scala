@@ -11,6 +11,7 @@ object Build {
 }
 
 object Dependencies {
+  var testClasspath: String = "empty"
   import Build._
   def scalahost(scalaVersion: String): ModuleID = "org.scalameta" % s"scalahost_$scalaVersion" % scalametaV
   def scalameta: ModuleID                       = "org.scalameta" %% "contrib"                 % scalametaV

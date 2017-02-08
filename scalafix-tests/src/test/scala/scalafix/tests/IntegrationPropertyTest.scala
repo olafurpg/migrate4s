@@ -83,7 +83,7 @@ abstract class IntegrationPropertyTest(t: ItTest, skip: Boolean = false)
       failAfter(maxTime) {
         import sys.process._
         val status = Process(args, cwd = t.workingPath.toIO).!
-        assert(status == 1)
+        assert(status == 0)
       }
       logger.info(s"Completed $id")
     }
