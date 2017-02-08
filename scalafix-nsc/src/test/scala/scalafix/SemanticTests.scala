@@ -32,13 +32,11 @@ class SemanticTests extends FunSuite with DiffAssertions { self =>
     def fail(msg: String) =
       sys.error(s"ReflectToMeta initialization failed: $msg")
     val classpath = System.getProperty("sbt.paths.scalafixNsc.test.classes")
-    val pluginpath = System.getProperty("sbt.paths.plugin.jar")
     val scalacOptions = Seq(
       "-cp",
       classpath,
       "-Yrangepos",
-      "-Ywarn-unused-import",
-      " -Xplugin-require:scalafix"
+      "-Ywarn-unused-import"
     ).mkString(" ", " ", " ")
 
     val args = CommandLineParser.tokenize(scalacOptions)

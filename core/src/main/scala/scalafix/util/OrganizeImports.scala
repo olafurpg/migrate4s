@@ -106,8 +106,9 @@ private[this] class OrganizeImports private (implicit ctx: RewriteCtx) {
   def fullyQualify(imp: CanonicalImport): Option[Term.Ref] =
     for {
       semantic <- ctx.semantic
-      sym <- semantic.symbol(imp.ref).toOption
-      fqnRef <- sym.toTermRef
+//      sym <- semantic.symbol(imp.ref).toOption
+//      fqnRef <- sym.toTermRef
+      fqnRef <- semantic.fqn(imp.ref)
       // Avoid inserting unneeded `package`
       if rootPkgName(fqnRef) != rootPkgName(imp.ref)
     } yield fqnRef.asInstanceOf[Term.Ref]

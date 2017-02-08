@@ -43,7 +43,6 @@ class ScalafixNscComponent(plugin: Plugin,
     override def name: String = "scalafix"
     override def run(): Unit = {
       implicit val mirror = new Mirror(global)
-      mirror.database // necessary to build up semantic mirror
       global.currentRun.units.foreach { unit =>
         try {
           runOn(unit)
