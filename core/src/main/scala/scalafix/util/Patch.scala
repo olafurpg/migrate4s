@@ -30,20 +30,33 @@ object TreePatch {
       extends ImportPatch(importer)
 }
 
+sealed abstract class ConflictStrategy
+object ConflictStrategy {
+  case object Combine extends ConflictStrategy
+  case object MergeIfEqual extends ConflictStrategy
+}
+
 object TokenPatch {
   case class Remove(override val tok: Token) extends TokenPatch(tok, "")
-  def AddRight(tok: Token, toAdd: String): TokenPatch = Add(tok, "", toAdd)
-  def AddLeft(tok: Token, toAdd: String): TokenPatch = Add(tok, toAdd, "")
-  case class Add(override val tok: Token,
-                 addLeft: String,
-                 addRight: String,
-                 keepTok: Boolean = true)
-      extends TokenPatch(tok,
+  def AddRight(tok: Token, toAdd: String): TokenPatch =
+    Add(tok, "", toAdd)
+  def AddLeft(tok: Token, toAdd: String): TokenPatch =
+    Add(tok, toAdd, "")
+  case class Add(
+                    override val tok: Token,
+                    addLeft: String,
+                    addRight: String,
+                    keepTok: Boolean = true,
+                    conflictStrategy: ConflictStrategy = ConflictStrategy.Combine
+  ) extends TokenPatch(tok,
                          s"""$addLeft${if (keepTok) tok else ""}$addRight""")
 
 }
 object Patch {
   def merge(a: TokenPatch, b: TokenPatch): TokenPatch = (a, b) match {
+    case (add1: Add, add2: Add)
+        if add1.conflictStrategy == ConflictStrategy.MergeIfEqual && add1 == add2 =>
+      add1
     case (add1: Add, add2: Add) =>
       Add(add1.tok,
           add1.addLeft + add2.addLeft,

@@ -1,6 +1,7 @@
 package scalafix
 
 import scala.collection.immutable.Seq
+import scala.meta.Dialect
 import scala.meta.Term
 import scala.meta.internal.scalahost.v1.online.Mirror
 import scala.meta.contrib._
@@ -109,9 +110,14 @@ class SemanticTests extends FunSuite with DiffAssertions { self =>
     unit -> unit.asInstanceOf[mirror.g.CompilationUnit].toDatabase
   }
 
-  def fix(code: String, config: ScalafixConfig): String = {
-    val (unit, database) = computeDatabaseFromSnippet(code)
-    val Fixed.Success(fixed) = fixer.fix(unit, config)
+  def fix(diffTest: DiffTest): String = {
+    val code = diffTest.wrapped()
+    val Fixed.Success(fixed) =
+      if (diffTest.isSyntax) Scalafix.fix(code, diffTest.config)
+      else {
+        val (unit, database) = computeDatabaseFromSnippet(code)
+        fixer.fix(unit, diffTest.config)
+      }
     fixed
   }
 
@@ -170,15 +176,16 @@ class SemanticTests extends FunSuite with DiffAssertions { self =>
     }
   }
 
-  private def parse(code: String): m.Tree = {
+  private def parse(code: String, config: ScalafixConfig)(implicit dialect: Dialect): m.Tree = {
     import scala.meta._
     code.parse[Source].get
   }
 
   def check(original: String, expectedStr: String, diffTest: DiffTest): Unit = {
-    val fixed = fix(diffTest.wrapped(), diffTest.config)
-    val obtained = parse(diffTest.unwrap(fixed))
-    val expected = parse(expectedStr)
+    implicit val dialect = diffTest.config.dialect
+    val fixed = fix(diffTest)
+    val obtained = parse(diffTest.unwrap(fixed), diffTest.config)
+    val expected = parse(expectedStr, diffTest.config)
     try {
       checkMismatchesModuloDesugarings(obtained, expected)
       if (diffTest.isSyntax) {

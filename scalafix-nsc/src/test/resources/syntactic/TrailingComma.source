@@ -1,0 +1,252 @@
+rewrites = [TrailingComma]
+dialect = AllowEverything
+<<< argument expr 1
+trait ArgumentExprs1 {
+  def f(foo: Int, bar: String)(implicit ev0: Ev0, ev1: Ev1) = 1
+  f(
+    23,
+    "bar"
+  )(
+    Ev0,
+    Ev1
+  )
+
+  // ignore
+  def g(x: Int, y: Int*) = 1
+  g(1,2
+  )
+  g(1,List(2, 3): _*
+  )
+}
+>>>
+trait ArgumentExprs1 {
+  def f(foo: Int, bar: String)(implicit ev0: Ev0, ev1: Ev1) = 1
+  f(
+    23,
+    "bar",
+  )(
+    Ev0,
+    Ev1,
+  )
+
+  // ignore
+  def g(x: Int, y: Int*) = 1
+  g(1,2
+  )
+  g(1,List(2, 3): _*
+  )
+}
+<<< ArgumentExprs2
+trait ArgumentExprs2 {
+  class C(foo: Int, bar: String)(implicit ev0: Ev0, ev1: Ev1)
+  new C(
+    23,
+    "bar"
+  )(
+    Ev0,
+    Ev1
+  )
+}
+>>>
+trait ArgumentExprs2 {
+  class C(foo: Int, bar: String)(implicit ev0: Ev0, ev1: Ev1)
+  new C(
+    23,
+    "bar",
+  )(
+    Ev0,
+    Ev1,
+  )
+}
+<<< params
+trait Params {
+  def f(
+    foo: Int,
+    bar: String
+  )(implicit
+    ev0: Ev0,
+    ev1: Ev1
+  )
+  class C(
+    foo: Int,
+    bar: String
+  )(implicit
+    ev0: Ev0,
+    ev1: Ev1
+  )
+}
+>>>
+trait Params {
+  def f(
+    foo: Int,
+    bar: String,
+  )(implicit
+    ev0: Ev0,
+    ev1: Ev1,
+  )
+  class C(
+    foo: Int,
+    bar: String,
+  )(implicit
+    ev0: Ev0,
+    ev1: Ev1,
+  )
+}
+<<< simple expr
+trait SimpleExpr1 {
+  def f: (Int, String) = (
+    23,
+    "bar"
+  )
+  // ignore, not arg list
+  def g: Int = (
+    23
+  )
+}
+>>>
+trait SimpleExpr1 {
+  def f: (Int, String) = (
+    23,
+    "bar",
+  )
+  // ignore, not arg list
+  def g: Int = (
+    23
+  )
+}
+<<< Type args
+trait TypeArgs {
+  class C[A, B]
+  def f: C[
+    Int,
+    String
+  ]
+  class C[
+    A,
+    B
+  ]
+  def f[
+    A,
+    B
+  ]
+}
+>>>
+trait TypeArgs {
+  class C[A, B]
+  def f: C[
+    Int,
+    String,
+  ]
+  class C[
+    A,
+    B,
+  ]
+  def f[
+    A,
+    B,
+  ]
+}
+<<< types
+trait SimpleType {
+  def f: (
+    Int,
+    String
+  )
+
+  // ignore, since this is isn't an argument list
+  def g: (
+    Int
+  ) = 23
+}
+>>>
+trait SimpleType {
+  def f: (
+    Int,
+    String,
+  )
+
+  // ignore, since this is isn't an argument list
+  def g: (
+    Int
+  ) = 23
+}
+<<< import selectors
+trait ImportSelectors {
+  import foo.{
+  Ev0,
+  Ev1
+  }
+}
+>>>
+trait ImportSelectors {
+  import foo.{
+  Ev0,
+  Ev1,
+  }
+}
+<<< patterns
+trait SimplePattern {
+  val (
+    foo,
+    bar
+  ) = null: Any
+
+  // test '@' syntax in patterns
+  Some(1) match {
+    case Some(x @ 1
+    ) => x
+  }
+
+  // test ': _*' syntax in patterns
+  List(1, 2, 3) match {
+    case List(1, 2, _ @ _*
+    ) => 1
+  }
+
+  // test varargs in patterns
+  val List(x, y, _*
+  ) = 42 :: 17 :: Nil
+}
+>>>
+trait SimplePattern {
+  val (
+    foo,
+    bar,
+  ) = null: Any
+
+  // test '@' syntax in patterns
+  Some(1) match {
+    case Some(x @ 1
+    ) => x
+  }
+
+  // test ': _*' syntax in patterns
+  List(1, 2, 3) match {
+    case List(1, 2, _ @ _*
+    ) => 1
+  }
+
+  // test varargs in patterns
+  val List(x, y, _*
+  ) = 42 :: 17 :: Nil
+}
+<<< function arg types
+trait FunctionArgTypes {
+  def f: (
+    Int,
+    String
+  ) => Boolean
+  def f: (
+    String
+  ) => Boolean
+}
+>>>
+trait FunctionArgTypes {
+  def f: (
+    Int,
+    String,
+  ) => Boolean
+  def f: (
+    String,
+  ) => Boolean
+}

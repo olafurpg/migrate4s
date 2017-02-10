@@ -56,6 +56,8 @@ object ScalafixConfig {
   def fromConfig(config: Config): Either[String, ScalafixConfig] = {
     import scala.collection.JavaConverters._
     val base = ScalafixConfig(
+      dialect = config.getDialectOrElse("dialect",
+        ScalafixConfig.default.dialect),
       fatalWarning = config.getBoolOrElse("fatalWarnings",
                                           ScalafixConfig.default.fatalWarning),
       imports = ImportsConfig(

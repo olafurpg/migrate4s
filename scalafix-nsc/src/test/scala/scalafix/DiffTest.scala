@@ -12,8 +12,8 @@ object DiffTest {
   def testsToRun: Seq[DiffTest] = tests.filter(testShouldRun)
 
   private val testDir = "scalafix-nsc/src/test/resources"
-  private def isOnly(name: String): Boolean = name.startsWith("ONLY ")
-  private def isSkip(name: String): Boolean = name.startsWith("SKIP ")
+  private def isOnly(name: String): Boolean = name.trim.startsWith("ONLY ")
+  private def isSkip(name: String): Boolean = name.trim.startsWith("SKIP ")
   private def stripPrefix(name: String) =
     name.stripPrefix("SKIP ").stripPrefix("ONLY ").trim
   private def apply(content: String, filename: String): Seq[DiffTest] = {
@@ -22,9 +22,10 @@ object DiffTest {
     val moduleSkip = isSkip(content)
     val split = content.split("\n<<< ")
 
+
     val style: ScalafixConfig = {
       val firstLine = split.head
-      ScalafixConfig.fromString(firstLine) match {
+      ScalafixConfig.fromString(stripPrefix(firstLine)) match {
         case Right(x) => x
         case Left(e) => throw new IllegalArgumentException(e)
       }
@@ -79,7 +80,7 @@ case class DiffTest(spec: String,
                     skip: Boolean,
                     only: Boolean,
                     config: ScalafixConfig) {
-  def noWrap: Boolean = name.startsWith("NOWRAP ")
+  def noWrap: Boolean = name.startsWith("NOWRAP ") || isSyntax
   def isSyntax: Boolean =
     Seq(
       "syntactic",

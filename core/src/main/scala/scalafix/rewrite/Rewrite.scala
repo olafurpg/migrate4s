@@ -10,7 +10,7 @@ abstract class Rewrite {
   def getSemanticApi(ctx: RewriteCtx): ScalafixMirror = ctx.semantic.getOrElse {
     throw MissingSemanticApi(this)
   }
-  def rewrite(code: Tree, rewriteCtx: RewriteCtx): Seq[Patch]
+  def rewrite(code: Tree, ctx: RewriteCtx): Seq[Patch]
 }
 
 object Rewrite {
@@ -20,6 +20,7 @@ object Rewrite {
 
   val syntaxRewrites: Seq[Rewrite] = Seq(
     ProcedureSyntax,
+    TrailingComma,
     VolatileLazyVal
   )
   val semanticRewrites: Seq[Rewrite] = Seq(ExplicitImplicit)

@@ -20,3 +20,28 @@ object Trivia {
     token.is[Whitespace] || token.is[Comment]
   }
 }
+
+@classifier
+trait CloseDelim
+object CloseDelim {
+  def unapply(token: Token): Boolean =
+    token.is[RightBrace] ||
+      token.is[RightParen] ||
+      token.is[RightBracket]
+}
+
+@classifier
+trait OpenDelim
+object OpenDelim {
+  def unapply(token: Token): Boolean =
+    token.is[LeftBrace] ||
+      token.is[LeftParen] ||
+      token.is[LeftBracket]
+}
+
+@classifier
+trait LineEnd
+object LineEnd {
+  def unapply(token: Token): Boolean =
+    token.is[LF] || token.is[CR]
+}

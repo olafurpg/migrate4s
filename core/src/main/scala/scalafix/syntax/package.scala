@@ -1,5 +1,6 @@
 package scalafix
 
+import scala.meta.Dialect
 import scala.meta.Importee
 import scala.meta.tokens.Token
 import scalafix.util.CanonicalImport
@@ -21,6 +22,10 @@ package object syntax {
   }
 
   implicit class XtensionConfig(config: Config) {
+    def getDialectOrElse(key: String, els: Dialect): Dialect =
+      if (config.hasPath(key))
+        scala.meta.Dialect.all.find(_.name == config.getString(key)).get
+      else els
     def getBoolOrElse(key: String, els: Boolean): Boolean =
       if (config.hasPath(key)) config.getBoolean(key)
       else els
