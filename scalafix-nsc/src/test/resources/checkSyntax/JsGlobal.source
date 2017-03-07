@@ -1,0 +1,16 @@
+rewrites = [DemandJSGlobal]
+<<< demand jsglobal
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
+
+@js.native class Foo extends js.Object
+@js.native @JSName("Foobaz") object Bar extends js.Object
+@js.native trait Baz extends js.Object
+>>>
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.annotation.JSName
+
+@js.native @JSGlobal class Foo extends js.Object
+@js.native @JSGlobal("Foobaz") object Bar extends js.Object
+@js.native trait Baz extends js.Object

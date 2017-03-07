@@ -6,6 +6,7 @@ object ScalafixRewrites {
     VolatileLazyVal
   )
   val semantic: List[ScalafixRewrite] = List(
+    ScalaJsRewrites.DemandJSGlobal,
     ExplicitImplicit,
     Xor2Either
   )
