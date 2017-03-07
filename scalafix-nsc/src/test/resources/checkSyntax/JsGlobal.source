@@ -1,5 +1,5 @@
 rewrites = [DemandJSGlobal]
-<<< demand jsglobal
+<<< pull request example
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
 
@@ -14,3 +14,18 @@ import scala.scalajs.js.annotation.JSName
 @js.native @JSGlobal class Foo extends js.Object
 @js.native @JSGlobal("Foobaz") object Bar extends js.Object
 @js.native trait Baz extends js.Object
+<<< fully qualified annotation
+@scala.scalajs.js.native
+class Foo extends scala.scalajs.js.Object
+>>>
+import scala.scalajs.js.annotation.JSGlobal
+@scala.scalajs.js.native @JSGlobal
+class Foo extends scala.scalajs.js.Object
+<<< false alarm
+import scala.scalajs.annotation.falsealarm.js
+@js.native
+class Foo
+>>>
+import scala.scalajs.annotation.falsealarm.js
+@js.native
+class Foo
