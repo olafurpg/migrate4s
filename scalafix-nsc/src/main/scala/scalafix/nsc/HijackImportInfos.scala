@@ -27,7 +27,7 @@ trait HijackImportInfos { self: ReflectToolkit =>
     }
     hijackLazyField("allUsedSelectors", allUsedSelectors)
     hijackLazyField("allImportInfos", allImportInfos)
-    hijackValidatePosition()
+//    hijackValidatePosition()
   }
 
   def hijackValidatePosition(): Unit = {

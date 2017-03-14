@@ -22,17 +22,27 @@ trait OrganizeImportsMirror {
   /** Returns fully qualified name of this reference
     *
     * For example scala.collection.immutable.List for List.
-    **/
+    * */
   def fullyQualifiedName(ref: Ref): Option[Ref]
 }
 
-private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
-                                                ev: CanOrganizeImports[T]) {
+private[this] class OrganizeImports[T] private(implicit ctx: RewriteCtx[T],
+                                               ev: CanOrganizeImports[T]) {
+  lazy val fallbackToken: Token = {
+    def loop(tree: Tree): Token = tree match {
+      case Source(stat :: _) => loop(stat)
+      case Pkg(_, stat :: _) => loop(stat)
+      case els => els.tokens(ctx.config.dialect).head
+    }
+
+    loop(ctx.tree)
+  }
   val mirror: OrganizeImportsMirror = ev.toOrganizeImportsMirror(ctx.mirror)
+
   def extractImports(stats: Seq[Stat]): Seq[Import] = {
     stats
-      .takeWhile(_.is[Import])
-      .collect { case i: Import => i }
+        .takeWhile(_.is[Import])
+        .collect { case i: Import => i }
   }
 
   def getCanonicalImports(imp: Import): Seq[CanonicalImport] = {
@@ -82,6 +92,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
     val wildcards = imports.collect {
       case c if c.importee.is[Importee.Wildcard] => c.ref.syntax
     }.toSet
+
     def isDuplicate(imp: CanonicalImport): Boolean = {
       val plainSyntax = imp.tree.syntax
       if (usedSyntax.contains(plainSyntax)) true
@@ -93,11 +104,12 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
         }
       }
     }
+
     imports.filterNot(isDuplicate)
   }
 
   def removeUnused(
-      possiblyDuplicates: Seq[CanonicalImport]): Seq[CanonicalImport] = {
+                      possiblyDuplicates: Seq[CanonicalImport]): Seq[CanonicalImport] = {
     val imports = removeDuplicates(possiblyDuplicates)
     if (!ctx.config.imports.removeUnused) imports
     else {
@@ -129,44 +141,46 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
     val (fullyQualifiedImports, relativeImports) =
       imports.partition { imp =>
         ctx.config.imports.expandRelative ||
-        fullyQualify(imp).forall(_.syntax == imp.ref.syntax)
+            fullyQualify(imp).forall(_.syntax == imp.ref.syntax)
       }
     val groupById =
       config.groups.zipWithIndex.toMap
-        .withDefaultValue(config.groups.length)
+          .withDefaultValue(config.groups.length)
     val grouped: Map[FilterMatcher, Seq[CanonicalImport]] =
       fullyQualifiedImports
-        .groupBy { imp =>
-          config.groups
-            .find(_.matches(imp.refSyntax))
-            .getOrElse(FilterMatcher.matchEverything)
-        } + (FilterMatcher("relative") -> relativeImports)
+          .groupBy { imp =>
+            config.groups
+                .find(_.matches(imp.refSyntax))
+                .getOrElse(FilterMatcher.matchEverything)
+          } + (FilterMatcher("relative") -> relativeImports)
     val inOrder =
       grouped
-        .mapValues(x => x.sortBy(_.sortOrder))
-        .to[Seq]
-        .filter(_._2.nonEmpty)
-        .sortBy(x => groupById(x._1))
-        .collect { case (_, s) => s }
+          .mapValues(x => x.sortBy(_.sortOrder))
+          .to[Seq]
+          .filter(_._2.nonEmpty)
+          .sortBy(x => groupById(x._1))
+          .collect { case (_, s) => s }
     val asImports = inOrder.map { is =>
       if (config.groupByPrefix) {
         is.groupBy(_.ref.syntax)
-          .to[Seq]
-          .map {
-            case (_, importers) =>
-              Import(Seq(
-                Importer(importers.head.actualRef, importers.map(_.importee))))
+            .to[Seq]
+            .map {
+              case (_, importers) =>
+                val sorted = importers.sortBy(_.sortOrder).reverse
+                Import(
+                  Seq(
+                    Importer(importers.head.actualRef, sorted.map(_.importee))))
 
-          }
+            }
       } else {
         var usedLeadingComment = Set.empty[Comment]
         is.map { i =>
           val result = i
-            .withoutLeading(usedLeadingComment)
-            .syntax
-            .parse[Stat]
-            .get
-            .asInstanceOf[Import]
+              .withoutLeading(usedLeadingComment)
+              .syntax
+              .parse[Stat]
+              .get
+              .asInstanceOf[Import]
           usedLeadingComment = usedLeadingComment ++ i.leadingComments
           result
         }
@@ -177,8 +191,8 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
 
   def prettyPrint(imports: Seq[CanonicalImport]): String = {
     groupImports(imports)
-      .map(_.map(_.syntax).mkString("\n"))
-      .mkString("\n\n")
+        .map(_.map(_.syntax).mkString("\n"))
+        .mkString("\n\n")
   }
 
   def getRemovePatches(oldImports: Seq[Import]): Seq[TokenPatch.Remove] = {
@@ -189,12 +203,12 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
       last <- lastImport.tokens.lastOption
     } yield {
       ctx.tokens.toIterator
-        .dropWhile(_.start < first.start)
-        .takeWhile { x =>
-          x.end <= last.end
-        }
-        .map(TokenPatch.Remove)
-        .toList
+          .dropWhile(_.start < first.start)
+          .takeWhile { x =>
+            x.end <= last.end
+          }
+          .map(TokenPatch.Remove)
+          .toList
     }
     toRemove.getOrElse(Nil)
   }
@@ -210,16 +224,8 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
         case remove: RemoveGlobalImport =>
           is.filterNot(_.structure == remove.importer.structure)
       }
-    patches.foldLeft(removeUnused(globalImports))(combine)
-  }
 
-  lazy val fallbackToken: Token = {
-    def loop(tree: Tree): Token = tree match {
-      case Source(stat :: _) => loop(stat)
-      case Pkg(_, stat :: _) => loop(stat)
-      case els => els.tokens(ctx.config.dialect).head
-    }
-    loop(ctx.tree)
+    patches.foldLeft(removeUnused(globalImports))(combine)
   }
 
   def organizeImports(patches: Seq[ImportPatch]): Seq[TokenPatch] = {
@@ -231,14 +237,14 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
       val cleanedUpImports = cleanUpImports(globalImports, patches)
       val tokenToEdit =
         oldImports.headOption
-          .map(_.tokens.head)
-          .getOrElse(fallbackToken)
+            .map(_.tokens.head)
+            .getOrElse(fallbackToken)
       val suffix =
         if (!tokenToEdit.is[KwImport] && tokenToEdit.eq(fallbackToken)) "\n"
         else ""
       val toInsert = prettyPrint(cleanedUpImports) ++ suffix
       TokenPatch.AddLeft(tokenToEdit, toInsert) +:
-        getRemovePatches(oldImports)
+          getRemovePatches(oldImports)
     }
   }
 }

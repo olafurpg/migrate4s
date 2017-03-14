@@ -19,9 +19,11 @@ class ScalafixNscComponent(plugin: Plugin,
     extends PluginComponent
     with ReflectToolkit
     with NscScalafixMirror {
-  if (getConfig().imports.organize) {
-    // warnUnusedImports could be set triggering a compiler error
-    // if fatal warnings is also enabled.
+
+  // warnUnusedImports could be set triggering a compiler error
+  // if fatal warnings is also enabled.
+  if (getConfig().imports.removeUnused) {
+    logger.elem(getConfig().imports.organize)
     g.settings.warnUnusedImport.tryToSetFromPropertyValue("true")
     g.settings.fatalWarnings.tryToSetFromPropertyValue("false")
   }

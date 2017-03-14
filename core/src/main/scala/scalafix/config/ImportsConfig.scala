@@ -9,10 +9,10 @@ import metaconfig.Reader
 
 @metaconfig.ConfigReader
 case class ImportsConfig(
-    expandRelative: Boolean = true,
+    expandRelative: Boolean = false,
     spaceAroundCurlyBrace: Boolean = false,
     organize: Boolean = true,
-    removeUnused: Boolean = true,
+    removeUnused: Boolean = false,
     alwaysUsed: List[Ref] = List(),
     groups: List[FilterMatcher] = List(
       FilterMatcher("scala.language.*"),

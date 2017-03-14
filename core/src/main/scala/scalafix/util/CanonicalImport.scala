@@ -7,7 +7,7 @@ import scalafix.rewrite.AnyCtx
 import scalafix.rewrite.ScalafixCtx
 import scalafix.rewrite.SyntaxCtx
 
-object CanonicalImport {
+object CanonicalImport extends Ordering[CanonicalImport] {
   def fromWildcard(ref: Term.Ref,
                    wildcard: Importee.Wildcard,
                    unimports: Seq[Importee.Unimport],
@@ -39,6 +39,15 @@ object CanonicalImport {
         ctx.comments.trailing(importee),
       None
     ) {}
+
+  override def compare(x: CanonicalImport, y: CanonicalImport): Int = {
+    if (x.importeeSyntax.startsWith(y.importeeSyntax)) -1
+    else if (y.importeeSyntax.startsWith(x.importeeSyntax)) 1
+    else {
+      import scala.math.Ordered.orderingToOrdered
+      x.sortOrder.compare(y.sortOrder)
+    }
+  }
 }
 
 /** A canonical imports is the minimal representation for a single import statement
@@ -114,7 +123,6 @@ sealed case class CanonicalImport(
     case i: Importee.Wildcard => (0, i.syntax)
     case i => (1, i.syntax)
   }
-  def sortOrder: (String, (Int, String)) =
-    (refSyntax, importeeOrder)
+  def sortOrder: (String, (Int, String)) = (refSyntax, importeeOrder)
   def structure: String = Importer(ref, Seq(importee)).structure
 }
