@@ -1,7 +1,11 @@
 package scalafix.nsc
 import scala.language.higherKinds
 
+import scala.collection.mutable
 import scala.reflect.internal.Positions
+import scala.reflect.internal.util.NoPosition
+import scala.reflect.internal.util.Position
+import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.typechecker.Contexts
 
 import org.scalameta.logger
@@ -28,6 +32,16 @@ trait HijackImportInfos { self: ReflectToolkit =>
     hijackLazyField("allUsedSelectors", allUsedSelectors)
     hijackLazyField("allImportInfos", allImportInfos)
 //    hijackValidatePosition()
+    hijackReporter()
+  }
+
+
+  def hijackReporter(): Unit = {
+    val scalafixReporter = new ScalahostReporter(g.reporter)
+    val field = g.getClass.getDeclaredField("reporter")
+    field.setAccessible(true)
+    field.set(g, scalafixReporter)
+    g.reporter.info(NoPosition, "HELLO!", true)
   }
 
   def hijackValidatePosition(): Unit = {
@@ -45,4 +59,20 @@ trait HijackImportInfos { self: ReflectToolkit =>
   }
 }
 
+case class CompilerMessage(severity: Int, file: String, offset: Int, message: String)
 //class Global
+class ScalahostReporter(other: Reporter) extends Reporter {
+  val messages = mutable.ListBuffer.empty[CompilerMessage]
+  override protected def info0(pos: Position, msg: String, severity: Severity, force: Boolean): Unit = {
+    logger.elem(msg)
+    if (!pos.isEmpty && pos.source != null) {
+      messages += new CompilerMessage(severity.id, pos.source.path, pos.point, msg)
+    }
+    severity.id match {
+      case 0 => other.info(pos, msg, force)
+      case 1 => other.warning(pos, msg)
+      case 2 => other.error(pos, msg)
+      case _ =>
+    }
+  }
+}

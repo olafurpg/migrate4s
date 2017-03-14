@@ -2,7 +2,7 @@ rewrites = []
 imports.organize = true
 imports.removeUnused = true
 imports.expandRelative = false
-<<< duplicate
+<<< ONLY duplicate
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.ListBuffer
 object a { ListBuffer(1) }
