@@ -6,7 +6,6 @@ import scala.util.control.NonFatal
 import scalafix.Failure
 import scalafix.Fixed
 import scalafix.Scalafix
-import scalafix.cli.ArgParserImplicits._
 import scalafix.cli.termdisplay.TermDisplay
 import scalafix.config.ScalafixConfig
 import scalafix.rewrite.ProcedureSyntax
@@ -22,10 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 import caseapp._
-import caseapp.core.Messages
 import caseapp.core.WithHelp
 import com.martiansoftware.nailgun.NGContext
-import org.scalameta.logger
 
 case class CommonOptions(
     @Hidden workingDirectory: String = System.getProperty("user.dir"),
@@ -58,6 +55,17 @@ case class ScalafixOptions(
     @HelpMessage(
       "If true, writes changes to files instead of printing to stdout."
     ) @ExtraName("i") inPlace: Boolean = false,
+    @HelpMessage(
+      "Sourcepath to construct a scala.meta.Mirror for semantic rewrites."
+    ) @ValueDescription(
+      "/semanticdb1:/semanticdb2"
+    ) mirrorSourcepath: Option[String] = None,
+    @HelpMessage(
+      "Classpath used to extract symbols from quasiquotes in semantic rewrites. " +
+        "If not provided, the classpath of the current thread is used. "
+    ) @ValueDescription(
+      "foo.jar:bar.jar"
+    ) mirrorClasspath: Option[String] = None,
     @HelpMessage(
       "Regex that is passed as first argument to " +
         "fileToFix.replaceAll(outFrom, outTo)."
