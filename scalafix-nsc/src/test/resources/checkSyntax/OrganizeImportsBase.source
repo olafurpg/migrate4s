@@ -71,3 +71,9 @@ object a { val x: Array[Int] = Array(1) }
 >>>
 import java.sql.{Array => SQLArray, _}
 object a { val x: Array[Int] = Array(1) }
+<<< ref prefix
+import scala.collection.mutable
+import scala.collection.immutable._
+>>>
+import scala.collection.immutable._
+import scala.collection.mutable

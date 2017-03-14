@@ -155,7 +155,7 @@ private[this] class OrganizeImports[T] private(implicit ctx: RewriteCtx[T],
           } + (FilterMatcher("relative") -> relativeImports)
     val inOrder =
       grouped
-          .mapValues(x => x.sortBy(_.sortOrder))
+          .mapValues(_.sorted)
           .to[Seq]
           .filter(_._2.nonEmpty)
           .sortBy(x => groupById(x._1))
@@ -166,10 +166,9 @@ private[this] class OrganizeImports[T] private(implicit ctx: RewriteCtx[T],
             .to[Seq]
             .map {
               case (_, importers) =>
-                val sorted = importers.sortBy(_.sortOrder).reverse
                 Import(
                   Seq(
-                    Importer(importers.head.actualRef, sorted.map(_.importee))))
+                    Importer(importers.head.actualRef, importers.map(_.importee))))
 
             }
       } else {
