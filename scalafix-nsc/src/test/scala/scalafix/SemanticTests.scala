@@ -44,6 +44,8 @@ class SemanticTests extends FunSuite with DiffAssertions { self =>
       "-Ywarn-unused-import"
     ).mkString(" ", " ", " ")
 
+    g.reporter.reset()
+
     val args = CommandLineParser.tokenize(scalacOptions)
     val emptySettings = new Settings(
       error => fail(s"couldn't apply settings because $error"))
