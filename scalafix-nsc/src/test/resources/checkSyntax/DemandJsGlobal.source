@@ -54,7 +54,7 @@ object Foo extends js.Object {
   @JSName("Foobaz")
   object Baz extends js.Object
 }
-<<< ONLY untouched
+<<< untouched
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 @js.native

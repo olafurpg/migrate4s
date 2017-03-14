@@ -1,7 +1,10 @@
 package scalafix.nsc
 import scala.language.higherKinds
 
+import scala.reflect.internal.Positions
 import scala.tools.nsc.typechecker.Contexts
+
+import org.scalameta.logger
 
 trait HijackImportInfos { self: ReflectToolkit =>
   val allUsedSelectors
@@ -24,5 +27,22 @@ trait HijackImportInfos { self: ReflectToolkit =>
     }
     hijackLazyField("allUsedSelectors", allUsedSelectors)
     hijackLazyField("allImportInfos", allImportInfos)
+    hijackValidatePosition()
+  }
+
+  def hijackValidatePosition(): Unit = {
+    g.reporter.hasErrors
+    g.reporter.cancelled = true
+    logger.elem(g.reporter.cancelled)
+//    logger.elem(cancelled)
+//    val validatePositionsMethod = g
+//      .asInstanceOf[Positions]
+//      .getClass
+//      .getMethod("validatePositions", classOf[g.Tree])
+//    validatePositionsMethod.setAccessible(true)
+//
+//    logger.elem(validatePositionsMethod)
   }
 }
+
+//class Global

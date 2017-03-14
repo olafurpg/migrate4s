@@ -19,10 +19,12 @@ class ScalafixNscComponent(plugin: Plugin,
     extends PluginComponent
     with ReflectToolkit
     with NscScalafixMirror {
-  // warnUnusedImports could be set triggering a compiler error
-  // if fatal warnings is also enabled.
-  g.settings.warnUnusedImport.tryToSetFromPropertyValue("true")
-  g.settings.fatalWarnings.tryToSetFromPropertyValue("false")
+  if (getConfig().imports.organize) {
+    // warnUnusedImports could be set triggering a compiler error
+    // if fatal warnings is also enabled.
+    g.settings.warnUnusedImport.tryToSetFromPropertyValue("true")
+    g.settings.fatalWarnings.tryToSetFromPropertyValue("false")
+  }
 
   override val phaseName: String = "scalafix"
   override val runsRightAfter: Option[String] = Some("typer")

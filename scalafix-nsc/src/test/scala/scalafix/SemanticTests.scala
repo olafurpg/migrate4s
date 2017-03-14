@@ -188,9 +188,10 @@ class SemanticTests extends FunSuite with DiffAssertions { self =>
     val obtained = parse(diffTest.unwrap(fixed))
     val expected = parse(expectedStr)
     try {
-      checkMismatchesModuloDesugarings(obtained, expected)
       if (diffTest.checkSyntax) {
         assertNoDiff(obtained, expected)
+      } else {
+        checkMismatchesModuloDesugarings(obtained, expected)
       }
       if (!diffTest.noWrap) {
         typeChecks(diffTest.wrapped(fixed))

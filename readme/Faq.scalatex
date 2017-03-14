@@ -1,0 +1,10 @@
+@import Main._
+@import scalafix.Readme._
+
+@sect{FAQ / Troubleshooting}
+
+  @sect{Enclosing tree [2873] does not include tree [2872]}
+    Scalafix (just like the presentation compiler) requires code to compile
+    with the scalac option @code{-Yrangepos}.
+
+
