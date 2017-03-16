@@ -10,7 +10,7 @@ import sbt._
 import sbt.plugins.JvmPlugin
 
 trait ScalafixKeys {
-  val scalafixRewrite: TaskKey[Unit] = taskKey[Unit]("Run scalafmt")
+  val scalafix: TaskKey[Unit] = taskKey[Unit]("Run scalafmt")
   val scalafixConfig: SettingKey[Option[File]] =
     settingKey[Option[File]](
       ".scalafix.conf file to specify which scalafix rules should run.")
@@ -100,18 +100,13 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   override def requires = JvmPlugin && ScalahostSbtPlugin
   override def trigger: PluginTrigger = AllRequirements
 
-  val scalafix: Command = Command.command("scalafix") { state =>
-    "scalafixRewrite" ::
-      state
-  }
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     scalafixConfig := Option(file(".scalafix.conf")).filter(_.isFile)
   )
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
-      commands += scalafix,
-      scalafixRewrite := Def.taskDyn {
+      scalafix := Def.taskDyn {
         val sourcepath =
           scalahostSourcepath.value
             .flatMap(_.map(_.getAbsolutePath))
@@ -121,8 +116,8 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
             .flatMap(_.files.map(_.getAbsolutePath))
             .mkString(java.io.File.pathSeparator)
         val args = List(
-          s"--sourcepath=$sourcepath",
-          s"--classpath=$classpath"
+          s"--mirror-sourcepath=$sourcepath",
+          s"--mirror-classpath=$classpath"
         )
         println(s"ARGS: $args")
         runMain

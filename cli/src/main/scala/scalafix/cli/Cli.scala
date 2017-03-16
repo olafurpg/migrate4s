@@ -60,6 +60,17 @@ case class ScalafixOptions(
       "If true, writes changes to files instead of printing to stdout."
     ) @ExtraName("i") inPlace: Boolean = false,
     @HelpMessage(
+      "Sourcepath to construct a scala.meta.Mirror for semantic rewrites."
+    ) @ValueDescription(
+      "/semanticdb1:/semanticdb2"
+    ) mirrorSourcepath: Option[String] = None,
+    @HelpMessage(
+      "Classpath used to extract symbols from quasiquotes in semantic rewrites. " +
+        "If not provided, the classpath of the current thread is used. "
+    ) @ValueDescription(
+      "foo.jar:bar.jar"
+    ) mirrorClasspath: Option[String] = None,
+    @HelpMessage(
       "Regex that is passed as first argument to " +
         "fileToFix.replaceAll(outFrom, outTo)."
     ) @ValueDescription("/shared/") outFrom: String = "",
@@ -180,7 +191,8 @@ object Cli {
         commonOptions.out.println(helpMessage)
         0
       case Right(WithHelp(_, _, options)) =>
-        val mirror = Mirror(options.classpath)
+        val mirror =
+          Mirror(options.mirrorClasspath.get, options.mirrorSourcepath.get)
         logger.elem(mirror)
         runOn(options.copy(common = commonOptions))
       case Left(error) =>
