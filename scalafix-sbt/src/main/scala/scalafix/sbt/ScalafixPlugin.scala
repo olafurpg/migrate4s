@@ -10,6 +10,7 @@ import sbt._
 import sbt.plugins.JvmPlugin
 
 trait ScalafixKeys {
+  val scalafixRewrite: TaskKey[Unit] = taskKey[Unit]("Run scalafmt")
   val scalafixConfig: SettingKey[Option[File]] =
     settingKey[Option[File]](
       ".scalafix.conf file to specify which scalafix rules should run.")
@@ -65,7 +66,7 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   private def scalahostAggregateFilter: Def.Initialize[Task[ScopeFilter]] =
     Def.task {
       val currentProject = Project.extract(state.value).currentProject
-      val projects = inProjects(currentProject.aggregate:_*)
+      val projects = inProjects(currentProject.aggregate: _*)
       println(s"current PROJECT: $currentProject")
       println(s"current PROJECT: ${currentProject.aggregate}")
       println(s"PROJECTS: $projects")
@@ -79,42 +80,16 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   private val scalahostClasspath: Def.Initialize[Task[Seq[Classpath]]] =
     Def.taskDyn(fullClasspath.all(scalahostAggregateFilter.value))
   private val scalafixRewrites =
-    Project("scalafix-rewrites", file("project/scalafix/rewrites")).settings(
-      scalaVersion := "2.11.8",
-      resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
-//      libraryDependencies := Nil, // remove inject dependencies
-      mainClass := Some("scalafix.cli.Cli"),
-      libraryDependencies += "ch.epfl.scala" %% "scalafix-cli" % scalafixVersion,
-      fork in run := true,
-      javaOptions ++= {
-        val sourcepath =
-          scalahostSourcepath.value
-            .flatMap(_.map(_.getAbsolutePath))
-            .mkString(java.io.File.pathSeparator)
-        val classpath =
-          scalahostClasspath.value
-            .flatMap(_.files.map(_.getAbsolutePath))
-            .mkString(java.io.File.pathSeparator)
-        val projectName = name.value
-        List(
-          s"-D$projectName.scalameta.sourcepath=$sourcepath",
-          s"-D$projectName.scalameta.classpath=$classpath",
-          s"-Dscalameta.sourcepath=$sourcepath",
-          s"-Dscalameta.classpath=$classpath"
-        )
-
-      }
-//        scalametaDependencies := {
-//          val deps = Project
-//            .getProjectForReference()
-//            .extract(sessionSettings, buildStructure.value)
-//            .currentProject
-//            .dependencies
-//            .map(_.project)
-//          println(s"DEPENDENCIES! $deps")
-//          deps
-//        }
-    )
+    Project("scalafix-rewrites", file("project/scalafix/rewrites"))
+      .settings(
+        scalaVersion := "2.11.8",
+        resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
+        libraryDependencies := Nil, // remove inject dependencies
+        mainClass := Some("scalafix.cli.Cli"),
+        libraryDependencies += "ch.epfl.scala" %% "scalafix-cli" % scalafixVersion,
+        fork in run := true
+      )
+      .disablePlugins(ScalahostSbtPlugin)
 
   override def extraProjects: Seq[Project] = Seq(
     scalafix211,
@@ -126,12 +101,7 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   override def trigger: PluginTrigger = AllRequirements
 
   val scalafix: Command = Command.command("scalafix") { state =>
-//    s"set scalafixEnabled in Global := true" ::
-//      "clean" ::
-//      "test:compile" ::
-//      s"set scalafixEnabled in Global := false" ::
-    "show scalafix-rewrites/javaOptions" ::
-      "scalafix-rewrites/runMain scalafix.cli.Cli --help" ::
+    "scalafixRewrite" ::
       state
   }
 
@@ -141,6 +111,22 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
       commands += scalafix,
+      scalafixRewrite := {
+        val filter = ScopeFilter(
+          configurations = inConfigurations(Compile, Test, IntegrationTest)
+        )
+        val sourcepath = sourceDirectories.all(filter).value
+        val classpath = fullClasspath.all(filter).value
+        val args = List(
+          s"--sourcepath=$sourcepath",
+          s"--classpath=$classpath"
+        )
+        run
+          .in(Compile)
+          .in(scalafixRewrite)
+          .toTask(args.mkString(" ", " ", ""))
+          .value
+      },
       scalafixInternalJar :=
         Def
           .taskDyn[Option[File]] {
