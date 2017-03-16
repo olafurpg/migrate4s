@@ -95,8 +95,6 @@ object Cli {
   val default = ScalafixOptions()
   // Run this at the end of the world, calls sys.exit.
   def main(args: Array[String]): Unit = {
-    val mirror = Mirror()
-    logger.elem(mirror)
     sys.exit(runMain(args, CommonOptions()))
   }
 
@@ -174,6 +172,8 @@ object Cli {
     }
 
   def runMain(args: Seq[String], commonOptions: CommonOptions): Int = {
+    val mirror = Mirror()
+    logger.elem(mirror)
     parse(args) match {
       case Right(WithHelp(usage @ true, _, _)) =>
         commonOptions.out.println(usageMessage)

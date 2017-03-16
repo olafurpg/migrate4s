@@ -1,9 +1,11 @@
 package scalafix.sbt
 
 import scala.meta.scalahost.sbt.ScalahostSbtPlugin._
+import scala.meta.scalahost.sbt.ScalahostSbtPlugin.autoImport._
 import scala.meta.scalahost.sbt.ScalahostSbtPlugin
 
 import sbt.Keys._
+import sbt.ScopeFilter.ScopeFilter
 import sbt._
 import sbt.plugins.JvmPlugin
 
@@ -60,13 +62,58 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   }
   private val scalafix211 = stub("2.11.8")
   private val scalafix212 = stub("2.12.1")
+  private def scalahostAggregateFilter: Def.Initialize[Task[ScopeFilter]] =
+    Def.task {
+      val currentProject = Project.extract(state.value).currentProject
+      val projects = inProjects(currentProject.aggregate:_*)
+      println(s"current PROJECT: $currentProject")
+      println(s"current PROJECT: ${currentProject.aggregate}")
+      println(s"PROJECTS: $projects")
+      ScopeFilter(
+        projects,
+        inConfigurations(Compile, Test, IntegrationTest)
+      )
+    }
+  private val scalahostSourcepath: Def.Initialize[Task[Seq[Seq[File]]]] =
+    Def.taskDyn(sourceDirectories.toTask.all(scalahostAggregateFilter.value))
+  private val scalahostClasspath: Def.Initialize[Task[Seq[Classpath]]] =
+    Def.taskDyn(fullClasspath.all(scalahostAggregateFilter.value))
   private val scalafixRewrites =
     Project("scalafix-rewrites", file("project/scalafix/rewrites")).settings(
       scalaVersion := "2.11.8",
       resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
 //      libraryDependencies := Nil, // remove inject dependencies
       mainClass := Some("scalafix.cli.Cli"),
-      libraryDependencies += "ch.epfl.scala" %% "scalafix-cli" % scalafixVersion
+      libraryDependencies += "ch.epfl.scala" %% "scalafix-cli" % scalafixVersion,
+      fork in run := true,
+      javaOptions ++= {
+        val sourcepath =
+          scalahostSourcepath.value
+            .flatMap(_.map(_.getAbsolutePath))
+            .mkString(java.io.File.pathSeparator)
+        val classpath =
+          scalahostClasspath.value
+            .flatMap(_.files.map(_.getAbsolutePath))
+            .mkString(java.io.File.pathSeparator)
+        val projectName = name.value
+        List(
+          s"-D$projectName.scalameta.sourcepath=$sourcepath",
+          s"-D$projectName.scalameta.classpath=$classpath",
+          s"-Dscalameta.sourcepath=$sourcepath",
+          s"-Dscalameta.classpath=$classpath"
+        )
+
+      }
+//        scalametaDependencies := {
+//          val deps = Project
+//            .getProjectForReference()
+//            .extract(sessionSettings, buildStructure.value)
+//            .currentProject
+//            .dependencies
+//            .map(_.project)
+//          println(s"DEPENDENCIES! $deps")
+//          deps
+//        }
     )
 
   override def extraProjects: Seq[Project] = Seq(
@@ -83,7 +130,8 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
 //      "clean" ::
 //      "test:compile" ::
 //      s"set scalafixEnabled in Global := false" ::
-    "scalafix-rewrites/runMain scalafix.cli.Cli --help" ::
+    "show scalafix-rewrites/javaOptions" ::
+      "scalafix-rewrites/runMain scalafix.cli.Cli --help" ::
       state
   }
 
