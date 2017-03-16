@@ -65,14 +65,14 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   private val scalafix212 = stub("2.12.1")
   private def scalahostAggregateFilter: Def.Initialize[Task[ScopeFilter]] =
     Def.task {
-      val currentProject = Project.extract(state.value).currentProject
-      val projects = inProjects(currentProject.aggregate: _*)
-      println(s"current PROJECT: $currentProject")
-      println(s"current PROJECT: ${currentProject.aggregate}")
-      println(s"PROJECTS: $projects")
+//      val currentProject = Project.extract(state.value).currentProject
+//      val projects = inProjects(currentProject.aggregate: _*)
+//      println(s"current PROJECT: $currentProject")
+//      println(s"current PROJECT: ${currentProject.aggregate}")
+//      println(s"PROJECTS: $projects")
       ScopeFilter(
-        projects,
-        inConfigurations(Compile, Test, IntegrationTest)
+//        projects,
+        configurations = inConfigurations(Compile, Test, IntegrationTest)
       )
     }
   private val scalahostSourcepath: Def.Initialize[Task[Seq[Seq[File]]]] =
@@ -111,22 +111,25 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
   override def projectSettings: Seq[Def.Setting[_]] =
     Seq(
       commands += scalafix,
-      scalafixRewrite := {
-        val filter = ScopeFilter(
-          configurations = inConfigurations(Compile, Test, IntegrationTest)
-        )
-        val sourcepath = sourceDirectories.all(filter).value
-        val classpath = fullClasspath.all(filter).value
+      scalafixRewrite := Def.taskDyn {
+        val sourcepath =
+          scalahostSourcepath.value
+            .flatMap(_.map(_.getAbsolutePath))
+            .mkString(java.io.File.pathSeparator)
+        val classpath =
+          scalahostClasspath.value
+            .flatMap(_.files.map(_.getAbsolutePath))
+            .mkString(java.io.File.pathSeparator)
         val args = List(
           s"--sourcepath=$sourcepath",
           s"--classpath=$classpath"
         )
+        println("ARGS: $args")
         run
           .in(Compile)
           .in(scalafixRewrite)
           .toTask(args.mkString(" ", " ", ""))
-          .value
-      },
+      }.taskValue,
       scalafixInternalJar :=
         Def
           .taskDyn[Option[File]] {
