@@ -1,5 +1,4 @@
 # compile should not affect scalafix
-> compile
-> scalafix
+> scalafixRewrite
 > check
 

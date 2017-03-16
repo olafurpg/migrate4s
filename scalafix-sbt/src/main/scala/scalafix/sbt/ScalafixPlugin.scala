@@ -124,12 +124,12 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
           s"--sourcepath=$sourcepath",
           s"--classpath=$classpath"
         )
-        println("ARGS: $args")
-        run
+        println(s"ARGS: $args")
+        runMain
           .in(Compile)
-          .in(scalafixRewrite)
-          .toTask(args.mkString(" ", " ", ""))
-      }.taskValue,
+          .in(scalafixRewrites)
+          .toTask(args.mkString(" scalafix.cli.Cli ", " ", ""))
+      }.value,
       scalafixInternalJar :=
         Def
           .taskDyn[Option[File]] {

@@ -172,8 +172,6 @@ object Cli {
     }
 
   def runMain(args: Seq[String], commonOptions: CommonOptions): Int = {
-    val mirror = Mirror()
-    logger.elem(mirror)
     parse(args) match {
       case Right(WithHelp(usage @ true, _, _)) =>
         commonOptions.out.println(usageMessage)
@@ -182,6 +180,8 @@ object Cli {
         commonOptions.out.println(helpMessage)
         0
       case Right(WithHelp(_, _, options)) =>
+        val mirror = Mirror(options.classpath)
+        logger.elem(mirror)
         runOn(options.copy(common = commonOptions))
       case Left(error) =>
         commonOptions.err.println(error)
