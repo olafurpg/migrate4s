@@ -251,8 +251,14 @@ lazy val `scalafix-sbt` = project
     sbtPlugin := true,
     // Doesn't work because we need to publish 2.11 and 2.12.
 //    scripted := scripted.dependsOn(publishedArtifacts: _*).evaluated,
-    scalaVersion := "2.10.5",
+    scalaVersion := "2.10.6",
+    testQuick := {
+      RunSbtCommand(
+        "; plz 2.11.8 publishLocal " +
+            "; plz 2.10.6 scalafix-sbt/scripted sbt-scalafix/config")(state.value)
+    },
     crossScalaVersions := Seq(scalaVersion.value),
+    addSbtPlugin("org.scalameta" % "sbt-scalahost" % scalametaV),
     moduleName := "sbt-scalafix",
     scriptedLaunchOpts ++= Seq(
       "-Dplugin.version=" + version.value,
@@ -339,3 +345,4 @@ def exposePaths(projectName: String,
     }
   )
 }
+

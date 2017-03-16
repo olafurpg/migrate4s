@@ -1,5 +1,8 @@
 package scalafix.sbt
 
+import scala.meta.scalahost.sbt.ScalahostSbtPlugin._
+import scala.meta.scalahost.sbt.ScalahostSbtPlugin
+
 import sbt.Keys._
 import sbt._
 import sbt.plugins.JvmPlugin
@@ -43,30 +46,44 @@ object ScalafixPlugin extends AutoPlugin with ScalafixKeys {
             |scalafix-nsc compiler plugin. If the dependency was added to all
             |projects, the (slow) update task will be re-run for every project.""".stripMargin,
         // Only needed when using snapshot versions.
-//        resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
         publishLocal := {},
         publish := {},
         publishArtifact := false,
         publishMavenStyle := false, // necessary to support intransitive dependencies.
         scalaVersion := version,
         libraryDependencies := Nil, // remove injected dependencies from random sbt plugins.
+//        scalacOptions := Nil, // remove injected options/compiler flags
         libraryDependencies +=
           ("ch.epfl.scala" %% "scalafix-nsc" % scalafixVersion).intransitive()
       )
+      .disablePlugins(ScalahostSbtPlugin)
   }
   private val scalafix211 = stub("2.11.8")
   private val scalafix212 = stub("2.12.1")
+  private val scalafixRewrites =
+    Project("scalafix-rewrites", file("project/scalafix/rewrites")).settings(
+      scalaVersion := "2.11.8",
+      resolvers += Resolver.bintrayIvyRepo("scalameta", "maven"),
+//      libraryDependencies := Nil, // remove inject dependencies
+      mainClass := Some("scalafix.cli.Cli"),
+      libraryDependencies += "ch.epfl.scala" %% "scalafix-cli" % scalafixVersion
+    )
 
-  override def extraProjects: Seq[Project] = Seq(scalafix211, scalafix212)
+  override def extraProjects: Seq[Project] = Seq(
+    scalafix211,
+    scalafix212,
+    scalafixRewrites
+  )
 
-  override def requires = JvmPlugin
+  override def requires = JvmPlugin && ScalahostSbtPlugin
   override def trigger: PluginTrigger = AllRequirements
 
   val scalafix: Command = Command.command("scalafix") { state =>
-    s"set scalafixEnabled in Global := true" ::
-      "clean" ::
-      "test:compile" ::
-      s"set scalafixEnabled in Global := false" ::
+//    s"set scalafixEnabled in Global := true" ::
+//      "clean" ::
+//      "test:compile" ::
+//      s"set scalafixEnabled in Global := false" ::
+    "scalafix-rewrites/runMain scalafix.cli.Cli --help" ::
       state
   }
 

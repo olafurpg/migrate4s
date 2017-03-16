@@ -1,6 +1,7 @@
 package scalafix.cli
 
 import scala.collection.GenSeq
+import scala.meta.Mirror
 import scala.meta.inputs.Input
 import scala.util.control.NonFatal
 import scalafix.Failure
@@ -94,6 +95,8 @@ object Cli {
   val default = ScalafixOptions()
   // Run this at the end of the world, calls sys.exit.
   def main(args: Array[String]): Unit = {
+    val mirror = Mirror()
+    logger.elem(mirror)
     sys.exit(runMain(args, CommonOptions()))
   }
 

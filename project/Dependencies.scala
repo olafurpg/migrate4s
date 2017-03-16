@@ -5,7 +5,7 @@ style = defaultWithAlign
 }*/
 
 object Dependencies {
-  val scalametaV = "1.7.0-3571-fbf8448a"
+  val scalametaV = "1.7.0-3581-d962fde7"
   val paradiseV  = "3.0.0-M7"
   var testClasspath: String = "empty"
   def scalahost(scalaVersion: String): ModuleID = "org.scalameta" % s"scalahost_$scalaVersion" % scalametaV

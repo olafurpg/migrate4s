@@ -189,6 +189,7 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
     assertSettingsAreValid()
     val offsets = offsetToType(unit.body, config.dialect)
     val unused = getUnusedImports(unit)
+    logger.elem(mirror.database.messages)
     new ScalafixMirror {
       override def typeSignature(defn: m.Defn): Option[m.Type] = {
         defn match {
