@@ -3,10 +3,14 @@ package scalafix.config
 import scala.util.matching.Regex
 import scalafix.util.AbsoluteFile
 
+import metaconfig.ExtraName
 import metaconfig.Reader
 
 @metaconfig.ConfigReader
-case class FilterMatcher(includeFilters: Regex, excludeFilters: Regex) {
+case class FilterMatcher(
+    @ExtraName("include") includeFilters: Regex,
+    @ExtraName("exclude") excludeFilters: Regex
+) {
   def matches(file: AbsoluteFile): Boolean = matches(file.path)
   def matches(input: String): Boolean =
     includeFilters.findFirstIn(input).isDefined &&

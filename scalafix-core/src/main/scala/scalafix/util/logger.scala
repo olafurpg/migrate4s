@@ -11,7 +11,7 @@ import java.io.File
 object logger {
 
   private def log[T](t: sourcecode.Text[T],
-                     logLevel: LogLevel,
+                     logLevel: Severity,
                      line: sourcecode.Line,
                      file: sourcecode.File,
                      enclosing: sourcecode.Enclosing,
@@ -33,7 +33,7 @@ object logger {
       file: sourcecode.File,
       enclosing: sourcecode.Enclosing): Unit = {
     ts.foreach { t =>
-      log(t, LogLevel.debug, line, file, enclosing, showSource = true)
+      log(t, Severity.Debug, line, file, enclosing, showSource = true)
     }
   }
 
@@ -46,22 +46,22 @@ object logger {
   def debug[T](t: sourcecode.Text[T])(implicit line: sourcecode.Line,
                                       file: sourcecode.File,
                                       enclosing: sourcecode.Enclosing): Unit =
-    log(t, LogLevel.debug, line, file, enclosing, showSource = false)
+    log(t, Severity.Debug, line, file, enclosing, showSource = false)
 
   def info[T](t: sourcecode.Text[T])(implicit line: sourcecode.Line,
                                      file: sourcecode.File,
                                      enclosing: sourcecode.Enclosing): Unit =
-    log(t, LogLevel.info, line, file, enclosing, showSource = false)
+    log(t, Severity.Info, line, file, enclosing, showSource = false)
 
   def warn[T](t: sourcecode.Text[T])(implicit line: sourcecode.Line,
                                      file: sourcecode.File,
                                      enclosing: sourcecode.Enclosing): Unit =
-    log(t, LogLevel.warn, line, file, enclosing, showSource = false)
+    log(t, Severity.Warn, line, file, enclosing, showSource = false)
 
   def error[T](t: sourcecode.Text[T])(implicit line: sourcecode.Line,
                                       file: sourcecode.File,
                                       enclosing: sourcecode.Enclosing): Unit =
-    log(t, LogLevel.error, line, file, enclosing, showSource = false)
+    log(t, Severity.Error, line, file, enclosing, showSource = false)
 
   def log(t: Tree, tokensOnly: Boolean = false): String = {
     val tokens =

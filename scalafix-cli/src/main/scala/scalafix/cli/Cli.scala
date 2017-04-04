@@ -125,6 +125,7 @@ case class ScalafixOptions(
           ScalafixConfig.default
         )
         .withRewrites(_ ++ rewrites)
+        .withReporter(_.copy(outStream = common.out))
     case Some(x) => x
   }
   lazy val resolvedSbtConfig: ScalafixConfig =

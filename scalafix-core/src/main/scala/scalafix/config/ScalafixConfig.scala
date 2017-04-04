@@ -21,14 +21,20 @@ case class ScalafixConfig(
     patches: PatchConfig = PatchConfig(),
     debug: DebugConfig = DebugConfig(),
     fatalWarnings: Boolean = true,
+    reporter: ScalafixReporter = ScalafixReporter.default,
     dialect: Dialect = Scala211
 ) {
+
   def withRewrites(
       f: List[ScalafixRewrite] => List[ScalafixRewrite]): ScalafixConfig =
     copy(rewrites = f(rewrites).distinct)
+  def withReporter(f: ScalafixReporter => ScalafixReporter): ScalafixConfig =
+    copy(reporter = f(reporter))
+
   implicit val importsConfigReader: Reader[ImportsConfig] = imports.reader
   implicit val patchConfigReader: Reader[PatchConfig] = patches.reader
   implicit val debugConfigReader: Reader[DebugConfig] = debug.reader
+  implicit val reporterConfigReader: Reader[ScalafixReporter] = reporter.reader
 }
 
 object ScalafixConfig {
