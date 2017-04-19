@@ -1,4 +1,5 @@
-package scalafix.nsc
+package scalafix
+package nsc
 
 import scala.meta.internal.scalahost.v1.online.Mirror
 import scala.meta.semantic.v1
@@ -10,11 +11,14 @@ import scala.tools.nsc.plugins.PluginComponent
 import scala.util.control.NonFatal
 import scalafix.Failure.ParseError
 import scalafix.config.ScalafixConfig
+import scalafix.rewrite.ScalafixMirror
 import scalafix.util.FileOps
 
-class ScalafixNscComponent(plugin: Plugin,
-                           val global: Global,
-                           getConfig: () => ScalafixConfig)
+class ScalafixNscComponent(
+    plugin: Plugin,
+    val global: Global,
+    getConfig: () => ScalafixConfig,
+    getRewrites: () => Iterable[Rewrite[ScalafixMirror]])
     extends PluginComponent
     with ReflectToolkit
     with NscScalafixMirror {
@@ -40,7 +44,8 @@ class ScalafixNscComponent(plugin: Plugin,
         unit.source.file.file.isFile &&
         !unit.isJava) {
       val config = getConfig()
-      val fixed = fix(unit, config).get
+      val rewrites = getRewrites()
+      val fixed = fix(unit, config, rewrites).get
       if (fixed.nonEmpty && fixed != new String(unit.source.content)) {
         FileOps.writeFile(unit.source.file.file, fixed)
       }

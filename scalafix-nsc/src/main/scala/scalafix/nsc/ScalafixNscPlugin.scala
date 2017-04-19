@@ -14,12 +14,11 @@ import java.io.File
 import metaconfig.Configured
 
 class ScalafixNscPlugin(val global: Global) extends Plugin {
-  var config: ScalafixConfig =
-    ScalafixConfig
-      .auto(new File(sys.props("user.dir")))
-      .getOrElse(ScalafixConfig.default)
+  var (config, rewrites) = ScalafixConfig
+    .auto(new File(sys.props("user.dir")))
+    .getOrElse(ScalafixConfig.default -> Nil)
   private val scalafixComponent =
-    new ScalafixNscComponent(this, global, () => config)
+    new ScalafixNscComponent(this, global, () => config, () => rewrites)
   // IMPORTANT. This needs to happen before we create ScalahostPlugin in order to hijack the
   // original global.analyzer instead of the Scalahost hijacked analyzer.
   // It seems warn-unused-imports still uses the old g.analyzer to collect import infos.

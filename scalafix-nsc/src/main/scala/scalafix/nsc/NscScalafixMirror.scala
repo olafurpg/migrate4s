@@ -1,4 +1,5 @@
-package scalafix.nsc
+package scalafix
+package nsc
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -15,7 +16,6 @@ import scalafix.Failure
 import scalafix.Fixed
 import scalafix.Scalafix
 import scalafix.config.ScalafixConfig
-import scalafix.rewrite.RewriteCtx
 import scalafix.rewrite.ScalafixMirror
 case class SemanticContext(enclosingPackage: String, inScope: List[String])
 
@@ -223,7 +223,9 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
     else m.Input.String(new String(source.content))
   }
 
-  def fix(unit: g.CompilationUnit, config: ScalafixConfig)(
+  def fix(unit: g.CompilationUnit,
+          config: ScalafixConfig,
+          rewrites: Iterable[Rewrite[ScalafixMirror]])(
       implicit mirror: Mirror): Fixed = {
     val api = getSemanticApi(unit, config)
     val input = getMetaInput(unit.source)
@@ -231,7 +233,7 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
       .find(_.pos.input.matches(input))
       .map { source =>
         val ctx = RewriteCtx.apply(source, config, api)
-        Scalafix.fix(ctx)
+        Scalafix.fix(ctx, rewrites)
       }
       .getOrElse(Fixed.Failed(Failure.Unexpected(new IllegalStateException(
         s"Unable to find source $input in ${api.database}"))))
