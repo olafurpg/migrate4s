@@ -23,7 +23,7 @@ abstract class Rewrite(implicit sourceName: sourcecode.Name) {
 
 object Rewrite {
   def empty[T]: Rewrite[T] = syntactic(_ => Patch.empty)
-  def syntactic(f: SyntacticRewriteCtx => Patch)(
+  def syntactic(f: RewriteCtx => Patch)(
       implicit name: sourcecode.Name): Rewrite = apply(f)
   def semantic(f: RewriteCtx => Patch)(
       implicit name: sourcecode.Name): Rewrite = apply(f)

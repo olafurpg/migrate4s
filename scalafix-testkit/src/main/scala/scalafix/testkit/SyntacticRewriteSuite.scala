@@ -9,7 +9,7 @@ import scalafix.rewrite.ScalafixRewrite
 
 import org.scalatest.FunSuiteLike
 
-class SyntacticRewriteSuite(rewrite: ScalafixRewrite)
+class RewriteSuite(rewrite: ScalafixRewrite)
     extends FunSuiteLike
     with DiffAssertions {
   def check(name: String, original: String, expected: String): Unit = {

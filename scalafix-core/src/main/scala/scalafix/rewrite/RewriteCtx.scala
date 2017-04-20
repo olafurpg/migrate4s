@@ -29,7 +29,7 @@ object RewriteCtx {
 
   def syntactic(
       tree: Tree,
-      config: ScalafixConfig = ScalafixConfig()): SyntacticRewriteCtx =
+      config: ScalafixConfig = ScalafixConfig()): RewriteCtx =
     apply(tree, config, syntacticRewriteCtx)
 
   def semantic(tree: Tree,

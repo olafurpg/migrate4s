@@ -13,7 +13,7 @@ package object scalafix {
   type RewriteCtx[T] = rewrite.RewriteCtx[T]
   type RewriteCtx = RewriteCtx[Mirror]
   // Syntactic rewrite ctx is RewriteCtx[Null] because it is a subtype of any other rewritectx.
-  type SyntacticRewriteCtx = RewriteCtx[Any]
+  type RewriteCtx = RewriteCtx[Any]
   val RewriteCtx = rewrite.RewriteCtx
 
   implicit class XtensionRewriteCtx(val ctx: SemanticRewriteCtx)
