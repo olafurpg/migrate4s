@@ -24,7 +24,9 @@ sealed abstract class Patch {
     if (this eq other) this
     else {
       (this, other) match {
-        case (a @ InCtx(_, _, _), b @ InCtx(_, _, _)) => ???
+        case (InCtx(ap, ac, am), b @ InCtx(bp, bc, bm)) =>
+          if (ac ne bc) ???
+          else InCtx(ap + bp, ac, am.orElse(bm))
         case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
         case (InCtx(p, ctx, m), _) => InCtx(p + other, ctx, m)
         case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
@@ -47,8 +49,8 @@ sealed abstract class Patch {
 private[scalafix] case class Concat(a: Patch, b: Patch) extends Patch
 private[scalafix] case object EmptyPatch extends Patch
 private[scalafix] case class InCtx(patch: Patch,
-                                ctx: RewriteCtx,
-                                mirror: Option[Mirror])
+                                   ctx: RewriteCtx,
+                                   mirror: Option[Mirror])
     extends Patch
 abstract class TreePatch extends Patch
 abstract class TokenPatch(val tok: Token, val newTok: String) extends Patch {
