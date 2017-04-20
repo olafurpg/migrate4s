@@ -70,10 +70,9 @@ object DiffTest {
       ScalafixConfig.fromString(firstLine, mirror) match {
         case Configured.Ok(x) => x
         case Configured.NotOk(x) =>
-          throw new IllegalArgumentException(
-            s"Failed to parse $filename",
-            new IllegalArgumentException(x.toString()))
-
+          throw new IllegalArgumentException(s"""Failed to parse $filename
+                                                |Mirror: $mirror
+                                                |Error: $x""".stripMargin)
       }
     }
 

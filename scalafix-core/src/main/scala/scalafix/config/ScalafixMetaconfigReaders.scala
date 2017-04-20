@@ -80,28 +80,30 @@ trait ScalafixMetaconfigReaders {
     }
   }
 
+  def scalafixConfigEmptyRewriteReader: ConfDecoder[(Conf, ScalafixConfig)] =
+    ConfDecoder.instance[(Conf, ScalafixConfig)] {
+      case Conf.Obj(values) =>
+        val (rewrites, noRewrites) = values.partition(_._1 == "rewrites")
+        val rewriteConf =
+          Configured.Ok(rewrites.lastOption.map(_._2).getOrElse(Conf.Lst()))
+        val config =
+          ScalafixConfig.syntaxConfDecoder.read(Conf.Obj(noRewrites))
+        rewriteConf.product(config)
+    }
   def scalafixConfigConfDecoder(
       mirror: Option[ScalafixMirror]): ConfDecoder[ScalafixConfig] = {
     mirror match {
-      case None => ScalafixConfig.syntaxConfDecoder
+      case None => scalafixConfigEmptyRewriteReader.map(_._2)
       case Some(x) =>
-        ConfDecoder.instance[ScalafixConfig] {
-          case Conf.Obj(values) =>
-            val (rewrites, noRewrites) = values.partition(_._1 == "rewrites")
-            val semanticRewrites = rewrites.lastOption
-              .map {
-                case (_, conf) =>
-                  implicit val singleRewriteDecoder =
-                    rewriteConfDecoder(Some(x))
-                  implicit val rewritesReader =
-                    implicitly[ConfDecoder[List[Rewrite]]]
-                  rewritesReader.read(conf)
-              }
-              .getOrElse(Configured.Ok(Nil))
-            ScalafixConfig.syntaxConfDecoder
-              .read(Conf.Obj(noRewrites))
-              .product(semanticRewrites)
-              .map { case (conf, rewrites) => conf.copy(rewrites = rewrites) }
+        scalafixConfigEmptyRewriteReader.flatMap {
+          case (rewriteConf, scalafixConfig) =>
+            implicit val singleRewriteDecoder =
+              rewriteConfDecoder(Some(x))
+            implicit val rewritesReader =
+              implicitly[ConfDecoder[List[Rewrite]]]
+            rewritesReader
+              .read(rewriteConf)
+              .map(x => scalafixConfig.copy(rewrites = x))
         }
     }
   }
