@@ -15,7 +15,7 @@ import scalafix.util.TreePatch.Rename
 
 import org.scalameta.logger
 
-private[this] class Replacer(implicit ctx: RewriteCtx[Mirror]) {
+private[this] class Replacer(implicit ctx: RewriteCtx, mirror: Mirror) {
   import ctx._
   object `:withSymbol:` {
     def unapply(ref: Ref): Option[(Ref, Symbol)] =
@@ -58,7 +58,8 @@ private[this] class Replacer(implicit ctx: RewriteCtx[Mirror]) {
 
 object Replacer {
   def toTokenPatches(ast: Tree, replacements: Seq[Replace])(
-      implicit ctx: RewriteCtx[Mirror]): Seq[Patch] = {
+      implicit ctx: RewriteCtx,
+      mirror: Mirror): Seq[Patch] = {
     new Replacer().toTokenPatches(
       ast,
       replacements ++ ctx.config.patches.all.collect {
@@ -70,7 +71,8 @@ object Replacer {
 
 object Renamer {
   def toTokenPatches(renamePatches: Seq[RenamePatch])(
-      implicit ctx: RewriteCtx[Mirror]): Seq[TokenPatch] = {
+      implicit ctx: RewriteCtx,
+      mirror: Mirror): Seq[TokenPatch] = {
     if (renamePatches.isEmpty) return Nil
     import ctx._
     val renames = renamePatches.collect { case r: Rename => r }

@@ -13,21 +13,21 @@ import scalafix.syntax._
 import scalafix.util.TreePatch.AddGlobalImport
 import scalafix.util.TreePatch.RemoveGlobalImport
 
-/** Set of operations needed to run organize imports */
-trait OrganizeImportsMirror {
-
-  /** Returns true if this importee is never used and can be removed. */
-  def isUnused(importee: Importee): Boolean
-
-  /** Returns fully qualified name of this reference
-    *
-    * For example scala.collection.immutable.List for List.
-    **/
-  def fullyQualifiedName(ref: Ref): Option[Ref]
-}
+///** Set of operations needed to run organize imports */
+//trait OrganizeImportsMirror {
+//
+//  /** Returns true if this importee is never used and can be removed. */
+//  def isUnused(importee: Importee): Boolean
+//
+//  /** Returns fully qualified name of this reference
+//    *
+//    * For example scala.collection.immutable.List for List.
+//    **/
+//  def fullyQualifiedName(ref: Ref): Option[Ref]
+//}
 
 private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
-                                                ev: CanOrganizeImports[T]) {
+                                                mirror: Mirror) {
   lazy val fallbackToken: Token = {
     def loop(tree: Tree): Token = tree match {
       case Source(stat :: _) => loop(stat)
@@ -37,7 +37,17 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
 
     loop(ctx.tree)
   }
-  val mirror: OrganizeImportsMirror = ev.toOrganizeImportsMirror(ctx.mirror)
+
+  def fullyQualifiedName(ref: Ref): Option[Ref] =
+    for {
+      sym <- mirror.symbol(ref).toOption
+      name <- sym.to[Ref].toOption
+      strippedRoot = name.transform {
+        case q"_root_.$nme" => nme
+      }
+      if strippedRoot.is[Ref]
+    } yield strippedRoot.asInstanceOf[Ref]
+
   def extractImports(stats: Seq[Stat]): Seq[Import] = {
     stats
       .takeWhile(_.is[Import])
@@ -82,18 +92,6 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
   def removeDuplicates(imports: Seq[CanonicalImport]): Seq[CanonicalImport] =
     imports.distinctBy(_.importerSyntax)
 
-  def removeUnused(
-      possiblyDuplicates: Seq[CanonicalImport]): Seq[CanonicalImport] = {
-    val imports = removeDuplicates(possiblyDuplicates)
-    if (!ctx.config.imports.removeUnused) imports
-    else {
-      imports.collect {
-        case i if !mirror.isUnused(i.importee) =>
-          i.copy(extraImportees = i.extraImportees.filterNot(mirror.isUnused))
-      }
-    }
-  }
-
   def rootPkgName(ref: Ref): String = ref match {
     case name: Term.Name => name.value
     case _ =>
@@ -104,7 +102,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
 
   def fullyQualify(imp: CanonicalImport): Option[Term.Ref] =
     for {
-      fqnRef <- mirror.fullyQualifiedName(imp.ref)
+      fqnRef <- fullyQualifiedName(imp.ref)
       // Avoid inserting unneeded `package`
       if rootPkgName(fqnRef) != rootPkgName(imp.ref)
     } yield fqnRef.asInstanceOf[Term.Ref]
@@ -199,7 +197,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
           is.filterNot(_.structure == remove.importer.structure)
       }
 
-    patches.foldLeft(removeUnused(globalImports))(combine)
+    patches.foldLeft(globalImports)(combine)
   }
 
   def organizeImports(patches: Seq[ImportPatch]): Seq[TokenPatch] = {
@@ -224,8 +222,9 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
 }
 
 object OrganizeImports {
-  def organizeImports[T: CanOrganizeImports](patches: Seq[ImportPatch])(
-      implicit ctx: RewriteCtx): Seq[TokenPatch] =
+  def organizeImports(patches: Seq[ImportPatch])(
+      implicit ctx: RewriteCtx,
+      mirror: Mirror): Seq[TokenPatch] =
     new OrganizeImports().organizeImports(
       patches ++ ctx.config.patches.all.collect {
         case i: ImportPatch => i
