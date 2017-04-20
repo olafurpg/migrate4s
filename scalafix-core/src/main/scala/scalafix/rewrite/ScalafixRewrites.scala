@@ -6,11 +6,11 @@ object ScalafixRewrites {
     ProcedureSyntax,
     VolatileLazyVal
   )
-  val semantic: List[ScalafixRewrite] = List(
-    ScalaJsRewrites.DemandJSGlobal,
-    ExplicitImplicit,
-    Scalameta17,
-    Xor2Either
+  def semantic(mirror: ScalafixMirror): List[Rewrite] = List(
+    ScalaJsRewrites.DemandJSGlobal(mirror),
+    ExplicitImplicit(mirror),
+    Scalameta17(mirror),
+    Xor2Either(mirror)
   )
   val all: List[ScalafixRewrite] = syntax ++ semantic
   val default: List[ScalafixRewrite] =
