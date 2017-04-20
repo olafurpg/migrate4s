@@ -1,10 +1,9 @@
-package scalafix.rewrite
+package scalafix
+package rewrite
 
 import scala.{meta => m}
-import scalafix.util.Patch
 import scalafix.util.Whitespace
 import scala.collection.immutable.Seq
-import scalafix.util.TokenPatch
 
 case class ExplicitImplicit(implicit mirror: ScalafixMirror) extends Rewrite {
   // Don't explicitly annotate vals when the right-hand body is a single call
@@ -29,7 +28,7 @@ case class ExplicitImplicit(implicit mirror: ScalafixMirror) extends Rewrite {
         replace <- lhsTokens.reverseIterator.find(x =>
           !x.is[Token.Equals] && !x.is[Whitespace])
         typ <- mirror.typeSignature(defn)
-      } yield TokenPatch.AddRight(replace, s": ${typ.syntax}")
+      } yield ctx.addRight(replace, s": ${typ.syntax}")
     }.to[Seq]
     tree
       .collect {

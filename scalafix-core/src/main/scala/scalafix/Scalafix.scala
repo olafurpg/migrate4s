@@ -19,7 +19,7 @@ object Scalafix {
         ctx.config.rewrites.foldLeft(Rewrite.empty)(_ andThen _)
       Fixed.Success(
         combinedRewrite
-          .rewrite(ctx)
+          .wrappedRewrite(ctx)
           .applied
       )
     } catch {

@@ -1,16 +1,16 @@
-package scalafix.util
+package scalafix.patch
 
 import scalafix.syntax._
 import scala.meta.{Symbol => _, _}
 import scala.meta.semantic.v1._
 import scala.collection.immutable.Seq
-import scalafix.util.TreePatch._
-import scalafix.util.TokenPatch._
+import scalafix.patch.TreePatch._
+import scalafix.patch.TokenPatch._
 import scala.meta.internal.ast.Helpers._
 import scala.util.Try
 import scalafix.rewrite.RewriteCtx
-import scalafix.util.TreePatch.AddGlobalImport
-import scalafix.util.TreePatch.Rename
+import scalafix.patch.TreePatch.AddGlobalImport
+import scalafix.patch.TreePatch.Rename
 
 import org.scalameta.logger
 
@@ -42,7 +42,7 @@ private[this] class Replacer(implicit ctx: RewriteCtx, mirror: Mirror) {
                 .toList
                 .flatMap(
                   replace =>
-                    TokenPatch.AddLeft(ref.tokens.head, replace.to.syntax) +:
+                    ctx.addLeft(ref.tokens.head, replace.to.syntax) +:
                       (ref.tokens.map(TokenPatch.Remove.apply) ++
                       replace.additionalImports.map(x => AddGlobalImport(x))))
           case imp: Import => // Do nothing
@@ -106,7 +106,7 @@ object Renamer {
       case ToRename(tok, to) =>
         Seq(
           Remove(tok),
-          AddLeft(tok, to.syntax)
+          ctx.addLeft(tok, to.syntax)
         )
     }.flatten
   }

@@ -1,9 +1,8 @@
-package scalafix.rewrite
+package scalafix
+package rewrite
 
 import scala.meta._
-import scalafix.util.Patch
 import scala.collection.immutable.Seq
-import scalafix.util.TokenPatch
 
 case object VolatileLazyVal extends Rewrite {
   private object NonVolatileLazyVal {
@@ -19,7 +18,7 @@ case object VolatileLazyVal extends Rewrite {
   override def rewrite(ctx: RewriteCtx): Patch = {
     ctx.tree.collect {
       case NonVolatileLazyVal(tok) =>
-        TokenPatch.AddLeft(tok, s"@volatile ")
+        ctx.addLeft(tok, s"@volatile ")
     }.asPatch
   }
 }

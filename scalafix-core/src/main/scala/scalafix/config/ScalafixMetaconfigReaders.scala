@@ -13,7 +13,7 @@ import scalafix.rewrite.ScalafixRewrites
 import scalafix.util.ClassloadObject
 import scalafix.util.FileOps
 import scalafix.util.ScalafixToolbox
-import scalafix.util.TreePatch._
+import scalafix.patch.TreePatch._
 
 import java.io.File
 import java.io.OutputStream

@@ -1,11 +1,8 @@
-package scalafix.rewrite
+package scalafix
+package rewrite
 import scala.collection.immutable.Seq
 import scala.meta._
 import scala.meta.contrib._
-import scalafix.util.Patch
-import scalafix.util.TokenPatch._
-import scalafix.util.TreePatch.AddGlobalImport
-import scalafix.util.TreePatch.Rename
 
 import org.scalameta.logger
 
@@ -66,9 +63,9 @@ object ScalaJsRewrites {
           else {
             mods match {
               case JsNative(_, Some(jsName)) =>
-                patchB += Rename(jsName, q"JSGlobal")
+                patchB += ctx.rename(jsName, q"JSGlobal")
               case JsNative(native, None) =>
-                patchB += AddRight(native.tokens.last, " @JSGlobal")
+                patchB += ctx.addRight(native.tokens.last, " @JSGlobal")
               case _ =>
             }
           }
@@ -78,7 +75,7 @@ object ScalaJsRewrites {
     val patches = patchB.result()
 
     if (patches.nonEmpty && config.imports.organize) {
-      AddGlobalImport(importer"scala.scalajs.js.annotation.JSGlobal") ++ patches
+      ctx.addGlobalImport(importer"scala.scalajs.js.annotation.JSGlobal") ++ patches
     } else {
       patches.asPatch
     }

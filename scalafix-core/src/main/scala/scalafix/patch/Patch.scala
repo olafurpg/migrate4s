@@ -22,16 +22,15 @@ sealed abstract class Patch {
   // patches. We might want to group related patches and enforce some ordering.
   def +(other: Patch): Patch =
     if (this eq other) this
-    else
+    else {
       (this, other) match {
-        case (a @ InCtx(_, _, _), b @ InCtx(_, _, _)) =>
-          if (a.ctx eq b.ctx) InCtx(a.patch + b.patch, a.ctx, a.mirror)
-          else ???
+        case (a @ InCtx(_, _, _), b @ InCtx(_, _, _)) => ???
         case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
         case (InCtx(p, ctx, m), _) => InCtx(p + other, ctx, m)
         case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
         case _ => Concat(this, other)
       }
+    }
   def ++(other: Seq[Patch]): Patch = other.foldLeft(this)(_ + _)
 
   def appliedDiff: String = {
@@ -45,11 +44,11 @@ sealed abstract class Patch {
 //    Patch.apply[T](this)
 }
 
-private[patch] case class Concat(a: Patch, b: Patch) extends Patch
-private[patch] case object EmptyPatch extends Patch
-private[patch] case class InCtx(patch: Patch,
-                                   ctx: RewriteCtx,
-                                   mirror: Option[Mirror])
+private[scalafix] case class Concat(a: Patch, b: Patch) extends Patch
+private[scalafix] case object EmptyPatch extends Patch
+private[scalafix] case class InCtx(patch: Patch,
+                                ctx: RewriteCtx,
+                                mirror: Option[Mirror])
     extends Patch
 abstract class TreePatch extends Patch
 abstract class TokenPatch(val tok: Token, val newTok: String) extends Patch {
@@ -62,7 +61,7 @@ abstract class ImportPatch(val importer: Importer) extends TreePatch {
   def toImport: Import = Import(Seq(importer))
 }
 
-private[patch] object TreePatch {
+private[scalafix] object TreePatch {
   trait RenamePatch
   case class Rename(from: Name, to: Name) extends TreePatch with RenamePatch
   case class RenameSymbol(from: Symbol, to: Name, normalize: Boolean = false)
@@ -88,10 +87,8 @@ private[patch] object TreePatch {
       extends ImportPatch(importer)
 }
 
-private[patch] object TokenPatch {
+private[scalafix] object TokenPatch {
   case class Remove(override val tok: Token) extends TokenPatch(tok, "")
-  def AddRight(tok: Token, toAdd: String): TokenPatch = Add(tok, "", toAdd)
-  def AddLeft(tok: Token, toAdd: String): TokenPatch = Add(tok, toAdd, "")
   case class Add(override val tok: Token,
                  addLeft: String,
                  addRight: String,

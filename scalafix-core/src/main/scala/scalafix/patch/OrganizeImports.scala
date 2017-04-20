@@ -1,4 +1,4 @@
-package scalafix.util
+package scalafix.patch
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -10,8 +10,9 @@ import scala.meta.tokens.Token.KwImport
 import scalafix.config.FilterMatcher
 import scalafix.rewrite.RewriteCtx
 import scalafix.syntax._
-import scalafix.util.TreePatch.AddGlobalImport
-import scalafix.util.TreePatch.RemoveGlobalImport
+import scalafix.patch.TreePatch.AddGlobalImport
+import scalafix.patch.TreePatch.RemoveGlobalImport
+import scalafix.util.CanonicalImport
 
 ///** Set of operations needed to run organize imports */
 //trait OrganizeImportsMirror {
@@ -215,7 +216,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
         if (!tokenToEdit.is[KwImport] && tokenToEdit.eq(fallbackToken)) "\n"
         else ""
       val toInsert = prettyPrint(cleanedUpImports) ++ suffix
-      TokenPatch.AddLeft(tokenToEdit, toInsert) +:
+      ctx.addLeft(tokenToEdit, toInsert) +:
         getRemovePatches(oldImports)
     }
   }
