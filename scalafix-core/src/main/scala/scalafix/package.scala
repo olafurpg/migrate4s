@@ -14,7 +14,7 @@ package object scalafix {
   type Patch = util.Patch
   val Patch = util.Patch
 
-  implicit class XtensionRewriteCtx(val ctx: SemanticRewriteCtx)
+  implicit class XtensionRewriteCtx(val ctx: RewriteCtx)
       extends rewrite.SemanticPatchOps
   implicit class XtensionRewriteCtx[T](val ctx: RewriteCtx[T])
       extends rewrite.SyntacticPatchOps[T]
