@@ -16,6 +16,7 @@ import scalafix.patch.TreePatch.RenamePatch
 import scalafix.patch.TreePatch.Replace
 
 import difflib.DiffUtils
+import org.scalameta.logger
 
 sealed abstract class Patch {
   // NOTE: potential bottle-neck, this might be very slow for large
@@ -29,7 +30,6 @@ sealed abstract class Patch {
           else InCtx(ap + bp, ac, am.orElse(bm))
         case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
         case (InCtx(p, ctx, m), _) => InCtx(p + other, ctx, m)
-        case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
         case _ => Concat(this, other)
       }
     }
@@ -133,10 +133,13 @@ object Patch {
       .mkString
 
   }
-  private def semanticApply(patches: Seq[Patch])(implicit ctx: RewriteCtx,
-                                                 mirror: Mirror): String = {
+  private def semanticApply(rewritePatches: Seq[Patch])(
+      implicit ctx: RewriteCtx,
+      mirror: Mirror): String = {
     val ast = ctx.tree
     val input = ctx.tokens
+    logger.elem(ctx.config.patches)
+    val patches = ctx.config.patches.all ++ rewritePatches
     val tokenPatches = patches.collect { case e: TokenPatch => e }
     val renamePatches = Renamer.toTokenPatches(patches.collect {
       case e: RenamePatch => e

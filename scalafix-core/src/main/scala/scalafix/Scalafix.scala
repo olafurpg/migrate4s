@@ -15,13 +15,7 @@ object Scalafix {
 
   def fix[T](ctx: RewriteCtx): Fixed =
     try {
-      val combinedRewrite =
-        ctx.config.rewrites.foldLeft(Rewrite.empty)(_ andThen _)
-      Fixed.Success(
-        combinedRewrite
-          .wrappedRewrite(ctx)
-          .applied
-      )
+      Fixed.Success(ctx.config.rewrite.wrappedRewrite(ctx).applied)
     } catch {
       case NonFatal(e) =>
         Fixed.Failed(Failure.Unexpected(e))

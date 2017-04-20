@@ -223,14 +223,16 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
     else m.Input.String(new String(source.content))
   }
 
-  def fix(unit: g.CompilationUnit, config: ScalafixConfig)(
+  def fix(unit: g.CompilationUnit,
+          config: ScalafixConfig,
+          getRewrite: ScalafixMirror => Rewrite)(
       implicit mirror: Mirror): Fixed = {
     val api = getScalafixMirror(unit, config)
     val input = getMetaInput(unit.source)
     mirror.sources
       .find(_.pos.input.matches(input))
       .map { source =>
-        val ctx = RewriteCtx(source, config)
+        val ctx = RewriteCtx(source, config.copy(rewrite = getRewrite(api)))
         Scalafix.fix(ctx)
       }
       .getOrElse(Fixed.Failed(Failure.Unexpected(new IllegalStateException(

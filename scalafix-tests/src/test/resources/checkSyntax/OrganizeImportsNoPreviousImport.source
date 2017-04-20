@@ -4,7 +4,7 @@ imports.expandRelative = false
 patches.addGlobalImports = [
   "scala.collection.immutable.Seq"
 ]
-<<< no previous imports
+<<< ONLY no previous imports
 object a
 >>>
 import scala.collection.immutable.Seq

@@ -29,6 +29,8 @@ abstract class SemanticRewrite(mirror: Mirror)(implicit name: Name)
 object Rewrite {
   val syntaxRewriteConfDecoder = config.rewriteConfDecoder(None)
   def empty: Rewrite = syntactic(_ => Patch.empty)
+  def emptySemantic(mirror: Mirror)(implicit name: Name): Rewrite =
+    semantic(x => y => Patch.empty)(name)(mirror)
   def syntactic(f: RewriteCtx => Patch)(implicit name: Name): Rewrite =
     new Rewrite() {
       override def rewrite(ctx: RewriteCtx): Patch = f(ctx)

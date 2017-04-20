@@ -94,16 +94,20 @@ trait ScalafixMetaconfigReaders {
       mirror: Option[ScalafixMirror]): ConfDecoder[ScalafixConfig] = {
     mirror match {
       case None => scalafixConfigEmptyRewriteReader.map(_._2)
-      case Some(x) =>
+      case Some(mirror) =>
         scalafixConfigEmptyRewriteReader.flatMap {
           case (rewriteConf, scalafixConfig) =>
             implicit val singleRewriteDecoder =
-              rewriteConfDecoder(Some(x))
+              rewriteConfDecoder(Some(mirror))
             implicit val rewritesReader =
               implicitly[ConfDecoder[List[Rewrite]]]
             rewritesReader
               .read(rewriteConf)
-              .map(x => scalafixConfig.copy(rewrites = x))
+              .map { rewrites =>
+                val combined =
+                  rewrites.foldLeft(Rewrite.emptySemantic(mirror))(_ andThen _)
+                scalafixConfig.copy(rewrite = combined)
+              }
         }
     }
   }

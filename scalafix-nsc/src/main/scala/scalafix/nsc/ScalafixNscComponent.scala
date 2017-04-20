@@ -17,7 +17,7 @@ import scalafix.util.FileOps
 class ScalafixNscComponent(plugin: Plugin,
                            val global: Global,
                            getConfig: () => ScalafixConfig,
-                           getRewrites: ScalafixMirror => List[Rewrite])
+                           getRewrite: ScalafixMirror => Rewrite)
     extends PluginComponent
     with ReflectToolkit
     with NscScalafixMirror {
@@ -43,7 +43,7 @@ class ScalafixNscComponent(plugin: Plugin,
         unit.source.file.file.isFile &&
         !unit.isJava) {
       val config = getConfig()
-      val fixed = fix(unit, config).get
+      val fixed = fix(unit, config, getRewrite).get
       if (fixed.nonEmpty && fixed != new String(unit.source.content)) {
         FileOps.writeFile(unit.source.file.file, fixed)
       }

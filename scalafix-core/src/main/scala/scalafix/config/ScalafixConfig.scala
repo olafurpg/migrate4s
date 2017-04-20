@@ -14,7 +14,7 @@ import metaconfig.typesafeconfig.TypesafeConfig2Class
 
 @DeriveConfDecoder
 case class ScalafixConfig(
-    rewrites: List[Rewrite] = Nil,
+    rewrite: Rewrite = Rewrite.empty,
     parser: Parse[_ <: Tree] = Parse.parseSource,
     @Recurse imports: ImportsConfig = ImportsConfig(),
     @Recurse patches: PatchConfig = PatchConfig(),
@@ -25,6 +25,8 @@ case class ScalafixConfig(
 ) {
   implicit val RewriteConfDecoder: ConfDecoder[Rewrite] =
     Rewrite.syntaxRewriteConfDecoder
+  def withRewrite(newRewrite: Rewrite): ScalafixConfig =
+    copy(rewrite = rewrite andThen rewrite)
 }
 
 object ScalafixConfig {
