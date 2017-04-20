@@ -27,7 +27,7 @@ import java.net.URLClassLoader
 import org.scalameta.logger
 import org.scalatest.FunSuite
 
-abstract class RewriteSuite(classpath: String)
+abstract class SemanticRewriteSuite(classpath: String)
     extends FunSuite
     with DiffAssertions { self =>
   private val testGlobal: Global = {
@@ -223,7 +223,7 @@ abstract class RewriteSuite(classpath: String)
     }
   }
 }
-object RewriteSuite {
+object SemanticRewriteSuite {
   def thisClasspath: String = this.getClass.getClassLoader match {
     case u: URLClassLoader =>
       u.getURLs.map(_.getPath).mkString(java.io.File.pathSeparator)

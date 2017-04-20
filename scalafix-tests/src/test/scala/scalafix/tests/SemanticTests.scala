@@ -3,7 +3,7 @@ package scalafix.tests
 import scalafix.testkit._
 
 class SemanticTests
-    extends RewriteSuite(
+    extends SemanticRewriteSuite(
       // Classpath to compile .source files. In the scalafix repo, the classpath
       // is passed in from build.sbt as a system property.
       sys.props("sbt.paths.scalafixNsc.test.classes")) {

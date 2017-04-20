@@ -29,9 +29,8 @@ object ScalaJsRewrites {
     }
   }
 
-  val DemandJSGlobal: Rewrite[Mirror] = Rewrite[Mirror] { ctx =>
+  val DemandJSGlobal = Rewrite.semantic { implicit mirror => ctx =>
     import ctx._
-    implicit val mirror = ctx.mirror
     object JsNative {
       def unapply(mods: Seq[Mod]): Option[(Mod, Option[Name])] =
         mods.collectFirst {

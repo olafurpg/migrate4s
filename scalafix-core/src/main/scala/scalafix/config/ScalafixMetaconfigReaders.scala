@@ -1,4 +1,5 @@
-package scalafix.config
+package scalafix
+package config
 
 import scala.meta.Ref
 import scala.meta._
@@ -8,7 +9,6 @@ import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.matching.Regex
 import scalafix.rewrite.ScalafixMirror
-import scalafix.rewrite.ScalafixRewrite
 import scalafix.rewrite.ScalafixRewrites
 import scalafix.util.ClassloadObject
 import scalafix.util.FileOps
@@ -80,14 +80,15 @@ trait ScalafixMetaconfigReaders {
     }
   }
 
-  implicit lazy val rewriteReader: ConfDecoder[ScalafixRewrite] =
-    ConfDecoder.instance[ScalafixRewrite] {
+  implicit lazy val rewriteReader: ConfDecoder[Rewrite] =
+    ConfDecoder.instance[Rewrite] {
       case ClassloadRewrite(fqn) =>
-        ClassloadObject[ScalafixRewrite](fqn)
+        ClassloadObject[Rewrite](fqn)
       case FromSourceRewrite(code) =>
-        ScalafixToolbox.getRewrite[ScalafixMirror](code)
-      case els =>
-        ReaderUtil.fromMap(ScalafixRewrites.name2rewrite).read(els)
+        ScalafixToolbox.getRewrite(code)
+//      case els =>
+//        ConfError.msg("")
+//        ReaderUtil.fromMap(ScalafixRewrites.name2rewrite).read(els)
     }
 
   object ConfStrLst {

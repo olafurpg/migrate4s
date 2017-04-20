@@ -1,4 +1,5 @@
-package scalafix.cli
+package scalafix
+package cli
 
 import scala.util.Failure
 import scala.util.Success
@@ -37,8 +38,8 @@ object ArgParserImplicits {
       }
     }
 
-  implicit val rewriteRead: ArgParser[ScalafixRewrite] =
-    ArgParser.instance[ScalafixRewrite] { str =>
+  implicit val rewriteRead: ArgParser[Rewrite] =
+    ArgParser.instance[Rewrite] { str =>
       ScalafixMetaconfigReaders.rewriteReader
         .read(Conf.Str(str))
         .toEither

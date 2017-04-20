@@ -15,11 +15,11 @@ object ScalafixToolbox {
   private val rewriteCache: mutable.WeakHashMap[String, Any] =
     mutable.WeakHashMap.empty
 
-  def getRewrite[T](code: String): Configured[Rewrite[T]] =
+  def getRewrite(code: String): Configured[Rewrite] =
     try {
       Configured.Ok(
         compile(RewriteInstrumentation.instrument(code))
-          .asInstanceOf[Rewrite[T]])
+          .asInstanceOf[Rewrite])
     } catch {
       case e: ToolBoxError => ConfError.msg(e.getMessage).notOk
     }

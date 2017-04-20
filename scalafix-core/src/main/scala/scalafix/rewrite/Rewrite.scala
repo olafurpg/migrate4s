@@ -21,14 +21,20 @@ abstract class Rewrite(implicit sourceName: sourcecode.Name) {
     Rewrite(ctx => this.rewrite(ctx) + other.rewrite(ctx))
 }
 
+abstract class SemanticRewrite(mirror: Mirror) extends Rewrite
+
 object Rewrite {
-  def empty[T]: Rewrite[T] = syntactic(_ => Patch.empty)
+  def empty: Rewrite = syntactic(_ => Patch.empty)
   def syntactic(f: RewriteCtx => Patch)(
       implicit name: sourcecode.Name): Rewrite = apply(f)
-  def semantic(f: RewriteCtx => Patch)(
-      implicit name: sourcecode.Name): Rewrite = apply(f)
-  def apply[T](f: RewriteCtx => Patch)(
-      implicit name: sourcecode.Name): Rewrite[T] = new Rewrite[T]() {
-    override def rewrite(ctx: RewriteCtx): Patch = f(ctx)
+  def semantic(f: Mirror => RewriteCtx => Patch)(
+      implicit name: sourcecode.Name): Mirror => SemanticRewrite = { mirror =>
+    new SemanticRewrite(mirror) {
+      override def rewrite(ctx: RewriteCtx): Patch = f(mirror)(ctx)
+    }
   }
+  def apply(f: RewriteCtx => Patch)(implicit name: sourcecode.Name): Rewrite =
+    new Rewrite() {
+      override def rewrite(ctx: RewriteCtx): Patch = f(ctx)
+    }
 }

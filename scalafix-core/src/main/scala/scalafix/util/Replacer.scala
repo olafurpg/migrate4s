@@ -4,7 +4,6 @@ import scalafix.syntax._
 import scala.meta.{Symbol => _, _}
 import scala.meta.semantic.v1._
 import scala.collection.immutable.Seq
-import scalafix.rewrite.ScalafixCtx
 import scalafix.util.TreePatch._
 import scalafix.util.TokenPatch._
 import scala.meta.internal.ast.Helpers._

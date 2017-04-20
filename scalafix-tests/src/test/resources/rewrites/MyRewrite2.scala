@@ -8,7 +8,7 @@ object Rewrites {
     }.asPatch
   }
 
-  val myRewrite2 = Rewrite[Mirror] { ctx =>
+  val myRewrite2 = Rewrite { ctx =>
     ctx.addGlobalImport(importer"scala.collection.immutable.Seq")
   }
 }
