@@ -10,8 +10,10 @@ package object scalafix {
   type RewriteCtx = rewrite.RewriteCtx
   val RewriteCtx = rewrite.RewriteCtx
 
+  type SemanticRewrite = rewrite.SemanticRewrite
   type Rewrite = rewrite.Rewrite
   val Rewrite = rewrite.Rewrite
+
 
   type Patch = patch.Patch
   val Patch = patch.Patch

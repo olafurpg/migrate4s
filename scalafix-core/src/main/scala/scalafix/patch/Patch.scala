@@ -133,13 +133,9 @@ object Patch {
       .mkString
 
   }
-  private def semanticApply(rewritePatches: Seq[Patch])(
-      implicit ctx: RewriteCtx,
-      mirror: Mirror): String = {
+  private def semanticApply(patches: Seq[Patch])(implicit ctx: RewriteCtx,
+                                                 mirror: Mirror): String = {
     val ast = ctx.tree
-    val input = ctx.tokens
-    logger.elem(ctx.config.patches)
-    val patches = ctx.config.patches.all ++ rewritePatches
     val tokenPatches = patches.collect { case e: TokenPatch => e }
     val renamePatches = Renamer.toTokenPatches(patches.collect {
       case e: RenamePatch => e

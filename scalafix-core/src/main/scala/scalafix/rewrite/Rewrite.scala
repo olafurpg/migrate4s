@@ -36,12 +36,12 @@ object Rewrite {
       override def rewrite(ctx: RewriteCtx): Patch = f(ctx)
     }
   def semantic(f: Mirror => RewriteCtx => Patch)(
-      implicit name: Name): Mirror => SemanticRewrite = { mirror =>
+      implicit name: Name): Mirror => Rewrite = { mirror =>
     new SemanticRewrite(mirror) {
       override def rewrite(ctx: RewriteCtx): Patch = f(mirror)(ctx)
     }
   }
-  def merge(a: Rewrite, b: Rewrite) =
+  def merge(a: Rewrite, b: Rewrite): Rewrite =
     new Rewrite()(Name(s"${a.name}+${b.name}")) {
       override def rewrite(ctx: RewriteCtx) =
         a.rewrite(ctx) + b.rewrite(ctx)

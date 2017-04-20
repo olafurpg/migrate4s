@@ -1,13 +1,12 @@
-package scalafix.test
+package scalafix
+package test
 
 import scala.collection.immutable.Seq
 import scala.meta._
-import scalafix.rewrite.Rewrite
-import scalafix.rewrite.RewriteCtx
 import scalafix.patch.Patch
-import scalafix.patch.TreePatch.AddGlobalImport
+import scalafix.rewrite.RewriteCtx
 
-case object FqnRewrite extends Rewrite {
+case class FqnRewrite(implicit mirror: Mirror) extends SemanticRewrite(mirror) {
   override def rewrite(ctx: RewriteCtx): Patch =
-    AddGlobalImport(importer"scala.meta._")
+    ctx.addGlobalImport(importer"scala.meta._")
 }

@@ -113,12 +113,7 @@ abstract class SemanticRewriteSuite(classpath: String)
   def fix(code: String,
           config: Option[ScalafixMirror] => ScalafixConfig): String = {
     val (unit, database) = computeDatabaseFromSnippet(code)
-    val fixed = {
-      val syntaxConfig = config(None)
-      val scalafixMirror = fixer.getScalafixMirror(unit, syntaxConfig)
-      val semanticConfig = config(Some(scalafixMirror))
-      fixer.fix(unit, semanticConfig).get
-    }
+    val fixed = fixer.fix(unit, config(None), m => config(Some(m)).rewrite).get
     fixed
   }
 
