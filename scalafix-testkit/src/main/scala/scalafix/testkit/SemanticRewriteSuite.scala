@@ -19,6 +19,7 @@ import scalafix.Fixed
 import scalafix.syntax._
 import scalafix.config.ScalafixConfig
 import scalafix.nsc.ScalafixNscPlugin
+import scalafix.rewrite.ScalafixMirror
 
 import java.io.File
 import java.io.PrintWriter
@@ -109,9 +110,15 @@ abstract class SemanticRewriteSuite(classpath: String)
     unit -> unit.asInstanceOf[mirror.g.CompilationUnit].toDatabase
   }
 
-  def fix(code: String, config: ScalafixConfig): String = {
+  def fix(code: String,
+          config: Option[ScalafixMirror] => ScalafixConfig): String = {
     val (unit, database) = computeDatabaseFromSnippet(code)
-    val Fixed.Success(fixed) = fixer.fix(unit, config)
+    val Fixed.Success(fixed) = {
+      val syntaxConfig = config(None)
+      val scalafixMirror = fixer.getScalafixMirror(unit, syntaxConfig)
+      val semanticConfig = config(Some(scalafixMirror))
+      fixer.fix(unit, semanticConfig)
+    }
     fixed
   }
 

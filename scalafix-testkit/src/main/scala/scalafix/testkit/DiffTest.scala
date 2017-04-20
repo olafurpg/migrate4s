@@ -3,6 +3,7 @@ package scalafix.testkit
 import scala.collection.immutable.Seq
 import scala.meta.io.AbsolutePath
 import scalafix.config.ScalafixConfig
+import scalafix.rewrite.ScalafixMirror
 import scalafix.util.FileOps
 
 import java.io.File
@@ -17,7 +18,7 @@ case class DiffTest(spec: String,
                     expected: String,
                     skip: Boolean,
                     only: Boolean,
-                    config: ScalafixConfig) {
+                    config: Option[ScalafixMirror] => ScalafixConfig) {
   def noWrap: Boolean = name.startsWith("NOWRAP ")
   def checkSyntax: Boolean = spec.startsWith("checkSyntax")
   private def packageName = name.replaceAll("[^a-zA-Z0-9]", "")
@@ -64,9 +65,9 @@ object DiffTest {
     val moduleSkip = isSkip(content)
     val split = content.split("\n<<< ")
 
-    val style: ScalafixConfig = {
+    val style = { mirror: Option[ScalafixMirror] =>
       val firstLine = split.head
-      ScalafixConfig.fromString(firstLine) match {
+      ScalafixConfig.fromString(firstLine, mirror) match {
         case Configured.Ok(x) => x
         case Configured.NotOk(x) =>
           throw new IllegalArgumentException(

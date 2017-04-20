@@ -53,8 +53,6 @@ class ScalafixNscComponent(plugin: Plugin,
     override def name: String = "scalafix"
     override def run(): Unit = {
       implicit val mirror = new Mirror(global) {
-        // super.database is a def, which means the entire database is recalculated
-        // on every call to .symbol.
         override lazy val database = super.database
       }
       global.currentRun.units.foreach { unit =>

@@ -40,7 +40,7 @@ object ArgParserImplicits {
 
   implicit val rewriteRead: ArgParser[Rewrite] =
     ArgParser.instance[Rewrite] { str =>
-      ScalafixMetaconfigReaders.rewriteReader
+      ScalafixMetaconfigReaders.rewriteConfDecoder
         .read(Conf.Str(str))
         .toEither
         .left

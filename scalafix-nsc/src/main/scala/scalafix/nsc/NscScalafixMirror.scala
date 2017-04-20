@@ -186,7 +186,7 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
     } yield s
   }
 
-  private def getSemanticApi(unit: g.CompilationUnit, config: ScalafixConfig)(
+  def getScalafixMirror(unit: g.CompilationUnit, config: ScalafixConfig)(
       implicit mirror: Mirror): ScalafixMirror = {
     assertSettingsAreValid(config)
     val offsets = offsetToType(unit.body, config.dialect)
@@ -225,12 +225,12 @@ trait NscScalafixMirror extends ReflectToolkit with HijackImportInfos {
 
   def fix(unit: g.CompilationUnit, config: ScalafixConfig)(
       implicit mirror: Mirror): Fixed = {
-    val api = getSemanticApi(unit, config)
+    val api = getScalafixMirror(unit, config)
     val input = getMetaInput(unit.source)
     mirror.sources
       .find(_.pos.input.matches(input))
       .map { source =>
-        val ctx = RewriteCtx.apply(source, config)
+        val ctx = RewriteCtx(source, config)
         Scalafix.fix(ctx)
       }
       .getOrElse(Fixed.Failed(Failure.Unexpected(new IllegalStateException(

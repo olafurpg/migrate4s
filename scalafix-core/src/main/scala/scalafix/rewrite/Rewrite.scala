@@ -7,12 +7,9 @@ import scalafix.util.Patch
 import scala.collection.immutable.Seq
 import scalafix.config.ReaderUtil
 
-/** A rewrite is a named RewriteCtx => Seq[Patch] function.
-  * @tparam A Required api in [[ScalafixMirror]]. Example values:
-  *           [[ScalafixMirror]] for scalafix-nsc,
-  *           [[scala.meta.Mirror]] when using scalahost or
-  *           [[Any]] for syntactic rewrites.
-  */
+import metaconfig.ConfDecoder
+
+/** A rewrite is a named RewriteCtx => Patch function. */
 abstract class Rewrite(implicit sourceName: sourcecode.Name) {
   def name: String = sourceName.value
   override def toString: String = name
@@ -24,6 +21,7 @@ abstract class Rewrite(implicit sourceName: sourcecode.Name) {
 abstract class SemanticRewrite(mirror: Mirror) extends Rewrite
 
 object Rewrite {
+  val syntaxRewriteConfDecoder = config.rewriteConfDecoder(None)
   def empty: Rewrite = syntactic(_ => Patch.empty)
   def syntactic(f: RewriteCtx => Patch)(
       implicit name: sourcecode.Name): Rewrite = apply(f)

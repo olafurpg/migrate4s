@@ -20,5 +20,7 @@ object ScalafixRewrites {
     default(null).map(_.name) // TODO(olafur) ugly hack
   def name2rewrite(mirror: ScalafixMirror): Map[String, Rewrite] =
     all(mirror).map(x => x.name -> x).toMap
+  lazy val syntaxName2rewrite: Map[String, Rewrite] =
+    syntax.map(x => x.name -> x).toMap
 
 }

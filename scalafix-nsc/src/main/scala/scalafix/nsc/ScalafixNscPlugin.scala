@@ -47,7 +47,7 @@ class ScalafixNscPlugin(val global: Global) extends Plugin {
     options match {
       case Nil => true
       case file :: Nil =>
-        ScalafixConfig.fromFile(new File(file)) match {
+        ScalafixConfig.fromFile(new File(file), None) match {
           case Configured.NotOk(msg) =>
             error(msg.toString())
             false
