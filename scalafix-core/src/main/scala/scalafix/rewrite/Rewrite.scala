@@ -29,6 +29,6 @@ object Rewrite {
       implicit name: sourcecode.Name): Rewrite = apply(f)
   def apply[T](f: RewriteCtx => Patch)(
       implicit name: sourcecode.Name): Rewrite[T] = new Rewrite[T]() {
-    override def rewrite[B <: T](ctx: RewriteCtx): Patch = f(ctx)
+    override def rewrite(ctx: RewriteCtx): Patch = f(ctx)
   }
 }

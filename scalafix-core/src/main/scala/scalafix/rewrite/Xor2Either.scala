@@ -9,8 +9,8 @@ import scalafix.util.TreeExtractors._
 import scalafix.util.Patch
 import scalafix.util.TreePatch._
 
-case object Xor2Either extends Rewrite {
-  override def rewrite[T <: ScalafixMirror](ctx: RewriteCtx): Patch = {
+case class Xor2Either(implicit mirror: Mirror) extends Rewrite {
+  override def rewrite(ctx: RewriteCtx): Patch = {
     import ctx._
     val importImplicits = tree.collectFirst {
       case t: Term.Name

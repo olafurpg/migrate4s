@@ -4,7 +4,7 @@ package foo.bar {
   import scala.meta._
 
   case object MyRewrite extends Rewrite {
-    def rewrite[T](ctx: RewriteCtx): Patch = {
+    def rewrite(ctx: RewriteCtx): Patch = {
       ctx.tree.collect {
         case n: scala.meta.Name => ctx.rename(n, Term.Name(n.syntax + "1"))
       }.asPatch
@@ -12,7 +12,7 @@ package foo.bar {
   }
 
   case object MyRewrite2 extends Rewrite {
-    def rewrite[T <: Mirror](ctx: RewriteCtx): Patch =
+    def rewrite(ctx: RewriteCtx): Patch =
       ctx.addGlobalImport(importer"scala.collection.immutable.Seq")
   }
 }

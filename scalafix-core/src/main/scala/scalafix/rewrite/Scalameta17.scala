@@ -11,9 +11,9 @@ import scalafix.util.Patch
 import scalafix.util.TokenPatch._
 import scalafix.util.TreePatch.RenameSymbol
 
-case object Scalameta17 extends Rewrite {
+case class Scalameta17(implicit mirror: Mirror) extends Rewrite {
 
-  override def rewrite[T <: Mirror](ctx: RewriteCtx): Patch = {
+  override def rewrite(ctx: RewriteCtx): Patch = {
     import ctx._
     val litPatches = tree.collect {
       case t @ Term.Name("Lit") if t.symbol.syntax.startsWith("_root_.scala.meta.Lit.apply(") =>
