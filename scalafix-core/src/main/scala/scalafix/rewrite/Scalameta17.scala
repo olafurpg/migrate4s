@@ -11,7 +11,7 @@ import scalafix.util.Patch
 import scalafix.util.TokenPatch._
 import scalafix.util.TreePatch.RenameSymbol
 
-case object Scalameta17 extends Rewrite[Mirror] {
+case object Scalameta17 extends Rewrite {
 
   override def rewrite[T <: Mirror](ctx: RewriteCtx[T]): Patch = {
     import ctx._

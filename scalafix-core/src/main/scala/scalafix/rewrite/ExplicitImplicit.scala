@@ -6,7 +6,7 @@ import scalafix.util.Whitespace
 import scala.collection.immutable.Seq
 import scalafix.util.TokenPatch
 
-case object ExplicitImplicit extends Rewrite[ScalafixMirror] {
+case object ExplicitImplicit extends Rewrite {
   // Don't explicitly annotate vals when the right-hand body is a single call
   // to `implicitly`. Prevents ambiguous implicit. Not annotating in such cases,
   // this a common trick employed implicit-heavy code to workaround SI-2712.

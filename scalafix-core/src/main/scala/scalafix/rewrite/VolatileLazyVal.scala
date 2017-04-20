@@ -5,7 +5,7 @@ import scalafix.util.Patch
 import scala.collection.immutable.Seq
 import scalafix.util.TokenPatch
 
-case object VolatileLazyVal extends Rewrite[Any] {
+case object VolatileLazyVal extends Rewrite {
   private object NonVolatileLazyVal {
     def unapply(defn: Defn.Val): Option[Token] = {
       defn.mods.collectFirst {
