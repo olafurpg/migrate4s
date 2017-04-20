@@ -14,7 +14,7 @@ import java.io.File
 import metaconfig.Configured
 
 class ScalafixNscPlugin(val global: Global) extends Plugin {
-  var (config, rewrites) = ScalafixConfig
+  var config = ScalafixConfig
     .auto(new File(sys.props("user.dir")))
     .getOrElse(ScalafixConfig.default -> Nil)
   private val scalafixComponent =
