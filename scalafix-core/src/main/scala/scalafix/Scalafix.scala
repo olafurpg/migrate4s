@@ -7,7 +7,7 @@ import scalafix.config.ScalafixConfig
 object Scalafix {
   def syntaxFix(input: Input,
                 config: ScalafixConfig,
-                rewrites: Iterable[SyntaxRewrite]): Fixed =
+                rewrites: Iterable[Rewrite]): Fixed =
     config.dialect(input).parse[Source] match {
       case parsers.Parsed.Success(ast) =>
         fix(RewriteCtx.syntactic(ast, config), rewrites)

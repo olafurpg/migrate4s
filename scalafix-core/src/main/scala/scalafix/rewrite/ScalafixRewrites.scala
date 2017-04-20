@@ -2,7 +2,7 @@ package scalafix
 package rewrite
 
 object ScalafixRewrites {
-  val syntax: List[SyntaxRewrite] = List(
+  val syntax: List[Rewrite] = List(
     ProcedureSyntax,
     VolatileLazyVal
   )

@@ -16,15 +16,12 @@ import scalafix.util.TokenList
   *           [[scala.meta.Mirror]] when using scalahost or open
   *           type parameter for syntactic rewrites (that is, no type bounds).
   */
-class RewriteCtx[+A](implicit val tree: Tree,
-                     val config: ScalafixConfig,
-                     val mirror: A) {
+class RewriteCtx(implicit val tree: Tree,
+                     val config: ScalafixConfig) {
   implicit lazy val tokens: Tokens = tree.tokens(config.dialect)
   lazy val tokenList: TokenList = new TokenList(tokens)
   lazy val comments: AssociatedComments = AssociatedComments(tokens)
   val reporter: ScalafixReporter = config.reporter
-  def map[B](f: A => B): RewriteCtx[B] =
-    new RewriteCtx[B]()(tree, config, f(mirror))
 }
 
 object RewriteCtx {
@@ -37,7 +34,7 @@ object RewriteCtx {
 
   def semantic(tree: Tree,
                mirror: Mirror,
-               config: ScalafixConfig = ScalafixConfig()): SemanticRewriteCtx =
+               config: ScalafixConfig = ScalafixConfig()): RewriteCtx =
     apply(tree, config, mirror)
 
   /** Constructor for a generic rewrite. */
