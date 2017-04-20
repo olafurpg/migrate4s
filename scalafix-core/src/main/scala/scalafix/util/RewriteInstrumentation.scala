@@ -23,9 +23,9 @@ object RewriteInstrumentation {
         val rewriteName: Seq[String] = ast.collect {
           case Defn.Object(_,
                            name,
-                           Template(_, ctor"Rewrite[$_]" :: _, _, _)) =>
+                           Template(_, ctor"Rewrite" :: _, _, _)) =>
             name.value
-          case Defn.Val(_, Pat.Var.Term(name) :: Nil, _, q"Rewrite[$_]($_)")
+          case Defn.Val(_, Pat.Var.Term(name) :: Nil, _, q"Rewrite($_)")
                 `:WithParent:` (_: Template)
                 `:WithParent:` Defn.Object(_, parentName, _) =>
             s"$parentName.$name"
