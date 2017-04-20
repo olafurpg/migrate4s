@@ -16,7 +16,7 @@ case object VolatileLazyVal extends Rewrite {
       }
     }.flatten
   }
-  override def rewrite[T](ctx: RewriteCtx[T]): Patch = {
+  override def rewrite[T](ctx: RewriteCtx): Patch = {
     ctx.tree.collect {
       case NonVolatileLazyVal(tok) =>
         TokenPatch.AddLeft(tok, s"@volatile ")

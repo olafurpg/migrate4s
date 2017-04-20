@@ -105,7 +105,7 @@ object Patch {
                    |2. $b""".stripMargin)
   }
   def apply[T <: Mirror: CanOrganizeImports](patch: Patch)(
-      implicit ctx: RewriteCtx[T]): String = {
+      implicit ctx: RewriteCtx): String = {
     if (ctx.config.debug.printSymbols)
       ctx.reporter.info(ctx.mirror.database.toString())
     val patches = underlying(patch)

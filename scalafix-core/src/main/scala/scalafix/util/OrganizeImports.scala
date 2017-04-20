@@ -26,7 +26,7 @@ trait OrganizeImportsMirror {
   def fullyQualifiedName(ref: Ref): Option[Ref]
 }
 
-private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
+private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
                                                 ev: CanOrganizeImports[T]) {
   lazy val fallbackToken: Token = {
     def loop(tree: Tree): Token = tree match {
@@ -225,7 +225,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx[T],
 
 object OrganizeImports {
   def organizeImports[T: CanOrganizeImports](patches: Seq[ImportPatch])(
-      implicit ctx: RewriteCtx[T]): Seq[TokenPatch] =
+      implicit ctx: RewriteCtx): Seq[TokenPatch] =
     new OrganizeImports().organizeImports(
       patches ++ ctx.config.patches.all.collect {
         case i: ImportPatch => i

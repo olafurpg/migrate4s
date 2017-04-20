@@ -14,10 +14,11 @@ package object scalafix {
   type Patch = util.Patch
   val Patch = util.Patch
 
-  implicit class XtensionRewriteCtx(val ctx: RewriteCtx)
+  implicit class XtensionMirrorRewriteCtx(val ctx: RewriteCtx)(
+      implicit val mirror: Mirror)
       extends rewrite.SemanticPatchOps
-  implicit class XtensionRewriteCtx[T](val ctx: RewriteCtx[T])
-      extends rewrite.SyntacticPatchOps[T]
+  implicit class XtensionRewriteCtx(val ctx: RewriteCtx)
+      extends rewrite.SyntacticPatchOps
   implicit class XtensionSeqPatch(patches: Seq[Patch]) {
     def asPatch: Patch = Patch.fromSeq(patches)
   }

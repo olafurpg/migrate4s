@@ -15,7 +15,7 @@ object Scalafix {
         Fixed.Failed(Failure.ParseError(pos, msg, details))
     }
 
-  def fix[T](ctx: RewriteCtx[T], rewrites: Iterable[Rewrite[T]]): Fixed =
+  def fix[T](ctx: RewriteCtx, rewrites: Iterable[Rewrite[T]]): Fixed =
     try {
       val combinedRewrite = rewrites.foldLeft(Rewrite.empty[T])(_ andThen _)
       Fixed.Success(
