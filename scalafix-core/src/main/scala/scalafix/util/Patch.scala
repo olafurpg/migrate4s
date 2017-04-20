@@ -8,7 +8,6 @@ import scala.meta.contrib._
 import scala.meta.internal.ast.Helpers._
 import scala.meta.tokens.Token
 import scala.meta.tokens.Token
-import scalafix.Fixed
 import scalafix.config._
 import scalafix.syntax._
 import scalafix.util.TokenPatch.Add
@@ -21,7 +20,18 @@ import difflib.DiffUtils
 sealed abstract class Patch {
   // NOTE: potential bottle-neck, this might be very slow for large
   // patches. We might want to group related patches and enforce some ordering.
-  def +(other: Patch): Patch = Concat(this, other)
+  def +(other: Patch): Patch =
+    if (this eq other) this
+    else
+      (this, other) match {
+        case (a @ InCtx(_, _, _), b @ InCtx(_, _, _)) =>
+          if (a.ctx eq b.ctx) InCtx(a.patch + b.patch, a.ctx, a.mirror)
+          else ???
+        case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
+        case (InCtx(p, ctx, m), _) => InCtx(p + other, ctx, m)
+        case (_, InCtx(p, ctx, m)) => InCtx(p + this, ctx, m)
+        case _ => Concat(this, other)
+      }
   def ++(other: Seq[Patch]): Patch = other.foldLeft(this)(_ + _)
 
   def appliedDiff: String = {
@@ -31,15 +41,18 @@ sealed abstract class Patch {
 //    Patch.unifiedDiff(original, obtained)
   }
 
-  def applied: String = ???
+  def applied: String = Patch(this)
 //    Patch.apply[T](this)
 }
 
 private[scalafix] case class Concat(a: Patch, b: Patch) extends Patch
 private[scalafix] case object EmptyPatch extends Patch
+private[scalafix] case class InCtx(patch: Patch,
+                                   ctx: RewriteCtx,
+                                   mirror: Option[Mirror])
+    extends Patch
 abstract class TreePatch extends Patch
-abstract class TokenPatch(val tok: Token, val newTok: String)
-    extends TreePatch {
+abstract class TokenPatch(val tok: Token, val newTok: String) extends Patch {
   override def toString: String =
     s"TokenPatch(${tok.syntax.revealWhiteSpace}, ${tok.structure}, $newTok)"
 }
@@ -104,10 +117,25 @@ object Patch {
                    |1. $a
                    |2. $b""".stripMargin)
   }
-  def apply(patch: Patch)(implicit ctx: RewriteCtx, mirror: Mirror): String = {
-//    if (ctx.config.debug.printSymbols)
-//      ctx.reporter.info(ctx.mirror.database.toString())
-    val patches = underlying(patch)
+  def apply(patch: Patch): String = patch match {
+    case InCtx(p, ctx, Some(mirror)) =>
+      semanticApply(underlying(p))(ctx, mirror)
+    case InCtx(p, ctx, None) =>
+      syntaxApply(ctx, underlying(p).collect { case tp: TokenPatch => tp })
+    case _ => ??? // can't support multiple ctx in same patch
+  }
+
+  private def syntaxApply(ctx: RewriteCtx, patches: Seq[TokenPatch]): String = {
+    val patchMap: Map[(Int, Int), String] = patches
+      .groupBy(_.tok.posTuple)
+      .mapValues(_.reduce(merge).newTok)
+    ctx.tokens.toIterator
+      .map(x => patchMap.getOrElse(x.posTuple, x.syntax))
+      .mkString
+
+  }
+  private def semanticApply(patches: Seq[Patch])(implicit ctx: RewriteCtx,
+                                                 mirror: Mirror): String = {
     val ast = ctx.tree
     val input = ctx.tokens
     val tokenPatches = patches.collect { case e: TokenPatch => e }
@@ -124,18 +152,20 @@ object Patch {
     val replaceTokenPatches = replacePatches.collect {
       case t: TokenPatch => t
     }
-    val patchMap: Map[(Int, Int), String] =
-      (importPatches ++ tokenPatches ++ replaceTokenPatches ++ renamePatches)
-        .groupBy(_.tok.posTuple)
-        .mapValues(_.reduce(merge).newTok)
-    input.toIterator
-      .map(x => patchMap.getOrElse(x.posTuple, x.syntax))
-      .mkString
+    syntaxApply(
+      ctx,
+      importPatches ++
+        tokenPatches ++
+        replaceTokenPatches ++
+        renamePatches
+    )
   }
 
   private def underlying(patch: Patch): Seq[Patch] = {
     val builder = Seq.newBuilder[Patch]
     def loop(patch: Patch): Unit = patch match {
+      case InCtx(p, _, _) =>
+        loop(p)
       case Concat(a, b) =>
         loop(a)
         loop(b)

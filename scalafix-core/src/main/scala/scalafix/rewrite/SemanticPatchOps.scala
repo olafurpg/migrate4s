@@ -10,5 +10,6 @@ trait SyntacticPatchOps {
 
 trait SemanticPatchOps extends SyntacticPatchOps {
   implicit def mirror: Mirror
+  implicit def ctx: RewriteCtx
   def addGlobalImport(importer: Importer): Patch = AddGlobalImport(importer)
 }

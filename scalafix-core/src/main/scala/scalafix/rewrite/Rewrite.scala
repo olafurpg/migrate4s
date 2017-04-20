@@ -6,6 +6,7 @@ import scala.meta._
 import scalafix.util.Patch
 import scala.collection.immutable.Seq
 import scalafix.config.ReaderUtil
+import scalafix.util.InCtx
 
 import metaconfig.ConfDecoder
 
