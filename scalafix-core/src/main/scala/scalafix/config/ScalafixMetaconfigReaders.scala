@@ -42,8 +42,7 @@ trait ScalafixMetaconfigReaders {
   object ClassloadRewrite {
     def unapply(arg: Conf.Str): Option[String] = arg match {
       case UriRewrite("scala", uri) =>
-        val suffix = if (arg.value.endsWith("$")) "" else "$"
-        Option(uri.getSchemeSpecificPart + suffix)
+        Option(uri.getSchemeSpecificPart)
       case _ => None
     }
   }
@@ -116,7 +115,7 @@ trait ScalafixMetaconfigReaders {
       mirror: Option[ScalafixMirror]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
       case ClassloadRewrite(fqn) =>
-        ClassloadObject[Rewrite](fqn)
+        ClassloadObject[Rewrite](fqn, mirror.toList)
       case FromSourceRewrite(code) =>
         ScalafixToolbox.getRewrite(code)
       case els =>

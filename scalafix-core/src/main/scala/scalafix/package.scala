@@ -14,7 +14,6 @@ package object scalafix {
   type Rewrite = rewrite.Rewrite
   val Rewrite = rewrite.Rewrite
 
-
   type Patch = patch.Patch
   val Patch = patch.Patch
 
@@ -29,5 +28,8 @@ package object scalafix {
   }
   implicit class XtensionSeqPatch(patches: Seq[Patch]) {
     def asPatch: Patch = Patch.fromSeq(patches)
+  }
+  implicit class XtensionOptionPatch(patch: Option[Patch]) {
+    def asPatch: Patch = patch.getOrElse(Patch.empty)
   }
 }
