@@ -5,7 +5,7 @@ rewrites = [
   "scala:banana.rewrite.LambdaRewrites.semantic"
 ]
 imports.removeUnused = true
-<<< ONLY NOWRAP add import
+<<< NOWRAP add import
 object FqnMe
 >>>
 // comment

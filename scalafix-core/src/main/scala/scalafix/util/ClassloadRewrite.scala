@@ -11,23 +11,12 @@ import java.lang.reflect.InvocationTargetException
 
 import metaconfig.ConfError
 import metaconfig.Configured
-import org.scalameta.logger
 
 class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
   private val t = ev.runtimeClass
   private val functionClasstag =
     implicitly[ClassTag[Function[Mirror, T]]].runtimeClass
 
-  object ClassRewrite {
-    def unapply(fqcn: String): Option[Class[_]] =
-      getClassFor(fqcn).toOption
-  }
-
-  object ObjectRewrite {
-    def unapply(fqcn: String): Option[Class[_]] =
-      if (!fqcn.endsWith("$")) getClassFor(fqcn + "$").toOption
-      else None // covered by ClassRewrite
-  }
   object LambdaRewrite {
     def unapply(fqcn: String): Option[(Class[_], String)] = {
       val idx = fqcn.lastIndexOf(".")
@@ -42,9 +31,9 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
   private def getClassFor(fqcn: String): Try[Class[_]] =
     Try { Class.forName(fqcn, false, classLoader) }
 
-  private def loadRewriteFromField(clazz: Class[_],
-                                   args: Seq[AnyRef],
-                                   fieldName: String): Try[T] = Try {
+  private def classloadLambdaRewrite(clazz: Class[_],
+                                     args: Seq[AnyRef],
+                                     fieldName: String): Try[T] = Try {
     val field = clazz.getDeclaredField(fieldName)
     val obj = {
       val constructor = clazz.getDeclaredConstructor()
@@ -64,15 +53,13 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
       }
   }
 
-  private def classloadRewriteFromConstructor(clazz: Class[_],
-                                              args: Seq[AnyRef]): Try[T] =
+  private def classloadClassRewrite(clazz: Class[_],
+                                    args: Seq[AnyRef]): Try[T] =
     Try {
       val argsLen = args.length
       val constructors =
         Try(clazz.getDeclaredConstructor()).toOption.toList ++
           clazz.getDeclaredConstructors.toList
-
-      logger.elem(clazz, clazz.getDeclaredConstructors.toList)
       val constructor = constructors
         .find(_.getParameterCount == argsLen)
         .orElse(constructors.find(_.getParameterCount == 0))
@@ -102,18 +89,18 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
         throw i.getTargetException
     }
 
-  def createInstanceFor(fqcn: String, args: Seq[AnyRef]): Try[T] = {
+  def classloadRewrite(fqcn: String, args: Seq[AnyRef]): Try[T] = {
     val combined = List.newBuilder[Try[T]]
     combined += getClassFor(fqcn).flatMap(cls =>
-      classloadRewriteFromConstructor(cls, args))
+      classloadClassRewrite(cls, args))
     if (!fqcn.endsWith("$")) {
       combined += getClassFor(fqcn + "$").flatMap(cls =>
-        classloadRewriteFromConstructor(cls, args))
+        classloadClassRewrite(cls, args))
     }
 
     val lambdaRewrite = fqcn match {
       case LambdaRewrite(cls, field) =>
-        combined += loadRewriteFromField(cls, args, field)
+        combined += classloadLambdaRewrite(cls, args, field)
       case _ => Nil
     }
     val result = combined.result()
@@ -131,12 +118,10 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
 object ClassloadRewrite {
   def apply[T: ClassTag](fqn: String, args: Seq[AnyRef]): Configured[T] = {
     val result = new ClassloadRewrite(this.getClass.getClassLoader)
-      .createInstanceFor(fqn, args)
+      .classloadRewrite(fqn, args)
     result match {
       case Success(e) => Configured.Ok(e)
-      case Failure(e) =>
-        throw e
-//        Configured.NotOk(ConfError.msg(e.toString))
+      case Failure(e) => Configured.NotOk(ConfError.msg(e.toString))
     }
   }
 }
