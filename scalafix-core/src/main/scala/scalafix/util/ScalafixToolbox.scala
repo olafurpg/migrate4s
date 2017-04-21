@@ -1,5 +1,6 @@
 package scalafix.util
 
+import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.meta.inputs.Input
@@ -13,6 +14,7 @@ import scala.{meta => m}
 import scalafix.rewrite.Rewrite
 
 import java.io.File
+import scalafix.util.TreeExtractors._
 import java.net.URLClassLoader
 
 import metaconfig.ConfError
@@ -25,17 +27,22 @@ object ScalafixToolbox {
   private val tb = runtimeMirror(getClass.getClassLoader).mkToolBox()
   private val rewriteCache: mutable.WeakHashMap[String, Any] =
     mutable.WeakHashMap.empty
-  val compiler = new Compiler()
+  private val compiler = new Compiler()
+  private lazy val emptyRewrite: Configured[Rewrite] =
+    Configured.Ok(Rewrite.empty)
 
-  def getRewrite(code: Input, mirror: Option[m.Mirror]): Configured[Rewrite] = {
-    compiler
-      .compile(code)
-      .flatMap { classloader =>
-        logger.elem(classloader, classloader.loadClass("foo.bar.MyRewrite"))
-        ClassloadRewrite("foo.bar.MyRewrite", mirror.toList, classloader)
+  def getRewrite(code: Input, mirror: Option[m.Mirror]): Configured[Rewrite] =
+    for {
+      classloader <- compiler.compile(code)
+      names <- RewriteInstrumentation.getRewriteFqn(code)
+      rewrite <- names.foldLeft(emptyRewrite) {
+        case (rewrite, fqn) =>
+          logger.elem(rewrite, names)
+          rewrite
+            .product(ClassloadRewrite(fqn, mirror.toList, classloader))
+            .map { case (a, b) => a.andThen(b) }
       }
-  }
-
+    } yield rewrite
 }
 
 class Compiler() {
