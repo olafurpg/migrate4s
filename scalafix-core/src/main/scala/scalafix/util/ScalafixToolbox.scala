@@ -17,6 +17,7 @@ import java.net.URLClassLoader
 
 import metaconfig.ConfError
 import metaconfig.Configured
+import org.scalameta.logger
 
 object ScalafixToolbox {
   import scala.reflect.runtime.universe._
@@ -41,7 +42,6 @@ class Compiler() {
   settings.deprecation.value = true // enable detailed deprecation warnings
   settings.unchecked.value = true // enable detailed unchecked warnings
   settings.outputDirs.setSingleOutput(target)
-  settings.usejavacp.value = true
   getClass.getClassLoader match {
     case u: URLClassLoader =>
       settings.classpath.value =
@@ -63,6 +63,7 @@ class Compiler() {
       case Input.LabeledString(label, _) => label
       case _ => "(input)"
     }
+    logger.elem(input)
     run.compileSources(
       List(new BatchSourceFile(label, new String(input.chars))))
     val errors = reporter.infos.collect {
