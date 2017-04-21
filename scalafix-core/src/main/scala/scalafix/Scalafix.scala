@@ -5,7 +5,7 @@ import scala.util.control.NonFatal
 import scalafix.config.ScalafixConfig
 
 object Scalafix {
-  def syntaxFix(input: Input, config: ScalafixConfig): Fixed =
+  def fix(input: Input, config: ScalafixConfig): Fixed =
     config.dialect(input).parse[Source] match {
       case parsers.Parsed.Success(ast) =>
         fix(RewriteCtx.syntactic(ast, config))
@@ -13,7 +13,7 @@ object Scalafix {
         Fixed.Failed(Failure.ParseError(pos, msg, details))
     }
 
-  def fix[T](ctx: RewriteCtx): Fixed =
+  def fix(ctx: RewriteCtx): Fixed =
     try {
       Fixed.Success(ctx.config.rewrite.wrappedRewrite(ctx).applied)
     } catch {

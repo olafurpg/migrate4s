@@ -10,21 +10,27 @@ import scala.meta.internal.scalahost.v1.online.Mirror
 import scala.tools.nsc.Global
 import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
+import scala.util.Try
 import scalafix.config.ScalafixConfig
 import scalafix.rewrite.ScalafixMirror
+
 import java.io.File
 
 import metaconfig.Configured
 
 class ScalafixNscPlugin(val global: Global) extends Plugin {
   val workingDir = new File(sys.props("user.dir"))
+  // TODO(olafur) pls no Try(.get.get)
   var config: ScalafixConfig =
-    ScalafixConfig.autoNoRewrites(workingDir).getOrElse(ScalafixConfig.default)
-  var getRewrite: ScalafixMirror => Rewrite = { mirror =>
-    ScalafixConfig
-      .auto(workingDir, Some(mirror))(ScalafixCompilerDecoder(Some(mirror)))
+    Try(ScalafixConfig.autoNoRewrites(workingDir).get.get)
       .getOrElse(ScalafixConfig.default)
-      .rewrite
+  var getRewrite: ScalafixMirror => Rewrite = { mirror =>
+    Try(
+      ScalafixConfig
+        .auto(workingDir, Some(mirror))(ScalafixCompilerDecoder(Some(mirror)))
+        .get
+        .get
+    ).getOrElse(ScalafixConfig.default).rewrite
   }
   private val scalafixComponent =
     new ScalafixNscComponent(this, global, () => config, getRewrite)

@@ -1,14 +1,13 @@
 package scalafix
 package rewrite
 
-import sourcecode.Name
+import scala.collection.immutable.Seq
 import scala.collection.immutable.Seq
 import scala.meta._
-import scala.collection.immutable.Seq
 import scalafix.config.ReaderUtil
-import scalafix.patch.SemanticPatchOps
 
 import metaconfig.ConfDecoder
+import sourcecode.Name
 
 /** A rewrite is a named RewriteCtx => Patch function. */
 abstract class Rewrite(implicit sourceName: Name) { self =>

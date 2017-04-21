@@ -16,12 +16,11 @@ import scalafix.Fixed
 import scalafix.Fixed.Failed
 import scalafix.Scalafix
 import scalafix.cli.termdisplay.TermDisplay
-import scalafix.config.PrintStreamReporter
-import scalafix.config.ScalafixConfig
-import scalafix.config.ScalafixReporter
+import scalafix.config._
 import scalafix.reflect.ScalafixCompilerDecoder
 import scalafix.reflect.ScalafixToolbox
 import scalafix.rewrite.ProcedureSyntax
+import scalafix.rewrite.RewriteCtx
 import scalafix.rewrite.ScalafixMirror
 import scalafix.util.FileOps
 
@@ -36,6 +35,9 @@ import caseapp._
 import caseapp.core.WithHelp
 import com.martiansoftware.nailgun.NGContext
 import metaconfig.Conf
+import metaconfig.ConfError
+import metaconfig.Configured
+import metaconfig.Configured.Ok
 import org.scalameta.logger
 
 case class CommonOptions(
@@ -123,35 +125,40 @@ case class ScalafixOptions(
   }
 
   /** Returns ScalafixConfig from .scalafix.conf, it exists and --config was not passed. */
-  lazy val resolvedConfig: ScalafixConfig = {
-    val x = for {
-      mirror <- resolvedMirror.right
+  lazy val resolvedConfig: Configured[ScalafixConfig] =
+    for {
+      mirror <- resolvedMirror
       decoder = ScalafixCompilerDecoder(mirror)
-      cliArgRewrite <- rewrites.foldLeft(ScalafixToolbox.emptyRewrite) {
-        case (rewrite, next) =>
-          rewrite
-            .product(decoder.read(Conf.Str(next)))
-            .map { case (a, b) => a.andThen(b) }
-      }
+      cliArgRewrite <- rewrites
+        .foldLeft(ScalafixToolbox.emptyRewrite) {
+          case (rewrite, next) =>
+            rewrite
+              .product(decoder.read(Conf.Str(next)))
+              .map { case (a, b) => a.andThen(b) }
+        }
       scalafixConfig <- config match {
         case None =>
-          val config = ScalafixConfig
+          ScalafixConfig
             .auto(common.workingDirectoryFile, mirror)(decoder)
-            .getOrElse(ScalafixConfig.default)
-            .withRewrite(_ => cliArgRewrite)
-          config.copy(reporter = config.reporter match {
-            case r: PrintStreamReporter => r.copy(outStream = common.err)
-            case _ => ScalafixReporter.default.copy(outStream = common.err)
-          })
-        case Some(x) => decoder
+            .getOrElse(Ok(ScalafixConfig.default))
+        case Some(x) =>
+          if (new File(x).isFile)
+            ScalafixConfig.fromFile(new File(x), mirror)(decoder)
+          else ScalafixConfig.fromString(x, mirror)(decoder)
       }
-    } yield scalafixConfig
-  }
+    } yield
+      scalafixConfig.copy(
+        rewrite = cliArgRewrite,
+        reporter = scalafixConfig.reporter match {
+          case r: PrintStreamReporter => r.copy(outStream = common.err)
+          case _ => ScalafixReporter.default.copy(outStream = common.err)
+        }
+      )
 
-  lazy val resolvedSbtConfig: ScalafixConfig =
-    resolvedConfig.copy(dialect = dialects.Sbt0137)
+  lazy val resolvedSbtConfig: Configured[ScalafixConfig] =
+    resolvedConfig.map(_.copy(dialect = dialects.Sbt0137))
 
-  lazy val resolvedMirror: Either[String, Option[ScalafixMirror]] =
+  lazy val resolvedMirror: Configured[Option[ScalafixMirror]] =
     (classpath, sourcepath) match {
       case (Some(cp), Some(sp)) =>
         val tryMirror = for {
@@ -159,11 +166,16 @@ case class ScalafixOptions(
             Try(offline.Mirror.autodetectScalahostNscPluginPath))(Success(_))
           mirror <- Try(ScalafixMirror.fromMirror(Mirror(cp, sp, pluginPath)))
         } yield Option(mirror)
-        tryMirror.asEither.leftAsString
-      case (None, None) => Right(None)
+        tryMirror match {
+          case Success(x) => Ok(x)
+          case scala.util.Failure(e) => ConfError.msg(e.toString).notOk
+        }
+      case (None, None) => Ok(None)
       case _ =>
-        Left(
-          "The semantic API was partially configured: both a classpath and sourcepath are required.")
+        ConfError
+          .msg(
+            "The semantic API was partially configured: both a classpath and sourcepath are required.")
+          .notOk
     }
 
   lazy val outFromPattern: Pattern = Pattern.compile(outFrom)
@@ -226,8 +238,8 @@ object Cli {
     val config =
       if (file.getAbsolutePath.endsWith(".sbt")) options.resolvedSbtConfig
       else options.resolvedConfig
-    val fixed =
-      Scalafix.fix(Input.File(file), config, options.resolvedMirror.get)
+
+    val fixed = Scalafix.fix(Input.File(file), config.get)
     fixed match {
       case Fixed.Success(code) =>
         if (options.inPlace) {
@@ -288,9 +300,11 @@ object Cli {
   def parse(args: Seq[String]): Either[String, WithHelp[ScalafixOptions]] =
     OptionsParser.withHelp.detailedParse(args) match {
       case Right((help, extraFiles, ls)) =>
-        for {
+        val configured = for {
           _ <- help.base.resolvedMirror // validate
+          _ <- help.base.resolvedConfig // validate
         } yield help.map(_.copy(files = help.base.files ++ extraFiles))
+        configured.toEither.left.map(_.toString())
       case Left(x) => Left(x)
     }
 
