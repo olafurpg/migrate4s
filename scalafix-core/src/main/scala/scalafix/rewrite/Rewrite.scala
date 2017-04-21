@@ -12,6 +12,7 @@ import metaconfig.ConfDecoder
 
 /** A rewrite is a named RewriteCtx => Patch function. */
 abstract class Rewrite(implicit sourceName: Name) { self =>
+
   def name: String = sourceName.value
   override def toString: String = name
   def rewrite(ctx: RewriteCtx): Patch

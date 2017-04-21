@@ -18,10 +18,12 @@ case object FqnRewrite2 extends Rewrite {
 }
 
 object LambdaRewrites {
-  val syntax = Rewrite.syntactic { ctx =>
+  val syntax: Rewrite = Rewrite.syntactic { ctx =>
     ctx.addLeft(ctx.tokens.head, "// comment\n")
   }
+
   val semantic = Rewrite.semantic { implicit mirror => ctx =>
     ctx.addGlobalImport(importer"hello.semantic")
   }
+
 }
