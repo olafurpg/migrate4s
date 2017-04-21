@@ -3,6 +3,7 @@ package scalafix.testkit
 import scala.collection.immutable.Seq
 import scala.meta.io.AbsolutePath
 import scalafix.config.ScalafixConfig
+import scalafix.reflect.ScalafixCompilerDecoder
 import scalafix.rewrite.ScalafixMirror
 import scalafix.util.FileOps
 
@@ -67,7 +68,8 @@ object DiffTest {
 
     val style = { mirror: Option[ScalafixMirror] =>
       val firstLine = split.head
-      ScalafixConfig.fromString(firstLine, mirror) match {
+      ScalafixConfig.fromString(firstLine, mirror)(
+        ScalafixCompilerDecoder(mirror)) match {
         case Configured.Ok(x) => x
         case Configured.NotOk(x) =>
           throw new IllegalArgumentException(s"""Failed to parse $filename

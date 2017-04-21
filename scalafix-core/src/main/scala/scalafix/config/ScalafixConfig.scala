@@ -34,9 +34,13 @@ object ScalafixConfig {
   val default = ScalafixConfig()
   val syntaxConfDecoder: ConfDecoder[ScalafixConfig] = default.reader
 
+  def autoNoRewrites(workingDir: File): Option[ScalafixConfig] =
+    auto(workingDir, None)(rewriteConfDecoder(None))
+
   /** Returns config from current working directory, if .scalafix.conf exists. */
-  def auto(workingDir: File,
-           mirror: Option[ScalafixMirror]): Option[ScalafixConfig] = {
+  def auto(workingDir: File, mirror: Option[ScalafixMirror])(
+      implicit rewriteDecoder: ConfDecoder[Rewrite]
+  ): Option[ScalafixConfig] = {
     val file = new File(workingDir, ".scalafix.conf")
     if (file.isFile && file.exists())
       Some(ScalafixConfig.fromFile(file, mirror).get)
@@ -50,13 +54,15 @@ object ScalafixConfig {
       cls <- reader.read(config)
     } yield cls
 
-  def fromFile(file: File,
-               mirror: Option[ScalafixMirror]): Configured[ScalafixConfig] =
+  def fromFile(file: File, mirror: Option[ScalafixMirror])(
+      implicit rewriteDecoder: ConfDecoder[Rewrite]
+  ): Configured[ScalafixConfig] =
     gimmeClass(TypesafeConfig2Class.gimmeConfFromFile(file))(
       scalafixConfigConfDecoder(mirror))
 
-  def fromString(str: String,
-                 mirror: Option[ScalafixMirror]): Configured[ScalafixConfig] =
+  def fromString(str: String, mirror: Option[ScalafixMirror])(
+      implicit rewriteDecoder: ConfDecoder[Rewrite]
+  ): Configured[ScalafixConfig] =
     gimmeClass(TypesafeConfig2Class.gimmeConfFromString(str))(
       scalafixConfigConfDecoder(mirror))
 }

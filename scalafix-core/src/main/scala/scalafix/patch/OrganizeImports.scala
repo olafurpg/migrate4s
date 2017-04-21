@@ -1,31 +1,17 @@
 package scalafix.patch
 
 import scala.collection.immutable.Seq
-import scala.collection.mutable
 import scala.meta.Importee.Wildcard
 import scala.meta._
 import scala.meta.semantic.v1.Completed
 import scala.meta.tokens.Token.Comment
 import scala.meta.tokens.Token.KwImport
 import scalafix.config.FilterMatcher
-import scalafix.rewrite.RewriteCtx
-import scalafix.syntax._
 import scalafix.patch.TreePatch.AddGlobalImport
 import scalafix.patch.TreePatch.RemoveGlobalImport
+import scalafix.rewrite.RewriteCtx
+import scalafix.syntax._
 import scalafix.util.CanonicalImport
-
-///** Set of operations needed to run organize imports */
-//trait OrganizeImportsMirror {
-//
-//  /** Returns true if this importee is never used and can be removed. */
-//  def isUnused(importee: Importee): Boolean
-//
-//  /** Returns fully qualified name of this reference
-//    *
-//    * For example scala.collection.immutable.List for List.
-//    **/
-//  def fullyQualifiedName(ref: Ref): Option[Ref]
-//}
 
 private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
                                                 mirror: Mirror) {

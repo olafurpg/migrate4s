@@ -1,6 +1,8 @@
 package scalafix
 package nsc
 
+import scalafix.config._
+import scalafix.reflect.ScalafixCompilerDecoder
 import scala.meta.Defn
 import scala.meta.Type
 import scala.meta.internal.scalahost.ScalahostPlugin
@@ -10,7 +12,6 @@ import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
 import scalafix.config.ScalafixConfig
 import scalafix.rewrite.ScalafixMirror
-
 import java.io.File
 
 import metaconfig.Configured
@@ -18,10 +19,10 @@ import metaconfig.Configured
 class ScalafixNscPlugin(val global: Global) extends Plugin {
   val workingDir = new File(sys.props("user.dir"))
   var config: ScalafixConfig =
-    ScalafixConfig.auto(workingDir, None).getOrElse(ScalafixConfig.default)
+    ScalafixConfig.autoNoRewrites(workingDir).getOrElse(ScalafixConfig.default)
   var getRewrite: ScalafixMirror => Rewrite = { mirror =>
     ScalafixConfig
-      .auto(workingDir, Some(mirror))
+      .auto(workingDir, Some(mirror))(ScalafixCompilerDecoder(Some(mirror)))
       .getOrElse(ScalafixConfig.default)
       .rewrite
   }
@@ -47,7 +48,7 @@ class ScalafixNscPlugin(val global: Global) extends Plugin {
     options match {
       case Nil => true
       case file :: Nil =>
-        ScalafixConfig.fromFile(new File(file), None) match {
+        ScalafixConfig.fromFile(new File(file), None)(rewriteConfDecoder(None)) match {
           case Configured.NotOk(msg) =>
             error(msg.toString())
             false

@@ -1,4 +1,4 @@
-package scalafix.util
+package scalafix.reflect
 
 import scala.collection.immutable.Seq
 import scala.collection.mutable
@@ -11,6 +11,7 @@ import scala.tools.nsc.io.VirtualDirectory
 import scala.tools.nsc.reporters.StoreReporter
 import scala.{meta => m}
 import scalafix.rewrite.Rewrite
+import scalafix.util.ClassloadRewrite
 
 import java.io.File
 import java.net.URLClassLoader
