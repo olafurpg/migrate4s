@@ -1,9 +1,8 @@
 package banana.rewrite
 
-import scala.meta._, contrib._
+import scala.meta._
+import scala.meta.contrib._
 import scalafix._
-
-import org.scalameta.logger
 
 case class FqnRewrite(implicit mirror: Mirror)
     extends SemanticRewrite(mirror) {
@@ -20,6 +19,6 @@ case object FqnRewrite2 extends Rewrite {
 
 object LambdaRewrites {
   val syntax = Rewrite.syntactic { ctx =>
-    ctx.addLeft(ctx.tokens.head, "// comment \n")
+    ctx.addLeft(ctx.tokens.head, "// comment\n")
   }
 }

@@ -10,7 +10,7 @@ import scala.util.Try
 import scala.util.matching.Regex
 import scalafix.rewrite.ScalafixMirror
 import scalafix.rewrite.ScalafixRewrites
-import scalafix.util.ClassloadObject
+import scalafix.util.ClassloadRewrite
 import scalafix.util.FileOps
 import scalafix.util.ScalafixToolbox
 import scalafix.patch.TreePatch._
@@ -39,7 +39,7 @@ trait ScalafixMetaconfigReaders {
     ReaderUtil.oneOf[Dialect](Scala211, Sbt0137, Dotty, Paradise211)
   }
 
-  object ClassloadRewrite {
+  object FromClassloadRewrite {
     def unapply(arg: Conf.Str): Option[String] = arg match {
       case UriRewrite("scala", uri) =>
         Option(uri.getSchemeSpecificPart)
@@ -114,8 +114,8 @@ trait ScalafixMetaconfigReaders {
   def rewriteConfDecoder(
       mirror: Option[ScalafixMirror]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
-      case ClassloadRewrite(fqn) =>
-        ClassloadObject[Rewrite](fqn, mirror.toList)
+      case FromClassloadRewrite(fqn) =>
+        ClassloadRewrite[Rewrite](fqn, mirror.toList)
       case FromSourceRewrite(code) =>
         ScalafixToolbox.getRewrite(code)
       case els =>
