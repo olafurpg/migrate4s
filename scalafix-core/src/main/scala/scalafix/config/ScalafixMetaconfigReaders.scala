@@ -115,9 +115,9 @@ trait ScalafixMetaconfigReaders {
       mirror: Option[ScalafixMirror]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
       case FromClassloadRewrite(fqn) =>
-        ClassloadRewrite[Rewrite](fqn, mirror.toList)
+        ClassloadRewrite(fqn, mirror.toList)
       case FromSourceRewrite(code) =>
-        ScalafixToolbox.getRewrite(code)
+        ScalafixToolbox.getRewrite(code, mirror)
       case els =>
         val name2rewrite = mirror match {
           case Some(mirror) => ScalafixRewrites.name2rewrite(mirror)

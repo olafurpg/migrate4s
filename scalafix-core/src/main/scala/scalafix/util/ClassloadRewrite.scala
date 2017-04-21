@@ -116,8 +116,12 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
 }
 
 object ClassloadRewrite {
-  def apply[T: ClassTag](fqn: String, args: Seq[AnyRef]): Configured[T] = {
-    val result = new ClassloadRewrite(this.getClass.getClassLoader)
+  lazy val defaultClassloader = getClass.getClassLoader
+  def apply(
+      fqn: String,
+      args: Seq[AnyRef],
+      classloader: ClassLoader = defaultClassloader): Configured[Rewrite] = {
+    val result = new ClassloadRewrite[Rewrite](this.getClass.getClassLoader)
       .classloadRewrite(fqn, args)
     result match {
       case Success(e) => Configured.Ok(e)
