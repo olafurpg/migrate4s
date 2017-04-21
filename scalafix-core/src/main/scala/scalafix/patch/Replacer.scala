@@ -106,7 +106,7 @@ object Renamer {
       case ToRename(tok, to) =>
         Seq(
           Remove(tok),
-          ctx.addLeft(tok, to.syntax)
+          TokenPatch.Add(tok, to.syntax, "")
         )
     }.flatten
   }

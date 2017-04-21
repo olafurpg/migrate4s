@@ -216,7 +216,7 @@ private[this] class OrganizeImports[T] private (implicit ctx: RewriteCtx,
         if (!tokenToEdit.is[KwImport] && tokenToEdit.eq(fallbackToken)) "\n"
         else ""
       val toInsert = prettyPrint(cleanedUpImports) ++ suffix
-      ctx.addLeft(tokenToEdit, toInsert) +:
+      TokenPatch.Add(tokenToEdit, toInsert, "") +:
         getRemovePatches(oldImports)
     }
   }
