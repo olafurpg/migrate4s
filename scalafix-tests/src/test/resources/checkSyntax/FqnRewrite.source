@@ -2,6 +2,7 @@ rewrites = [
   "scala:banana.rewrite.FqnRewrite"
   "scala:banana.rewrite.FqnRewrite2"
   "scala:banana.rewrite.LambdaRewrites.syntax"
+  "scala:banana.rewrite.LambdaRewrites.semantic"
 ]
 imports.removeUnused = true
 <<< ONLY NOWRAP add import
@@ -9,4 +10,6 @@ object FqnMe
 >>>
 // comment
 import scala.meta._
+
+import hello.semantic
 object FqnMe2
