@@ -25,8 +25,8 @@ case class ScalafixConfig(
 ) {
   implicit val RewriteConfDecoder: ConfDecoder[Rewrite] =
     Rewrite.syntaxRewriteConfDecoder
-  def withRewrite(newRewrite: Rewrite): ScalafixConfig =
-    copy(rewrite = rewrite andThen rewrite)
+  def withRewrite(f: Rewrite => Rewrite): ScalafixConfig =
+    copy(rewrite = f(rewrite))
 }
 
 object ScalafixConfig {
@@ -34,16 +34,16 @@ object ScalafixConfig {
   val default = ScalafixConfig()
   val syntaxConfDecoder: ConfDecoder[ScalafixConfig] = default.reader
 
-  def autoNoRewrites(workingDir: File): Option[ScalafixConfig] =
+  def autoNoRewrites(workingDir: File): Option[Configured[ScalafixConfig]] =
     auto(workingDir, None)(rewriteConfDecoder(None))
 
   /** Returns config from current working directory, if .scalafix.conf exists. */
   def auto(workingDir: File, mirror: Option[ScalafixMirror])(
       implicit rewriteDecoder: ConfDecoder[Rewrite]
-  ): Option[ScalafixConfig] = {
+  ): Option[Configured[ScalafixConfig]] = {
     val file = new File(workingDir, ".scalafix.conf")
     if (file.isFile && file.exists())
-      Some(ScalafixConfig.fromFile(file, mirror).get)
+      Some(ScalafixConfig.fromFile(file, mirror))
     else None
   }
 

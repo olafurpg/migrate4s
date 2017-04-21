@@ -13,7 +13,7 @@ class ScalafixConfigTest extends FunSuite {
   implicit val reader = ScalafixConfig.default.reader
   def check[T](config: String, expected: T): Unit = {
     test(logger.revealWhitespace(config).take(50)) {
-      ScalafixConfig.fromString(config).get
+      ScalafixConfig.fromString(config, None)(rewriteConfDecoder(None)).get
     }
   }
   check(

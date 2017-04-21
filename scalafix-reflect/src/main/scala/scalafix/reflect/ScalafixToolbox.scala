@@ -27,7 +27,7 @@ object ScalafixToolbox {
     : mutable.WeakHashMap[Input, Configured.Ok[Rewrite]] =
     mutable.WeakHashMap.empty
   private val compiler = new Compiler()
-  private lazy val emptyRewrite: Configured[Rewrite] =
+  lazy val emptyRewrite: Configured[Rewrite] =
     Configured.Ok(Rewrite.empty)
 
   def getRewrite(code: Input, mirror: Option[m.Mirror]): Configured[Rewrite] =

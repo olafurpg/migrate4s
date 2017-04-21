@@ -200,12 +200,15 @@ lazy val cli = project
     isFullCrossVersion,
     mainClass in assembly := Some("scalafix.cli.Cli"),
     libraryDependencies ++= Seq(
-      "com.github.scopt"           %% "scopt"         % "3.5.0",
       "com.github.alexarchambault" %% "case-app"      % "1.1.3",
       "com.martiansoftware"        % "nailgun-server" % "0.9.1"
     )
   )
-  .dependsOn(core, testkit % Test)
+  .dependsOn(
+    core,
+    reflect,
+    testkit % Test
+  )
 
 lazy val fatcli = project
   .configure(setId)

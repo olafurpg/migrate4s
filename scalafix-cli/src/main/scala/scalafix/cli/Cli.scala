@@ -19,10 +19,10 @@ import scalafix.cli.termdisplay.TermDisplay
 import scalafix.config.PrintStreamReporter
 import scalafix.config.ScalafixConfig
 import scalafix.config.ScalafixReporter
+import scalafix.reflect.ScalafixCompilerDecoder
+import scalafix.reflect.ScalafixToolbox
 import scalafix.rewrite.ProcedureSyntax
 import scalafix.rewrite.ScalafixMirror
-import scalafix.rewrite.ScalafixRewrite
-import scalafix.rewrite.ScalafixRewrites
 import scalafix.util.FileOps
 
 import java.io.File
@@ -35,6 +35,7 @@ import java.util.regex.Pattern
 import caseapp._
 import caseapp.core.WithHelp
 import com.martiansoftware.nailgun.NGContext
+import metaconfig.Conf
 import org.scalameta.logger
 
 case class CommonOptions(
@@ -55,7 +56,7 @@ case class ScalafixOptions(
       "Scalafix configuration, either a file path or a hocon string"
     ) @ValueDescription(
       ".scalafix.conf OR imports.organize=false"
-    ) @ExtraName("c") config: Option[ScalafixConfig] = None,
+    ) @ExtraName("c") config: Option[String] = None,
     @HelpMessage(
       """java.io.File.pathSeparator separated list of jar files or directories
         |        containing classfiles and `semanticdb` files. The `semanticdb`
@@ -89,7 +90,7 @@ case class ScalafixOptions(
          |               file:LocalFile.scala OR
          |               scala:full.Name OR
          |               https://gist.com/.../Rewrite.scala""".stripMargin
-    ) rewrites: List[ScalafixRewrite] = ScalafixRewrites.syntax,
+    ) rewrites: List[String] = Nil,
     @HelpMessage(
       "Files to fix. Runs on all *.scala files if given a directory."
     ) @ValueDescription(
@@ -122,19 +123,29 @@ case class ScalafixOptions(
   }
 
   /** Returns ScalafixConfig from .scalafix.conf, it exists and --config was not passed. */
-  lazy val resolvedConfig: ScalafixConfig = config match {
-    case None =>
-      val config = ScalafixConfig
-        .auto(common.workingDirectoryFile)
-        .getOrElse(
-          ScalafixConfig.default
-        )
-        .withRewrites(_ ++ rewrites)
-      config.copy(reporter = config.reporter match {
-        case r: PrintStreamReporter => r.copy(outStream = common.err)
-        case _ => ScalafixReporter.default.copy(outStream = common.err)
-      })
-    case Some(x) => x
+  lazy val resolvedConfig: ScalafixConfig = {
+    val x = for {
+      mirror <- resolvedMirror.right
+      decoder = ScalafixCompilerDecoder(mirror)
+      cliArgRewrite <- rewrites.foldLeft(ScalafixToolbox.emptyRewrite) {
+        case (rewrite, next) =>
+          rewrite
+            .product(decoder.read(Conf.Str(next)))
+            .map { case (a, b) => a.andThen(b) }
+      }
+      scalafixConfig <- config match {
+        case None =>
+          val config = ScalafixConfig
+            .auto(common.workingDirectoryFile, mirror)(decoder)
+            .getOrElse(ScalafixConfig.default)
+            .withRewrite(_ => cliArgRewrite)
+          config.copy(reporter = config.reporter match {
+            case r: PrintStreamReporter => r.copy(outStream = common.err)
+            case _ => ScalafixReporter.default.copy(outStream = common.err)
+          })
+        case Some(x) => decoder
+      }
+    } yield scalafixConfig
   }
 
   lazy val resolvedSbtConfig: ScalafixConfig =
