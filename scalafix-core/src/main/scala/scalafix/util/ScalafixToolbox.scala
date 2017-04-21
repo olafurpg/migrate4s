@@ -30,8 +30,10 @@ object ScalafixToolbox {
   def getRewrite(code: Input, mirror: Option[m.Mirror]): Configured[Rewrite] = {
     compiler
       .compile(code)
-      .flatMap(classloader =>
-        ClassloadRewrite("foo.bar.MyRewrite", mirror.toList, classloader))
+      .flatMap { classloader =>
+        logger.elem(classloader, classloader.loadClass("foo.bar.MyRewrite"))
+        ClassloadRewrite("foo.bar.MyRewrite", mirror.toList, classloader)
+      }
   }
 
 }

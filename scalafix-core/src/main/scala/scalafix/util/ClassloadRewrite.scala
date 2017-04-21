@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException
 
 import metaconfig.ConfError
 import metaconfig.Configured
+import org.scalameta.logger
 
 class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
   private val t = ev.runtimeClass
@@ -106,11 +107,14 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
     val result = combined.result()
     val successes = result.collect { case Success(t) => t }
     val failures = result.collect { case Failure(e) => e }
+    def pretty(ex: Throwable): String =
+      s"""$ex
+         | ${ex.getStackTrace.take(10).mkString(" \n")}""".stripMargin
     if (successes.nonEmpty) Success(successes.head)
     else {
       Failure(new IllegalArgumentException(
         s"""Unable to load rewrite $fqcn with args $args. Tried the following:
-           |${failures.mkString("\n")}""".stripMargin))
+           |${failures.map(pretty).mkString("\n")}""".stripMargin))
     }
   }
 }
@@ -121,8 +125,8 @@ object ClassloadRewrite {
       fqn: String,
       args: Seq[AnyRef],
       classloader: ClassLoader = defaultClassloader): Configured[Rewrite] = {
-    val result = new ClassloadRewrite[Rewrite](this.getClass.getClassLoader)
-      .classloadRewrite(fqn, args)
+    val result =
+      new ClassloadRewrite[Rewrite](classloader).classloadRewrite(fqn, args)
     result match {
       case Success(e) => Configured.Ok(e)
       case Failure(e) => Configured.NotOk(ConfError.msg(e.toString))
