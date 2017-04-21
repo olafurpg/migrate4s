@@ -37,7 +37,6 @@ object ScalafixToolbox {
       names <- RewriteInstrumentation.getRewriteFqn(code)
       rewrite <- names.foldLeft(emptyRewrite) {
         case (rewrite, fqn) =>
-          logger.elem(rewrite, names)
           rewrite
             .product(ClassloadRewrite(fqn, mirror.toList, classloader))
             .map { case (a, b) => a.andThen(b) }

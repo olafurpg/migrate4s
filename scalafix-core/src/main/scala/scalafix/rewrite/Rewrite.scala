@@ -42,11 +42,13 @@ object Rewrite {
       override def rewrite(ctx: RewriteCtx): Patch = f(mirror)(ctx)
     }
   }
-  def merge(a: Rewrite, b: Rewrite): Rewrite =
-    new Rewrite()(Name(s"${a.name}+${b.name}")) {
+  def merge(a: Rewrite, b: Rewrite): Rewrite = {
+    val newName = if (a.name == "empty") b.name else s"${a.name}+${b.name}"
+    new Rewrite()(Name(newName)) {
       override def rewrite(ctx: RewriteCtx) =
         a.rewrite(ctx) + b.rewrite(ctx)
       override def wrappedRewrite(ctx: RewriteCtx): Patch =
         a.wrappedRewrite(ctx) + b.wrappedRewrite(ctx)
     }
+  }
 }
