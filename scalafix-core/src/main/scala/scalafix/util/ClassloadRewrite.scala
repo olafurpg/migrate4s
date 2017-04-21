@@ -103,22 +103,24 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
     }
 
   def createInstanceFor(fqcn: String, args: Seq[AnyRef]): Try[T] = {
-    val classRewrites =
-      Seq(ClassRewrite.unapply(fqcn), ObjectRewrite.unapply(fqcn)).flatten
-        .map(cls => classloadRewriteFromConstructor(cls, args))
-    val lambdaRewrite =
-      LambdaRewrite
-        .unapply(fqcn)
-        .map {
-          case (cls, field) => loadRewriteFromField(cls, args, field)
-        }
-        .toList
-    val combined = (classRewrites ++ lambdaRewrite)
-    val successes = combined.collect { case Success(t) => t }
-    val failures = combined.collect { case Failure(e) => e }
+    val combined = List.newBuilder[Try[T]]
+    combined += getClassFor(fqcn).flatMap(cls =>
+      classloadRewriteFromConstructor(cls, args))
+    if (!fqcn.endsWith("$")) {
+      combined += getClassFor(fqcn + "$").flatMap(cls =>
+        classloadRewriteFromConstructor(cls, args))
+    }
+
+    val lambdaRewrite = fqcn match {
+      case LambdaRewrite(cls, field) =>
+        combined += loadRewriteFromField(cls, args, field)
+      case _ => Nil
+    }
+    val result = combined.result()
+    val successes = result.collect { case Success(t) => t }
+    val failures = result.collect { case Failure(e) => e }
     if (successes.nonEmpty) Success(successes.head)
     else {
-
       Failure(new IllegalArgumentException(
         s"""Unable to load rewrite $fqcn with args $args. Tried the following:
            |${failures.mkString("\n")}""".stripMargin))
