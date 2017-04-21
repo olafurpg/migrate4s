@@ -72,9 +72,13 @@ trait ScalafixMetaconfigReaders {
   }
 
   object FromSourceRewrite {
-    def unapply(arg: Conf.Str): Option[String] = arg match {
-      case FileRewrite(file) => Option(FileOps.readFile(file))
-      case UrlRewrite(url) => Option(FileOps.readURL(url))
+    def unapply(arg: Conf.Str): Option[Input] = arg match {
+      case FileRewrite(file) => Option(Input.File(file))
+      case UrlRewrite(url) =>
+        val code = FileOps.readURL(url)
+        val file = File.createTempFile(url.toString, ".scala")
+        FileOps.writeFile(file, code)
+        Option(Input.File(file))
       case _ => None
     }
   }
