@@ -31,8 +31,8 @@ case class ScalafixConfig(
 
 object ScalafixConfig {
 
-  val default = ScalafixConfig()
-  val syntaxConfDecoder: ConfDecoder[ScalafixConfig] = default.reader
+  lazy val default = ScalafixConfig()
+  lazy val syntaxConfDecoder: ConfDecoder[ScalafixConfig] = default.reader
 
   def autoNoRewrites(workingDir: File): Option[Configured[ScalafixConfig]] =
     auto(workingDir, None)(rewriteConfDecoder(None))
