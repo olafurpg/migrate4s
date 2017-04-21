@@ -1,6 +1,5 @@
 package scalafix.util
 
-import scala.annotation.tailrec
 import scala.collection.immutable.Seq
 import scala.collection.mutable
 import scala.meta.inputs.Input
@@ -14,24 +13,34 @@ import scala.{meta => m}
 import scalafix.rewrite.Rewrite
 
 import java.io.File
-import scalafix.util.TreeExtractors._
 import java.net.URLClassLoader
 
 import metaconfig.ConfError
 import metaconfig.Configured
-import org.scalameta.logger
 
 object ScalafixToolbox {
   import scala.reflect.runtime.universe._
   import scala.tools.reflect.ToolBox
   private val tb = runtimeMirror(getClass.getClassLoader).mkToolBox()
-  private val rewriteCache: mutable.WeakHashMap[String, Any] =
+  private val rewriteCache
+    : mutable.WeakHashMap[Input, Configured.Ok[Rewrite]] =
     mutable.WeakHashMap.empty
   private val compiler = new Compiler()
   private lazy val emptyRewrite: Configured[Rewrite] =
     Configured.Ok(Rewrite.empty)
 
   def getRewrite(code: Input, mirror: Option[m.Mirror]): Configured[Rewrite] =
+    rewriteCache.getOrElse(code, {
+      val uncached = getRewriteUncached(code, mirror)
+      uncached match {
+        case toCache @ Configured.Ok(_) => rewriteCache(code) = toCache
+        case _ =>
+      }
+      uncached
+    })
+
+  def getRewriteUncached(code: Input,
+                         mirror: Option[m.Mirror]): Configured[Rewrite] =
     for {
       classloader <- compiler.compile(code)
       names <- RewriteInstrumentation.getRewriteFqn(code)
@@ -71,7 +80,6 @@ class Compiler() {
       case Input.LabeledString(label, _) => label
       case _ => "(input)"
     }
-    logger.elem(input)
     run.compileSources(
       List(new BatchSourceFile(label, new String(input.chars))))
     val errors = reporter.infos.collect {

@@ -1,7 +1,7 @@
 rewrites = [
   "file:scalafix-tests/src/test/resources/rewrites/MyRewrite.scala"
 ]
-<<< ONLY NOWRAP basic
+<<< NOWRAP basic
 object Name
 >>>
 import scala.collection.immutable.Seq
