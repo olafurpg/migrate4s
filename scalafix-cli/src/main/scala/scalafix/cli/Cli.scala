@@ -49,10 +49,12 @@ case class CommonOptions(
   def workingDirectoryFile = new File(workingDirectory)
 }
 
+sealed abstract class CliCommand
+
 @AppName("scalafix")
 @AppVersion(scalafix.Versions.version)
 @ProgName("scalafix")
-case class ScalafixOptions(
+case class RewriteCommand(
     @HelpMessage(
       "Scalafix configuration, either a file path or a hocon string"
     ) @ValueDescription(
@@ -125,7 +127,7 @@ case class ScalafixOptions(
       "If true, does not sys.exit at the end. Useful for example in sbt-scalafix."
     ) noSysExit: Boolean = false,
     @Recurse common: CommonOptions = CommonOptions()
-) {
+) extends CliCommand {
 
   object InputSource {
     def unapply(source: Source): Option[AbsolutePath] =
@@ -238,6 +240,10 @@ case class ScalafixOptions(
     new File(outFromPattern.matcher(file.getPath).replaceAll(outTo))
 }
 
+case class GeneratorCommand(
+    semantic: Boolean = false
+) extends CliCommand
+
 object Cli {
   import ArgParserImplicits._
   private val withHelp = OptionsMessages.withHelp
@@ -254,7 +260,7 @@ object Cli {
         | ${ExitStatus.all.mkString("\n ")}
         |""".stripMargin
   val usageMessage: String = withHelp.usageMessage
-  val default = ScalafixOptions()
+  val default = RewriteCommand()
   // Run this at the end of the world, calls sys.exit.
 
   case object EmptySourcepath extends Exception(s"No sources parse")
@@ -268,7 +274,7 @@ object Cli {
     } else sys.exit(code)
   }
 
-  def safeHandleFile(file: File, options: ScalafixOptions): ExitStatus = {
+  def safeHandleFile(file: File, options: RewriteCommand): ExitStatus = {
     try handleFile(file, options)
     catch {
       case NonFatal(e) =>
@@ -279,7 +285,7 @@ object Cli {
 
   def reportError(file: File,
                   cause: Throwable,
-                  options: ScalafixOptions): Unit = {
+                  options: RewriteCommand): Unit = {
     options.common.err.println(
       s"""Error fixing file: $file
          |Cause: $cause""".stripMargin
@@ -297,7 +303,7 @@ object Cli {
     }
   }
 
-  def handleFile(file: File, options: ScalafixOptions): ExitStatus = {
+  def handleFile(file: File, options: RewriteCommand): ExitStatus = {
     val config =
       if (file.getAbsolutePath.endsWith(".sbt")) options.resolvedSbtConfig
       else options.resolvedConfig
@@ -326,7 +332,7 @@ object Cli {
   def isScalaPath(path: String): Boolean =
     path.endsWith(".scala") || path.endsWith(".sbt")
 
-  def runOn(config: ScalafixOptions): ExitStatus = {
+  def runOn(config: RewriteCommand): ExitStatus = {
     val workingDirectory = new File(config.common.workingDirectory)
     val display = new TermDisplay(new OutputStreamWriter(System.out))
     val filesToFix = config.resolvedFiles
@@ -350,13 +356,14 @@ object Cli {
     exitCode.get()
   }
 
-  def parse(args: Seq[String]): Either[String, WithHelp[ScalafixOptions]] =
+  def parse(args: Seq[String]): Either[String, WithHelp[RewriteCommand]] =
     OptionsParser.withHelp.detailedParse(args) match {
-      case Right((help, extraFiles, ls)) =>
+      case Right(
+          (help @ WithHelp(_, _, base: RewriteCommand), extraFiles, ls)) =>
         val configured = for {
-          _ <- help.base.resolvedMirror // validate
-          _ <- help.base.resolvedConfig // validate
-        } yield help.map(_.copy(files = help.base.files ++ extraFiles))
+          _ <- base.resolvedMirror // validate
+          _ <- base.resolvedConfig // validate
+        } yield help.map(_ => base.copy(files = base.files ++ extraFiles))
         configured.toEither.left.map(_.toString())
       case Left(x) => Left(x)
     }

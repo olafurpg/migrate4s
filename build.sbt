@@ -147,7 +147,7 @@ lazy val cli = project
     publishSettings,
     isFullCrossVersion,
     libraryDependencies ++= Seq(
-      "com.github.alexarchambault" %% "case-app"      % "1.1.3",
+      "com.github.alexarchambault" %% "case-app"      % "1.2.0-M3",
       "com.martiansoftware"        % "nailgun-server" % "0.9.1"
     )
   )

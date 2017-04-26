@@ -69,7 +69,7 @@ class CliTest extends FunSuite with DiffAssertions {
     val file = File.createTempFile("prefix", ".scala")
     FileOps.writeFile(file, original)
     Cli.runOn(
-      ScalafixOptions(
+      RewriteCommand(
         rewrites = List(ProcedureSyntax.toString),
         files = List(file.getAbsolutePath),
         inPlace = true
@@ -82,7 +82,7 @@ class CliTest extends FunSuite with DiffAssertions {
     FileOps.writeFile(file, original)
     val baos = new ByteArrayOutputStream()
     val exit = Cli.runOn(
-      ScalafixOptions(
+      RewriteCommand(
         common = CommonOptions(
           out = new PrintStream(baos)
         ),
@@ -108,7 +108,7 @@ class CliTest extends FunSuite with DiffAssertions {
     val file1, file2 = createFile()
 
     Cli.runOn(
-      ScalafixOptions(rewrites = List(ProcedureSyntax.toString),
+      RewriteCommand(rewrites = List(ProcedureSyntax.toString),
                       files = List(dir.getAbsolutePath),
                       inPlace = true))
     assertNoDiff(FileOps.readFile(file1), expected)
@@ -151,7 +151,7 @@ class CliTest extends FunSuite with DiffAssertions {
     val file = File.createTempFile("prefix", ".scala")
     FileOps.writeFile(file, "object a { implicit val x = ??? }")
     val code = Cli.runOn(
-      ScalafixOptions(rewrites = List(ExplicitImplicit.toString),
+      RewriteCommand(rewrites = List(ExplicitImplicit.toString),
                       files = List(file.getAbsolutePath),
                       inPlace = true,
                       common = devNull))
@@ -162,7 +162,7 @@ class CliTest extends FunSuite with DiffAssertions {
     val file = File.createTempFile("prefix", ".sbt")
     FileOps.writeFile(file, "def foo { println(1) }\n")
     val code = Cli.runOn(
-      ScalafixOptions(rewrites = List(ProcedureSyntax.toString),
+      RewriteCommand(rewrites = List(ProcedureSyntax.toString),
                       files = List(file.getAbsolutePath),
                       inPlace = true,
                       common = devNull))
