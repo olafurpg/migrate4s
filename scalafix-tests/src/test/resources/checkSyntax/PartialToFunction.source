@@ -1,0 +1,21 @@
+rewrites = [PartialToFunction]
+<<< ONLY basic
+object a {
+  def foo(f: (Int, Int) => Int): Int = f(1, 2)
+  foo { case (a, b) => a + b }
+}
+>>>
+object a {
+  def foo(f: (Int, Int) => Int): Int = f(1, 2)
+  foo (  (a, b) => a + b )
+}
+<<< ONLY false alarm
+object a {
+  def foo(f: ((Int, Int)) => Int): Int = f((1, 2))
+  foo { case (a, b) => a + b } // unchanged
+}
+>>>
+object a {
+  def foo(f: ((Int, Int)) => Int): Int = f((1, 2))
+  foo { case (a, b) => a + b } // unchanged
+}
