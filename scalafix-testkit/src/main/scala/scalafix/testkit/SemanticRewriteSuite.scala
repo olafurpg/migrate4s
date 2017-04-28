@@ -28,6 +28,7 @@ import java.io.PrintWriter
 import java.net.URLClassLoader
 
 import metaconfig.ConfError
+import org.scalameta.logger
 import org.scalatest.FunSuite
 
 // TODO(olafur) contribute upstream to scalameta-testkit
@@ -97,6 +98,7 @@ abstract class SemanticRewriteSuite(
 
     val fixed = fix(diffTest.wrapped(), diffTest.config)
     val obtained = parse(diffTest.unwrap(fixed))
+    logger.elem(obtained)
     val expected = parse(expectedStr)
     try {
       typeChecks(diffTest.wrapped(fixed))
@@ -263,3 +265,4 @@ object SemanticRewriteSuite {
     case _ => ""
   }
 }
+
