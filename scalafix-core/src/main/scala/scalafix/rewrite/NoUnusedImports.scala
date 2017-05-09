@@ -1,8 +1,8 @@
 package scalafix
 package rewrite
 
-import scala.meta._
 import scala.annotation.tailrec
+import scala.meta._
 
 case class NoUnusedImports(mirror: Mirror) extends SemanticRewrite(mirror) {
 
@@ -39,6 +39,7 @@ case class NoUnusedImports(mirror: Mirror) extends SemanticRewrite(mirror) {
   }
 
   override def rewrite(ctx: RewriteCtx): Patch = {
+    ctx.reporter.warn("foo", ctx.tree.children.head.children.head.pos)
     val patches = mirror.database.messages.collect {
       case Message(Anchor(_, start, end), _, "Unused import") =>
         val toRemove =

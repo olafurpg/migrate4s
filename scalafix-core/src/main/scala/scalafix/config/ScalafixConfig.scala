@@ -19,7 +19,16 @@ case class ScalafixConfig(
     fatalWarnings: Boolean = true,
     reporter: ScalafixReporter = ScalafixReporter.default,
     dialect: Dialect = Scala211
-)
+) {
+  def withStoreReporter: ScalafixConfig = reporter match {
+    case StoreReporter(_) => this
+    case _ => copy(reporter = StoreReporter(reporter))
+  }
+  def reportedMessages: Seq[Message] = reporter match {
+    case x @ StoreReporter(_) => x.store.toSeq
+    case _ => Nil
+  }
+}
 
 object ScalafixConfig {
 

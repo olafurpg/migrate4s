@@ -29,7 +29,7 @@ object imp {
   val d = new Date
 }
 
-<<< selective import
+<<< SKIP selective import
 object imp {
   import scala.collection.mutable.{ Set, ListBuffer }
 
@@ -41,4 +41,13 @@ object imp {
 
   val l = ListBuffer.empty[Int]
 }
-
+<<< ONLY many
+import scala.collection.mutable.{ ListBuffer, Set}
+object A {
+  Set.empty[Int]
+}
+>>>
+import scala.collection.mutable.Set
+object A {
+  Set.empty[Int]
+}

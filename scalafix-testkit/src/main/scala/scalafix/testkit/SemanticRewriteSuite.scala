@@ -23,6 +23,7 @@ import java.net.URL
 import java.net.URLClassLoader
 
 import metaconfig.ConfError
+import org.scalameta.logger
 import org.scalatest.FunSuite
 
 // TODO(olafur) contribute upstream to scalameta-testkit
@@ -123,8 +124,13 @@ abstract class SemanticRewriteSuite(
     val mirror = computeMirror(code)
     val (rewrite, config) = getConfig(Some(mirror))
     val tree = mirror.sources.head
+    val actualConfig = config.withStoreReporter
     val ctx = RewriteCtx(tree, config)
-    rewrite.apply(ctx)
+    val fixed = rewrite.apply(ctx)
+    val msg = actualConfig.reportedMessages.mkString("\n")
+    logger.elem(msg)
+    msg +
+      fixed
   }
 
   private def computeMirror(code: String): Mirror = {
