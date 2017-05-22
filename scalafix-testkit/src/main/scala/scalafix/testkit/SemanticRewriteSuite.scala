@@ -83,26 +83,27 @@ abstract class SemanticRewriteSuite(
       val line = s"=" * (header.length + 3)
       s"$line\n=> $header\n$line"
     }
-
-    val fixed = fix(diffTest.wrapped(), diffTest.config)
-    logger.elem(diffTest.unwrap(fixed))
-    val obtained = parse(diffTest.unwrap(fixed))
-    val expected = parse(expectedStr)
+    val fixed = fix(if (diffTest.typecheckExpected) diffTest.wrapped()
+                    else diffTest.original,
+                    diffTest.config)
+    val obtained =
+      if (diffTest.typecheckExpected) diffTest.unwrap(fixed)
+      else fixed
     try {
-      typeChecks(diffTest.wrapped(fixed))
-      if (diffTest.checkSyntax) {
-        assertNoDiff(obtained, expected)
-      } else {
-        checkMismatchesModuloDesugarings(obtained, expected)
+      assertNoDiff(obtained, diffTest.expected)
+      if (diffTest.checkSyntax) {} else if (diffTest.typecheckExpected) {
+        val expected = parse(expectedStr)
+        typeChecks(diffTest.wrapped(fixed))
+        checkMismatchesModuloDesugarings(parse(obtained), expected)
       }
     } catch {
       case MismatchException(details) =>
         val header = s"scala -> meta converter error\n$details"
         val fullDetails =
           s"""${formatHeader("Expected")}
-             |${expected.syntax}
+             |${diffTest.expected}
              |${formatHeader("Obtained")}
-             |${obtained.syntax}""".stripMargin
+             |${obtained}""".stripMargin
         fail(s"$header\n$fullDetails")
     }
   }

@@ -7,6 +7,7 @@ object ScalafixRewrites {
     ProcedureSyntax,
     VolatileLazyVal,
     RemoveXmlLiterals,
+    SignificantIndent,
     ExplicitUnit
   )
   def semantic(mirror: Mirror): List[Rewrite] = List(

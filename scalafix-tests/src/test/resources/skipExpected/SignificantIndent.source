@@ -1,0 +1,27 @@
+rewrites = SignificantIndent
+<<< remove all curlies!
+object a {
+  def f(x: Int) = {
+    val y = x * x
+    y + 1
+  }
+}
+>>>
+object a
+  def f(x: Int) =
+    val y = x * x
+    y + 1
+<<< trim
+object a {
+  try {
+    1
+  } catch {
+    case b =>
+  }
+}
+>>>
+object a
+  try
+    1
+  catch
+    case b =>

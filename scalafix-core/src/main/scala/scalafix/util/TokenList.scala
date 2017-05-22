@@ -15,6 +15,9 @@ class TokenList(tokens: Tokens) {
     map.result()
   }
 
+  def from(token: Token) = tokens.view(tok2idx(token), tokens.length)
+  def to(token: Token) = tokens.view(0, tok2idx(token))
+
   def find(start: Token)(f: Token => Boolean): Option[Token] = {
     def loop(curr: Token): Option[Token] = {
       if (f(curr)) Option(curr)

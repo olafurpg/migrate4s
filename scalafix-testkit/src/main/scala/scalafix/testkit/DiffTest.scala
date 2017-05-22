@@ -1,6 +1,7 @@
 package scalafix.testkit
 
-import metaconfig._, typesafeconfig._
+import metaconfig._
+import typesafeconfig._
 import scala.collection.immutable.Seq
 import scala.meta._
 import scalafix.Rewrite
@@ -8,10 +9,9 @@ import scalafix.config.ScalafixConfig
 import scalafix.config.ScalafixMetaconfigReaders
 import scalafix.reflect.ScalafixCompilerDecoder
 import scalafix.util.FileOps
-
 import java.io.File
-
 import metaconfig.Configured
+import org.scalameta.logger
 
 case class DiffTest(spec: String,
                     name: String,
@@ -32,6 +32,7 @@ case class DiffTest(spec: String,
   def unwrap(code: String): String =
     if (noWrap) code
     else code.stripPrefix(packagePrefix).stripSuffix(packageSuffix)
+  def typecheckExpected = !spec.startsWith("skipExpected")
   val fullName = s"$spec: $name"
 }
 
@@ -102,10 +103,5 @@ object DiffTest {
     val onlyTests = testsFiles.filter(_.contains("\n<<< ONLY"))
     if (onlyTests.nonEmpty) onlyTests
     else testsFiles
-  }
-
-  private def bySpecThenName(left: DiffTest, right: DiffTest): Boolean = {
-    import scala.math.Ordered.orderingToOrdered
-    (left.spec, left.name).compare(right.spec -> right.name) < 0
   }
 }
