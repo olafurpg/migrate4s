@@ -3,14 +3,14 @@ package scalafix.sbt
 import scala.language.reflectiveCalls
 
 import scalafix.Versions
-
 import java.io.File
-
+import scala.collection.immutable.Seq
 import sbt.File
 import sbt.Keys.{version => _}
 import sbt.Keys._
 import sbt.ScopeFilter.ScopeFilter
 import sbt._
+import sbt.inc.Analysis
 import sbt.plugins.JvmPlugin
 
 object ScalafixPlugin extends AutoPlugin {
@@ -25,6 +25,7 @@ object ScalafixPlugin extends AutoPlugin {
   }
   import CliWrapperPlugin.autoImport._
   import autoImport._
+  import ScalahostPlugin.XtensionFormatClasspath
   private val scalafixVersion = _root_.scalafix.Versions.version
 
   private val scalafixStub =
@@ -57,27 +58,27 @@ object ScalafixPlugin extends AutoPlugin {
         .map(x => "--config" :: x.getAbsolutePath :: Nil)
         .getOrElse(Nil)
     val log = streams.value.log
-    val sourcepath = List(baseDirectory.in(ThisBuild).value)
-    val classpath = scalahostClasspath.value.flatMap(_.map(_.data))
-    def format(files: Seq[File]): String =
-      files.map(_.getAbsolutePath).mkString(File.pathSeparator)
+    scalahostCompile.value // trigger compilation
+    val classpath = scalahostClasspath.value.asPath
     val inputArgs = Def.spaceDelimited("<rewrite>").parsed
     val rewriteArgs =
       if (inputArgs.nonEmpty) "--rewrites" +: inputArgs
       else Nil
-    val args =
+    val args: Seq[String] =
       config ++
         rewriteArgs ++
         Seq(
           "--no-sys-exit",
           "-i",
-          "--sourcepath",
-          format(sourcepath),
+          "--sourceroot",
+          baseDirectory.in(ThisBuild).value.getAbsolutePath,
           "--classpath",
-          format(classpath)
+          classpath
         )
-    log.info(s"Running scalafix ${args.mkString(" ")}...")
-    if (sourcepath.nonEmpty && classpath.nonEmpty) main.main(args.toArray)
+    if (classpath.nonEmpty) {
+      log.info(s"Running scalafix ${args.mkString(" ")}")
+      main.main(args.toArray)
+    }
   }
   lazy val scalafixSettings = Seq(
     scalafix := scalafixTaskImpl.evaluated
@@ -85,17 +86,18 @@ object ScalafixPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] =
     inConfig(Compile)(scalafixSettings) ++
-      inConfig(Test)(scalafixSettings) ++
-      inConfig(IntegrationTest)(scalafixSettings)
-  // TODO(olafur) remove
+      inConfig(Test)(scalafixSettings)
   private def scalahostAggregateFilter: Def.Initialize[ScopeFilter] =
     Def.setting {
       ScopeFilter(configurations = inConfigurations(Compile, Test))
     }
   lazy private val scalahostSourcepath: Def.Initialize[Seq[Seq[File]]] =
-    Def.settingDyn(sourceDirectories.all(scalahostAggregateFilter.value))
-  lazy private val scalahostClasspath: Def.Initialize[Task[Seq[Classpath]]] =
-    Def.taskDyn(fullClasspath.all(scalahostAggregateFilter.value))
+    Def.settingDyn(
+      unmanagedSourceDirectories.all(scalahostAggregateFilter.value))
+  lazy private val scalahostClasspath: Def.Initialize[Seq[File]] =
+    Def.settingDyn(classDirectory.all(scalahostAggregateFilter.value))
+  lazy private val scalahostCompile: Def.Initialize[Task[Seq[Analysis]]] =
+    Def.taskDyn(compile.all(scalahostAggregateFilter.value))
 }
 
 // generic plugin for wrapping any command-line interface as an sbt plugin
@@ -190,13 +192,9 @@ object ScalahostPlugin extends AutoPlugin {
       if (scalametaDependencies.value.isEmpty) Nil
       else {
         val sourcepath =
-          scalahostSourcepath.value
-            .flatMap(_.map(_.getAbsolutePath))
-            .mkString(java.io.File.pathSeparator)
+          scalahostSourcepath.value.flatten.asPath
         val classpath =
-          scalahostClasspath.value
-            .flatMap(_.files.map(_.getAbsolutePath))
-            .mkString(java.io.File.pathSeparator)
+          scalahostClasspath.value.asPath
         val projectName = name.value
         scalahostJarPath.value.map(path => s"-Dscalahost.jar=$path").toList ++
           List(
@@ -262,6 +260,10 @@ object ScalahostPlugin extends AutoPlugin {
         case _ => None
       }
     }
+  private[scalafix] implicit class XtensionFormatClasspath(paths: Seq[File]) {
+    def asPath: String =
+      paths.map(_.getAbsolutePath).mkString(java.io.File.pathSeparator)
+  }
   // Defaults to version.value of in scala.meta's build.sbt
   private val scalahostVersion: String =
     sys.props.getOrElse("scalahost.version", Versions.scalameta)
@@ -273,6 +275,6 @@ object ScalahostPlugin extends AutoPlugin {
     }
   private val scalahostSourcepath: Def.Initialize[Seq[Seq[File]]] =
     Def.settingDyn(sourceDirectories.all(scalahostAggregateFilter.value))
-  private val scalahostClasspath: Def.Initialize[Task[Seq[Classpath]]] =
-    Def.taskDyn(fullClasspath.all(scalahostAggregateFilter.value))
+  private val scalahostClasspath: Def.Initialize[Seq[File]] =
+    Def.settingDyn(classDirectory.all(scalahostAggregateFilter.value))
 }

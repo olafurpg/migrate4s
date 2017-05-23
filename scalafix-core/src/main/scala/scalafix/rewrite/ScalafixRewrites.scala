@@ -11,7 +11,7 @@ object ScalafixRewrites {
   )
   def semantic(mirror: Mirror): List[Rewrite] = List(
     ScalaJsRewrites.DemandJSGlobal(mirror),
-//    ExplicitImplicit(mirror), // Unsupported for now
+    ExplicitImplicit(mirror),
     Xor2Either(mirror),
     NoAutoTupling(mirror)
   )

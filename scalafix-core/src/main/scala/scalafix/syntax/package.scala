@@ -9,9 +9,11 @@ import scala.meta.semantic.Symbol
 import scala.meta.tokens.Token
 import scala.util.Success
 import scala.util.Try
-
 import org.scalameta.logger
 import scala.compat.Platform.EOL
+import scala.meta.internal.prettyprinters.TreeSyntax
+import scala.meta.internal.prettyprinters.TreeToString
+import scala.meta.internal.scalafix.ScalafixScalametaHacks
 
 package object syntax {
 
@@ -61,6 +63,13 @@ package object syntax {
 
   implicit class XtensionRefSymbolOpt(ref: Ref)(implicit mirror: Mirror) {
     def symbolOpt: Option[Symbol] = Try(ref.symbol).toOption
+  }
+
+  implicit class XtensionParsedOpt[T](parsed: Parsed[T]) {
+    def toOption: Option[T] = parsed match {
+      case parsers.Parsed.Success(tree) => Some(tree)
+      case _ => None
+    }
   }
 
   implicit class XtensionTermRef(ref: Term.Ref) {
@@ -123,6 +132,7 @@ package object syntax {
   }
   implicit class XtensionTreeScalafix(tree: Tree) {
     def input: Input = tree.tokens.head.input
+    def treeSyntax: String = ScalafixScalametaHacks.resetOrigin(tree).syntax
   }
   implicit class XtensionInputScalafix(input: Input) {
     def label: String = input match {

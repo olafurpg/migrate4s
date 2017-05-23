@@ -1,7 +1,10 @@
 package scalafix
 package rewrite
 import scala.meta.Tree
+import scala.meta.inputs.Input
+import scala.meta.io.AbsolutePath
 import scala.meta.tokens.Tokens
+import scalafix.syntax._
 import scalafix.config.ScalafixConfig
 import scalafix.config.ScalafixReporter
 import scalafix.util.AssociatedComments
@@ -13,6 +16,7 @@ class RewriteCtx(implicit val tree: Tree, val config: ScalafixConfig) {
   lazy val tokenList: TokenList = new TokenList(tokens)
   lazy val comments: AssociatedComments = AssociatedComments(tokens)
   val reporter: ScalafixReporter = config.reporter
+  lazy val input = tree.input
 }
 
 object RewriteCtx {

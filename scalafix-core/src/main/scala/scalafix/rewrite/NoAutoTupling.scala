@@ -5,6 +5,7 @@ import scala.meta._
 import scalafix.syntax._
 import scala.meta.semantic.Signature
 import scala.collection.mutable.{Set => MutableSet}
+import org.scalameta.logger
 
 case class NoAutoTupling(mirror: Mirror) extends SemanticRewrite(mirror) {
 
@@ -19,8 +20,9 @@ case class NoAutoTupling(mirror: Mirror) extends SemanticRewrite(mirror) {
     // "hack" to avoid fixing an argument list more than once due
     // to recursive matching of multiple parameters lists.
     val fixed = MutableSet.empty[Seq[Term.Arg]]
-    ctx.tree.collect {
+    val patch = ctx.tree.collect {
       case q"${fun: Term.Ref}(...$argss)" if argss.nonEmpty =>
+        logger.elem(fun, fun.symbolOpt)
         fun.symbolOpt
           .collect {
             case Symbol.Global(_, Signature.Method(_, jvmSignature)) =>
@@ -42,5 +44,7 @@ case class NoAutoTupling(mirror: Mirror) extends SemanticRewrite(mirror) {
           }
           .getOrElse(Patch.empty)
     }.asPatch
+    logger.elem(patch, diff(ctx, patch))
+    patch
   }
 }
