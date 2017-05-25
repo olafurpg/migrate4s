@@ -53,11 +53,11 @@ import scala.collection.immutable.Set // Set
 trait a
 <<< relative imports
 import scalafix._
-import rewrite.ExplicitImplicit
+import rewrite.ExplicitUnit
 >>>
 import scalafix._
 
-import rewrite.ExplicitImplicit
+import rewrite.ExplicitUnit
 <<< wildcard does not subsume
 import scala.collection.mutable._
 import scala.collection.mutable.ListBuffer

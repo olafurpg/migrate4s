@@ -4,10 +4,10 @@ imports.removeUnused = false
 imports.expandRelative = true
 <<< relative imports
 import scalafix._
-import rewrite.ExplicitImplicit
+import rewrite.ExplicitUnit
 >>>
 import scalafix._
-import scalafix.rewrite.ExplicitImplicit
+import scalafix.rewrite.ExplicitUnit
 <<< language imports
 import scala.annotation.implicitNotFound
 import scala.collection.generic.CanBuild
@@ -28,19 +28,19 @@ import slick.jdbc.H2Profile.api._
 >>>
 import slick.jdbc.H2Profile.api._
 <<< root imports
-import _root_.scalafix.rewrite.{ExplicitImplicit, ProcedureSyntax}
+import _root_.scalafix.rewrite.{ExplicitUnit, ProcedureSyntax}
 package object scalafix {
   object a {
-    ExplicitImplicit.toString
+    ExplicitUnit.toString
     ProcedureSyntax.toString
   }
 }
 >>>
-import _root_.scalafix.rewrite.ExplicitImplicit
+import _root_.scalafix.rewrite.ExplicitUnit
 import _root_.scalafix.rewrite.ProcedureSyntax
 package object scalafix {
   object a {
-    ExplicitImplicit.toString
+    ExplicitUnit.toString
     ProcedureSyntax.toString
   }
 }

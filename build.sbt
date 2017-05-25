@@ -91,12 +91,13 @@ lazy val allSettings = List(
     } else old
   },
   triggeredMessage in ThisBuild := Watched.clearWhenTriggered,
-  scalacOptions := compilerOptions,
+  scalacOptions ++= compilerOptions,
   scalacOptions in (Compile, console) := compilerOptions :+ "-Yrepl-class-based",
   libraryDependencies += scalatest % Test,
   testOptions in Test += Tests.Argument("-oD"),
   scalaVersion := ciScalaVersion.getOrElse(scala212),
   crossScalaVersions := crossVersions,
+  scalametaSemanticdb := ScalametaSemanticdb.Disabled,
   updateOptions := updateOptions.value.withCachedResolution(true)
 )
 
@@ -221,8 +222,67 @@ lazy val testkit = project
     reflect
   )
 
-lazy val tests = project
-  .configure(setId)
+lazy val testsDeps = List(
+  // integration property tests
+  "org.renucci"        %% "scala-xml-quote"    % "0.1.3"    % Test,
+  "org.typelevel"      %% "catalysts-platform" % "0.0.5"    % Test,
+  "com.typesafe.slick" %% "slick"              % "3.2.0-M2" % Test,
+  "com.chuusai"        %% "shapeless"          % "2.3.2"    % Test,
+  "org.scalacheck"     %% "scalacheck"         % "1.13.4"   % Test
+)
+
+lazy val testsInput = project
+  .in(file("scalafix-tests/input"))
+  .settings(
+    allSettings,
+    noPublish,
+    scalametaSourceroot := sourceDirectory.in(Compile).value,
+    scalametaSemanticdb := ScalametaSemanticdb.Fat,
+    // TODO: Remove once scala-xml-quote is merged into scala-xml
+    resolvers += Resolver.bintrayRepo("allanrenucci", "maven"),
+    libraryDependencies ++= testsDeps
+  )
+
+lazy val testsOutput = project
+  .in(file("scalafix-tests/output"))
+  .settings(
+    allSettings,
+    noPublish,
+    resolvers := resolvers.in(testsInput).value,
+    libraryDependencies := libraryDependencies.in(testsInput).value
+  )
+
+lazy val unit = project
+  .in(file("scalafix-tests/unit"))
+  .settings(
+    allSettings,
+    noPublish,
+    fork := false,
+    javaOptions := Nil,
+    buildInfoPackage := "scalafix.tests",
+    buildInfoObject := "BuildInfo",
+    compile.in(Compile) :=
+      compile.in(Compile).dependsOn(compile.in(testsInput, Compile)).value,
+    buildInfoKeys := Seq[BuildInfoKey](
+      "inputSourceroot" ->
+        sourceDirectory.in(testsInput, Compile).value,
+      "outputSourceroot" ->
+        sourceDirectory.in(testsOutput, Compile).value,
+      "testsInputResources" -> resourceDirectory.in(testsInput, Compile).value,
+      "mirrorClasspath" -> classDirectory.in(testsInput, Compile).value,
+      "mirrorSourceroot" -> baseDirectory.in(ThisBuild).value
+    ),
+    libraryDependencies ++= testsDeps
+  )
+  .enablePlugins(BuildInfoPlugin)
+  .dependsOn(
+    testsInput % Scalameta,
+    cli,
+    testkit
+  )
+
+lazy val integration = project
+  .in(file("scalafix-tests/integration"))
   .configs(IntegrationTest)
   .settings(
     allSettings,
@@ -233,21 +293,10 @@ lazy val tests = project
       s"; plz $scala212 publishLocal " +
         s"; such scalafix-sbt/publishLocal " +
         "; tests/it:testQuick" // hack to workaround cyclic dependencies in test.
-    )(state.value),
-    parallelExecution in Test := true,
-    // TODO: Remove once scala-xml-quote is merged into scala-xml
-    resolvers += Resolver.bintrayRepo("allanrenucci", "maven"),
-    libraryDependencies ++= Seq(
-      scalahost % Test,
-      // integration property tests
-      "org.renucci"        %% "scala-xml-quote"    % "0.1.3"    % Test,
-      "org.typelevel"      %% "catalysts-platform" % "0.0.5"    % Test,
-      "com.typesafe.slick" %% "slick"              % "3.2.0-M2" % Test,
-      "com.chuusai"        %% "shapeless"          % "2.3.2"    % Test,
-      "org.scalacheck"     %% "scalacheck"         % "1.13.4"   % Test
-    )
+    )(state.value)
   )
   .dependsOn(
+    testsInput % Scalameta,
     core,
     reflect,
     testkit
@@ -291,8 +340,7 @@ def exposePaths(projectName: String,
     fullClasspath in config := {
       val defaultValue = (fullClasspath in config).value
       val classpath = defaultValue.files.map(_.getAbsolutePath)
-      val scalaLibrary =
-        classpath.map(_.toString).find(_.contains("scala-library")).get
+      val scalaLibrary = classpath.find(_.contains("scala-library")).get
       System.setProperty("sbt.paths.scalalibrary.classes", scalaLibrary)
       System.setProperty(prefix + "classes",
                          classpath.mkString(java.io.File.pathSeparator))
@@ -335,10 +383,13 @@ lazy val gitPushTag = taskKey[Unit]("Push to git tag")
 
 def setId(project: Project): Project = {
   val newId = "scalafix-" + project.id
-  project.copy(base = file(newId)).settings(moduleName := newId)
+  project
+    .copy(base = file(newId))
+    .settings(moduleName := newId)
+    .disablePlugins(ScalahostSbtPlugin)
 }
 def customScalafixVersion = sys.props.get("scalafix.version")
-def isDroneCI = sys.env("CI") == "DRONE"
+def isDroneCI = sys.env.get("CI").exists(_ == "DRONE")
 def epflArtifactory =
   MavenRepository("epfl-artifactory",
                   "http://scala-webapps.epfl.ch:8081/artifactory/dbuild/")

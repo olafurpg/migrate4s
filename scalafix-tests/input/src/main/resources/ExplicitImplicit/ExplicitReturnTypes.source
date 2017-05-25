@@ -1,4 +1,5 @@
-rewrites = ExplicitImplicit
+rewrites = ExplicitReturnTypes
+explicitReturnTypes.memberKind = [Def, Val, Var]
 <<< list
 class A {
   implicit val x = List(1)

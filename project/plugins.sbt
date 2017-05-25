@@ -8,6 +8,7 @@ addSbtPlugin("com.jsuereth"    % "sbt-pgp"             % "1.0.0")
 addSbtPlugin("org.xerial.sbt"  % "sbt-sonatype"        % "1.1")
 addSbtPlugin("me.lessis"       % "bintray-sbt"         % "0.3.0")
 addSbtPlugin("com.dwijnand"    % "sbt-dynver"          % "1.2.0")
+addSbtPlugin("org.scalameta"   % "sbt-scalahost"       % Dependencies.scalametaV)
 
 // TODO(olafur) re-enable scoverage.
 // scoverage is disabled because it messes up with scalafix-nsc
