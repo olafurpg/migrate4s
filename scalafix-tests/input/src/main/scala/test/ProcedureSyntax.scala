@@ -18,3 +18,4 @@ object ProcedureSyntax {
   }
   def main() /* unit */ {}
 }
+
