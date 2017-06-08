@@ -1,4 +1,4 @@
-/*
+/* ONLY
 rewrites = NoAutoTupling
  */
 package test
@@ -58,5 +58,10 @@ class NoAutoTupling {
     new Foo(1, "foo")(true, Nil)
 //    Foo(1, "foo")(true, Nil) // blocked by https://github.com/scalameta/scalameta/issues/846
     Foo.apply(1, "foo")(true, Nil)
+  }
+
+  //  <<< auto-tupling with 3rd party lambdas
+  object tup9 {
+    scalafix.tests.example.NoAutoTuplingFunction1.foo(3, true)
   }
 }
