@@ -4,6 +4,7 @@ package testkit
 import scala.meta._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSuite
+import org.scalatest.exceptions.TestFailedException
 
 abstract class SemanticRewriteSuite(
     val mirror: Database,
@@ -29,7 +30,8 @@ abstract class SemanticRewriteSuite(
         val tokens = obtainedWithComment.tokenize.get
         val comment = tokens
           .find(x => x.is[Token.Comment] && x.syntax.startsWith("/*"))
-          .get
+          .getOrElse(SemanticRewriteSuite.failMissingCommentAtTopOfFile(
+            diffTest.filename))
         tokens.filter(_ ne comment).mkString
       }
       val candidateOutputFiles = expectedOutputSourceroot.flatMap { root =>
@@ -66,5 +68,24 @@ abstract class SemanticRewriteSuite(
   lazy val testsToRun = DiffTest.testToRun(DiffTest.fromMirror(mirror))
   def runAllTests(): Unit = {
     testsToRun.foreach(runOn)
+  }
+}
+
+object SemanticRewriteSuite {
+  def failMissingCommentAtTopOfFile(relpath: RelativePath): Nothing = {
+    throw new TestFailedException(
+      s"""Missing scalafix configuration inside comment at top of file $relpath.
+         |To fix this, add a comment at the top of the input file like this:
+         |
+         |    /*
+         |    rewrite = MyRewriteName
+         |    /*
+         |    package test
+         |    // rest of file ...
+         |
+         |
+         |""".stripMargin,
+      0
+    )
   }
 }
