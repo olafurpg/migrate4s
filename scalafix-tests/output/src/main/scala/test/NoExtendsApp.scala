@@ -49,3 +49,13 @@ object Main10 extends Something {
 object Main11 {
   def main(args: Array[String]): Unit = { println(args(0)) }
 }
+
+object Main12 {
+  def main(args: Array[String]): Unit = {
+    println("Starting the app")
+    val foo = { println("Initializing foo"); "hello" }
+    init()
+
+    def init(): Unit = println(foo)
+  }
+}

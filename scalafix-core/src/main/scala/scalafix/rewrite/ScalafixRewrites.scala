@@ -16,6 +16,7 @@ object ScalafixRewrites {
     RemoveUnusedImports(mirror),
     Xor2Either(mirror),
     NoAutoTupling(mirror),
+    ExplicitImplicitArgs(mirror),
     NoExtendsApp(mirror)
   )
   def all(mirror: Mirror): List[Rewrite] =

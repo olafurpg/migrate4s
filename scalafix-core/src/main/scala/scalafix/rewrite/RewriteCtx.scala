@@ -20,6 +20,7 @@ case class RewriteCtx(tree: Tree, config: ScalafixConfig) {
   override def toString: String = syntax
   def toks(t: Tree): Tokens = t.tokens(config.dialect)
   implicit lazy val tokens: Tokens = tree.tokens(config.dialect)
+  lazy val input: Input = tree.input
   lazy val tokenList: TokenList = new TokenList(tokens)
   lazy val matching: MatchingParens = MatchingParens(tokens)
   lazy val comments: AssociatedComments = AssociatedComments(tokens)
