@@ -40,9 +40,8 @@ object DiffTest {
                            Some(mirror))(decoder)
                 .get
           }
-          .getOrElse(throw new TestFailedException(
-            s"Missing scalafix configuration inside comment at top of file $relpath",
-            0))
+          .getOrElse(
+            SemanticRewriteSuite.failMissingCommentAtTopOfFile(relpath))
       }
       DiffTest(
         filename = relpath,
