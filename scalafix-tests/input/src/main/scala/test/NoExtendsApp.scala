@@ -46,3 +46,12 @@ object Main10 extends Ppa with Something {
 }
 
 object Main11 extends App { println(args(0)) }
+
+object Main12 extends App {
+  println("Starting the app")
+  val foo = { println("Initializing foo"); "hello" }
+  init()
+
+  def init(): Unit = println(foo)
+}
+

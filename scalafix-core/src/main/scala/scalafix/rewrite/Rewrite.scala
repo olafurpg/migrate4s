@@ -4,12 +4,24 @@ package rewrite
 import scala.collection.immutable.Seq
 import scala.meta._
 import scalafix.syntax._
-
 import metaconfig.ConfDecoder
+import metaconfig.Configured
+import metaconfig.Configured.Ok
 import sourcecode.Name
 
 /** A Rewrite is a program that produces a Patch from a scala.meta.Tree. */
 abstract class Rewrite(implicit rewriteName: Name) { self =>
+
+  /** Customize the initialization/preprocessing of your rewrite here.
+    *
+    * For example, if you need to build indices from Mirror or check some invariants,
+    * you can make rewrite a stub (return Patch.empty) and construct a new Rewrite
+    * that takes the validated indices as constructor arguments.
+    *
+    * @return If the pre-processing succeeds, return metaconfig.Configured.Ok(newRewrite).
+    *         If the pre-processing fails, return metaconfig.Configured.NotOk(ConfError.msg(...))
+    */
+  def init: Configured[Rewrite] = Ok(this)
 
   /** Build patch for a single tree/compilation unit.
     *
@@ -87,6 +99,8 @@ object Rewrite {
       else if (b.name == "empty") a.name
       else s"${a.name}+${b.name}"
     new Rewrite()(Name(newName)) {
+      override def init: Configured[Rewrite] =
+        a.init.product(b.init).map { case (c, d) => c.andThen(d) }
       override def rewrite(ctx: RewriteCtx): Patch =
         a.rewrite(ctx) + b.rewrite(ctx)
       override def mirrorOption: Option[Mirror] =

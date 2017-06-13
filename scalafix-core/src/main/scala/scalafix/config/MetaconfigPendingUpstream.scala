@@ -1,9 +1,11 @@
 package scalafix.config
 
+import java.io.PrintWriter
+import java.io.StringWriter
 import scala.collection.immutable.Seq
-
 import metaconfig.Conf
 import metaconfig.ConfDecoder
+import metaconfig.ConfError
 import metaconfig.Configured
 
 // TODO(olafur) contribute upstream to metaconfig.
@@ -13,6 +15,11 @@ object MetaconfigPendingUpstream {
       case (res, configured) =>
         res.product(configured).map { case (a, b) => b +: a }
     }
+  }
+  def fromException(err: Throwable): Configured[Nothing] = {
+    val msg = new StringWriter()
+    err.printStackTrace(new PrintWriter(msg))
+    ConfError.msg(msg.toString).notOk
   }
 
   def orElse[T](a: ConfDecoder[T], b: ConfDecoder[T]): ConfDecoder[T] =

@@ -6,11 +6,13 @@ import scala.reflect.ClassTag
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-
 import java.lang.reflect.InvocationTargetException
-
+import scala.util.control.NonFatal
+import scalafix.Failure.RewriteConstructorException
+import scalafix.config.MetaconfigPendingUpstream
 import metaconfig.ConfError
 import metaconfig.Configured
+import org.scalameta.logger
 
 class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
   private val t = ev.runtimeClass
@@ -73,10 +75,15 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
              """.stripMargin)
         }
       constructor.setAccessible(true)
-      val obj = {
+      val obj = try {
         if (constructor.getParameterCount == argsLen)
           constructor.newInstance(args: _*)
         else constructor.newInstance()
+      } catch {
+        case NonFatal(e) if false =>
+          throw new IllegalArgumentException(
+            s"Failed to initialize ${clazz.getSimpleName}",
+            e)
       }
       if (t.isInstance(obj)) obj.asInstanceOf[T]
       else {
@@ -109,9 +116,12 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
          | ${ex.getStackTrace.take(10).mkString(" \n")}""".stripMargin
     if (successes.nonEmpty) Success(successes.head)
     else {
-      Failure(new IllegalArgumentException(
-        s"""Unable to load rewrite $fqcn with args $args. Tried the following:
-           |${failures.map(pretty).mkString("\n")}""".stripMargin))
+      val prettyArgs = args.map(_.getClass.getCanonicalName).toList
+      val tried = failures.map(pretty).mkString("\n\n======================\n")
+      Failure(
+        new IllegalArgumentException(
+          s"""Unable to load rewrite $fqcn with args=${prettyArgs}. Tried the following:
+             |$tried""".stripMargin))
     }
   }
 }
@@ -124,9 +134,10 @@ object ClassloadRewrite {
       classloader: ClassLoader = defaultClassloader): Configured[Rewrite] = {
     val result =
       new ClassloadRewrite[Rewrite](classloader).classloadRewrite(fqn, args)
+    logger.elem(result)
     result match {
       case Success(e) => Configured.Ok(e)
-      case Failure(e) => Configured.NotOk(ConfError.msg(e.toString))
+      case Failure(e) => MetaconfigPendingUpstream.fromException(e)
     }
   }
 }

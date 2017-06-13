@@ -1,3 +1,4 @@
+import scala.tools.util.PathResolver
 import sbt.ScriptedPlugin
 import sbt.ScriptedPlugin._
 import Dependencies._
@@ -80,6 +81,9 @@ lazy val buildInfoSettings: Seq[Def.Setting[_]] = Seq(
     "supportedScalaVersions" -> Seq(scala211, scala212),
     "scala211" -> scala211,
     "scala212" -> scala212,
+    "dottyVersion" -> dottyVersion,
+    "dottyBinaryVersion" ->
+      scalaBinaryVersion.in(testsOutputDotty, Compile).value,
     sbtVersion
   ),
   buildInfoPackage := "scalafix",
@@ -173,6 +177,30 @@ lazy val cli = project
     reflect,
     testkit % Test
   )
+
+lazy val dotty = project
+  .configure(setId)
+  .settings(
+    description := "Dotty specific rewrites.",
+    allSettings,
+    publishSettings,
+    libraryDependencies ++= List(
+      "ch.epfl.lamp"    % "dotty-interfaces" % dottyVersion,
+      "io.get-coursier" %% "coursier"        % "1.0.0-RC3",
+      "io.get-coursier" %% "coursier-cache"  % "1.0.0-RC3"
+    )
+  )
+  .dependsOn(core)
+
+lazy val isDotty = Seq(
+  scalaVersion := dottyVersion,
+  scalaBinaryVersion := dottyVersion.take(3),
+  scalacOptions := Nil,
+  crossScalaVersions := List(dottyVersion),
+  libraryDependencies := libraryDependencies.value.map(_.withDottyCompat()),
+  libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test,
+  testOptions in Test := List(Tests.Argument(TestFrameworks.JUnit))
+)
 
 lazy val `scalafix-sbt` = project
   .configs(IntegrationTest)
@@ -270,9 +298,7 @@ lazy val testsOutputDotty = project
   .settings(
     allSettings,
     noPublish,
-    scalaVersion := dotty,
-    crossScalaVersions := List(dotty),
-    libraryDependencies := libraryDependencies.value.map(_.withDottyCompat()),
+    isDotty,
     scalacOptions := Nil
   )
   .disablePlugins(ScalahostSbtPlugin)
@@ -310,6 +336,7 @@ lazy val unit = project
   .dependsOn(
     testsInput % Scalameta,
     cli,
+    dotty,
     testkit
   )
 
@@ -367,7 +394,7 @@ lazy val isFullCrossVersion = Seq(
   crossVersion := CrossVersion.full
 )
 
-lazy val dotty = "0.1.1-bin-20170530-f8f52cc-NIGHTLY"
+lazy val dottyVersion = "0.2.0-bin-20170612-cee829f-NIGHTLY"
 lazy val scala210 = "2.10.6"
 lazy val scala211 = "2.11.11"
 lazy val scala212 = "2.12.2"

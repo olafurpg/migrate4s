@@ -16,11 +16,13 @@ import java.io.PrintStream
 import java.net.URI
 import java.util.regex.Pattern
 import scala.util.control.NonFatal
+import scalafix.rewrite.ScalafixDatabase
 import metaconfig.Conf
 import metaconfig.ConfDecoder
 import metaconfig.ConfError
 import metaconfig.Configured
 import metaconfig.Configured.Ok
+import org.scalameta.logger
 
 object ScalafixMetaconfigReaders extends ScalafixMetaconfigReaders
 // A collection of metaconfig.Reader instances that are shared across
@@ -68,20 +70,25 @@ trait ScalafixMetaconfigReaders {
   ): ConfDecoder[(Rewrite, ScalafixConfig)] =
     scalafixConfigEmptyRewriteReader.flatMap {
       case (conf, config) =>
-        rewriteDecoder.read(conf).map(x => x -> config)
+        rewriteDecoder.read(conf).flatMap(_.init).map(x => x -> config)
     }
 
-  def rewriteByName(mirror: Option[Mirror]): Map[String, Rewrite] =
+  def rewriteByName(mirror: Option[ScalafixDatabase]): Map[String, Rewrite] =
     ScalafixRewrites.syntaxName2rewrite ++
       mirror.fold(Map.empty[String, Rewrite])(ScalafixRewrites.name2rewrite)
 
-  def classloadRewriteDecoder(mirror: Option[Mirror]): ConfDecoder[Rewrite] =
+  def classloadRewriteDecoder(
+      mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
       case FromClassloadRewrite(fqn) =>
-        ClassloadRewrite(fqn, mirror.toList)
+        logger.elem(fqn)
+        val x = ClassloadRewrite(fqn, mirror.toList)
+        logger.elem(x)
+        x
     }
 
-  def baseRewriteDecoders(mirror: Option[Mirror]): ConfDecoder[Rewrite] = {
+  def baseRewriteDecoders(
+      mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] = {
     MetaconfigPendingUpstream.orElse(
       ReaderUtil.fromMap(
         rewriteByName(mirror), {
@@ -96,8 +103,9 @@ trait ScalafixMetaconfigReaders {
     )
   }
 
-  def rewriteConfDecoder(singleRewriteDecoder: ConfDecoder[Rewrite],
-                         mirror: Option[Mirror]): ConfDecoder[Rewrite] = {
+  def rewriteConfDecoder(
+      singleRewriteDecoder: ConfDecoder[Rewrite],
+      mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] = {
     ConfDecoder.instance[Rewrite] {
       case Conf.Lst(values) =>
         MetaconfigPendingUpstream
