@@ -96,20 +96,25 @@ class DottyCompiler(classloader: URLClassLoader) {
     result
   }
 
-  def compile(code: Input): List[Diagnostic] = {
-    val suffix =
-      if (code.isInstanceOf[Input.File]) code.label else "Code.scala"
-    val tmpFile = Files.createTempFile("scalafix", suffix)
+  def compile(code: Input, classpath: Seq[String] = Nil): List[Diagnostic] =
+    compile(List(code), classpath)
+
+  def compile(inputs: Seq[Input], classpath: Seq[String]): List[Diagnostic] = {
     val out = Files.createTempDirectory("scalafix").toString
-    Files.write(tmpFile, new String(code.chars).getBytes)
+    val tmpFiles = inputs.map { input =>
+      val suffix =
+        if (input.isInstanceOf[Input.File]) input.label else "Code.scala"
+      val tmpFile = Files.createTempFile("scalafix", suffix)
+      Files.write(tmpFile, new String(input.chars).getBytes)
+      tmpFile.toAbsolutePath.toString
+    }
     val buffer = List.newBuilder[Diagnostic]
     val args = Array(
       "-classpath",
-      cp,
+      (cp +: classpath).mkString(File.pathSeparator),
       "-d",
-      out,
-      tmpFile.toAbsolutePath.toString
-    )
+      out
+    ) ++ tmpFiles
     val simpleReporterHandler = new InvocationHandler {
       override def invoke(proxy: scala.Any,
                           method: Method,

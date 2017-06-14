@@ -336,6 +336,7 @@ lazy val unit = project
   .dependsOn(
     testsInput % Scalameta,
     cli,
+    dotty,
     testkit
   )
 

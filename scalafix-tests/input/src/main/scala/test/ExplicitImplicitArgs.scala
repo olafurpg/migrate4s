@@ -1,5 +1,5 @@
 /* ONLY
-rewrite = ExplicitImplicitArgs
+rewrite = "scala:scalafix.rewrite.ExplicitImplicitArgs"
  */
 package test
 

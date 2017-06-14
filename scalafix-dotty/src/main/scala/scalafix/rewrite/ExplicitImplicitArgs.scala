@@ -1,9 +1,10 @@
-package scalafix
-package rewrite
+package scalafix.rewrite
 
 import scala.meta._
-import scalafix.syntax._
+import scalafix.Patch
+import scalafix.dotc.DottyCompiler
 import org.scalameta.logger
+import scalafix.syntax._
 
 case class ExplicitImplicitArgs(mirror: ScalafixDatabase)
     extends SemanticRewrite(mirror) {
