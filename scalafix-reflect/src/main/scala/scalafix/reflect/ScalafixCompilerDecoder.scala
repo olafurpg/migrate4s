@@ -4,23 +4,24 @@ import scala.meta._
 import scalafix.Rewrite
 import scalafix.config._
 import scalafix.util.FileOps
-
 import java.io.File
 import java.net.URL
-
+import scalafix.rewrite.ScalafixDatabase
 import metaconfig.Conf
 import metaconfig.ConfDecoder
 
 object ScalafixCompilerDecoder {
   def syntactic: ConfDecoder[Rewrite] = fromMirrorOption(None)
-  def semantic(mirror: Mirror): ConfDecoder[Rewrite] =
+  def semantic(mirror: ScalafixDatabase): ConfDecoder[Rewrite] =
     fromMirrorOption(Some(mirror))
-  def fromMirrorOption(mirror: Option[Mirror]): ConfDecoder[Rewrite] =
+  def fromMirrorOption(
+      mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] =
     rewriteConfDecoder(
       MetaconfigPendingUpstream.orElse(baseCompilerDecoder(mirror),
                                        baseRewriteDecoders(mirror)),
       mirror)
-  def baseCompilerDecoder(mirror: Option[Mirror]): ConfDecoder[Rewrite] =
+  def baseCompilerDecoder(
+      mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
       case FromSourceRewrite(code) =>
         ScalafixToolbox.getRewrite(code, mirror)

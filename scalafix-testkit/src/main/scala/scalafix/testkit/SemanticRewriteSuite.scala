@@ -2,6 +2,7 @@ package scalafix
 package testkit
 
 import scala.meta._
+import scalafix.rewrite.ScalafixDatabase
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSuite
 import org.scalatest.exceptions.TestFailedException
@@ -9,10 +10,16 @@ import org.scalatest.exceptions.TestFailedException
 abstract class SemanticRewriteSuite(
     val mirror: Database,
     val inputSourceroot: AbsolutePath,
-    val expectedOutputSourceroot: Seq[AbsolutePath]
+    val expectedOutputSourceroot: Seq[AbsolutePath],
+    val inputDependencyClasspath: Classpath
 ) extends FunSuite
     with DiffAssertions
     with BeforeAndAfterAll { self =>
+
+  def this(mirror: Database,
+           inputSourceroot: AbsolutePath,
+           expectedOutputSourceroot: Seq[AbsolutePath]) =
+    this(mirror, inputSourceroot, expectedOutputSourceroot, Classpath(Nil))
 
   private def dialectToPath(dialect: Dialect): Option[String] =
     Option(dialect).collect {
@@ -65,7 +72,8 @@ abstract class SemanticRewriteSuite(
     }
     super.afterAll()
   }
-  lazy val testsToRun = DiffTest.testToRun(DiffTest.fromMirror(mirror))
+  lazy val testsToRun = DiffTest.testToRun(
+    DiffTest.fromMirror(ScalafixDatabase(mirror, inputDependencyClasspath)))
   def runAllTests(): Unit = {
     testsToRun.foreach(runOn)
   }

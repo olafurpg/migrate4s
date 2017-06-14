@@ -4,6 +4,9 @@ import scala.meta.Tree
 import scala.meta.contrib.AssociatedComments
 import scala.meta.inputs.Input
 import scala.meta.io.AbsolutePath
+import scala.meta.io.Classpath
+import scala.meta.semantic.Database
+import scala.meta.semantic.Mirror
 import scala.meta.tokens.Tokens
 import scalafix.syntax._
 import scalafix.config.ScalafixConfig
@@ -25,4 +28,12 @@ case class RewriteCtx(tree: Tree, config: ScalafixConfig) {
   lazy val matching: MatchingParens = MatchingParens(tokens)
   lazy val comments: AssociatedComments = AssociatedComments(tokens)
   val reporter: ScalafixReporter = config.reporter
+}
+
+case class ScalafixDatabase(database: Database, dependencyClasspath: Classpath)
+    extends Mirror {
+  def entries = database.entries
+}
+object ScalafixDatabase {
+  def empty = ScalafixDatabase(Database(Nil), Classpath(Nil))
 }

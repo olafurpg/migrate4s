@@ -37,6 +37,7 @@ import scalafix.config.ScalafixConfig
 import scalafix.config.ScalafixReporter
 import scalafix.reflect.ScalafixCompilerDecoder
 import scalafix.reflect.ScalafixToolbox
+import scalafix.rewrite.ScalafixDatabase
 import scalafix.rewrite.ScalafixRewrites
 import scalafix.syntax._
 import metaconfig.Configured.NotOk
@@ -48,7 +49,7 @@ sealed abstract case class CliRunner(
     sourceroot: AbsolutePath,
     cli: ScalafixOptions,
     config: ScalafixConfig,
-    database: Option[Database],
+    database: Option[ScalafixDatabase],
     rewrite: Rewrite,
     explicitPaths: Seq[Input],
     inputs: Seq[Input],
@@ -213,7 +214,7 @@ object CliRunner {
     }
 
     // Database
-    private val resolvedDatabase: Configured[Database] =
+    private val resolvedDatabase: Configured[ScalafixDatabase] =
       (resolvedClasspath, sourceroot) match {
         case (Some(Ok(cp)), sp) =>
           val tryMirror = for {
@@ -221,7 +222,7 @@ object CliRunner {
               val sourcepath = sp.map(Sourcepath.apply)
               val mirror =
                 vfs.Database.load(cp).toSchema.toMeta(sourcepath)
-              mirror
+              ScalafixDatabase(mirror, cp)
             }
           } yield mirror
           tryMirror match {
@@ -235,9 +236,9 @@ object CliRunner {
               s"Missing --classpath, cannot use --sourcepath $sp without --classpath")
             .notOk
         case (None, None) =>
-          Ok(ScalafixRewrites.emptyDatabase)
+          Ok(ScalafixDatabase.empty)
       }
-    val resolvedMirror: Configured[Option[Database]] =
+    val resolvedMirror: Configured[Option[ScalafixDatabase]] =
       resolvedDatabase.map { x =>
         if (x == ScalafixRewrites.emptyDatabase) None
         else Some(x)

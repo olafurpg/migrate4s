@@ -73,7 +73,7 @@ object ScalafixPlugin extends AutoPlugin {
   lazy val scalafixTaskImpl = Def.inputTask {
     val main = cliWrapperMain.in(scalafixStub).value
     val log = streams.value.log
-    compile.value // trigger compilation
+    scalahostCompile.value // trigger compilation
     val classpath = scalahostClasspath.value.asPath
     val inputArgs = Def.spaceDelimited("<rewrite>").parsed
     val args: Seq[String] =
@@ -126,6 +126,8 @@ object ScalafixPlugin extends AutoPlugin {
     }
   lazy private val scalahostClasspath: Def.Initialize[Seq[File]] =
     Def.settingDyn(classDirectory.all(scalahostAggregateFilter.value))
+  lazy private val scalahostCompile: Def.Initialize[Task[Seq[Analysis]]] =
+    Def.taskDyn(compile.all(scalahostAggregateFilter.value))
   private[scalafix] implicit class XtensionFormatClasspath(paths: Seq[File]) {
     def asPath: String =
       paths.toIterator

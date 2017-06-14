@@ -5,7 +5,7 @@ import scala.meta._
 import scalafix.syntax._
 import org.scalameta.logger
 
-case class ExplicitImplicitArgs(mirror: Mirror)
+case class ExplicitImplicitArgs(mirror: ScalafixDatabase)
     extends SemanticRewrite(mirror) {
   val sugars = mirror.database.sugars.map { case (a, b) => a.start -> b }
 
