@@ -2,16 +2,14 @@ package scalafix.sbt
 
 import scala.language.reflectiveCalls
 
+import scala.meta.scalahost.sbt.ScalahostSbtPlugin
 import scalafix.Versions
-import java.io.File
 import sbt.File
-import sbt.Keys.{version => _}
 import sbt.Keys._
 import sbt.ScopeFilter.ScopeFilter
 import sbt._
 import sbt.inc.Analysis
 import sbt.plugins.JvmPlugin
-import scala.meta.scalahost.sbt.ScalahostSbtPlugin
 
 object ScalafixPlugin extends AutoPlugin {
   override def trigger: PluginTrigger = allRequirements
@@ -75,7 +73,7 @@ object ScalafixPlugin extends AutoPlugin {
   lazy val scalafixTaskImpl = Def.inputTask {
     val main = cliWrapperMain.in(scalafixStub).value
     val log = streams.value.log
-    scalahostCompile.value // trigger compilation
+    compile.value // trigger compilation
     val classpath = scalahostClasspath.value.asPath
     val inputArgs = Def.spaceDelimited("<rewrite>").parsed
     val args: Seq[String] =
@@ -128,8 +126,6 @@ object ScalafixPlugin extends AutoPlugin {
     }
   lazy private val scalahostClasspath: Def.Initialize[Seq[File]] =
     Def.settingDyn(classDirectory.all(scalahostAggregateFilter.value))
-  lazy private val scalahostCompile: Def.Initialize[Task[Seq[Analysis]]] =
-    Def.taskDyn(compile.all(scalahostAggregateFilter.value))
   private[scalafix] implicit class XtensionFormatClasspath(paths: Seq[File]) {
     def asPath: String =
       paths.toIterator
