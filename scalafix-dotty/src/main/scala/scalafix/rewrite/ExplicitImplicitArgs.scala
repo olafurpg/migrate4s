@@ -3,13 +3,13 @@ package scalafix.rewrite
 import scala.meta._
 import scalafix.Patch
 import scalafix.dotc.DottyCompiler
+import scalafix.dotc.DottyMirror
 import org.scalameta.logger
-import scalafix.syntax._
 
 case class ExplicitImplicitArgs(mirror: ScalafixDatabase)
     extends SemanticRewrite(mirror) {
   val sugars = mirror.database.sugars.map { case (a, b) => a.start -> b }
-
+  val dottyMirror = DottyMirror.fromScalacMirror(mirror, DottyCompiler().get)
   override def rewrite(ctx: RewriteCtx): Patch = {
     val d = Database(mirror.database.entries.filter(_._1 == ctx.input))
     logger.elem(d)

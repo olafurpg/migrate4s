@@ -22,6 +22,7 @@ import metaconfig.ConfDecoder
 import metaconfig.ConfError
 import metaconfig.Configured
 import metaconfig.Configured.Ok
+import org.scalameta.logger
 
 object ScalafixMetaconfigReaders extends ScalafixMetaconfigReaders
 // A collection of metaconfig.Reader instances that are shared across
@@ -80,7 +81,10 @@ trait ScalafixMetaconfigReaders {
       mirror: Option[ScalafixDatabase]): ConfDecoder[Rewrite] =
     ConfDecoder.instance[Rewrite] {
       case FromClassloadRewrite(fqn) =>
-        ClassloadRewrite(fqn, mirror.toList)
+        logger.elem(fqn)
+        val x = ClassloadRewrite(fqn, mirror.toList)
+        logger.elem(x)
+        x
     }
 
   def baseRewriteDecoders(

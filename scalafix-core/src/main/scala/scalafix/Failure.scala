@@ -51,4 +51,6 @@ object Failure {
   case class Unsupported(msg: String)
       extends Failure(new UnsupportedOperationException(msg))
   case class InvariantFailedException(msg: String) extends Exception(msg)
+  case class RewriteConstructorException(rewriteName: String, err: Throwable)
+      extends Failure(err)
 }
