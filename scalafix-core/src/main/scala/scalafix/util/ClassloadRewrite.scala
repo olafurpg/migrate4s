@@ -75,18 +75,15 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
              """.stripMargin)
         }
       constructor.setAccessible(true)
-      val obj = {
-        try {
-          if (constructor.getParameterCount == argsLen)
-            constructor.newInstance(args: _*)
-          else constructor.newInstance()
-        } catch {
-          case NonFatal(e) =>
-            throw new IllegalStateException(
-              s"Failed to initialize ${clazz.getSimpleName}",
-              e)
-        }
-
+      val obj = try {
+        if (constructor.getParameterCount == argsLen)
+          constructor.newInstance(args: _*)
+        else constructor.newInstance()
+      } catch {
+        case NonFatal(e) if false =>
+          throw new IllegalArgumentException(
+            s"Failed to initialize ${clazz.getSimpleName}",
+            e)
       }
       if (t.isInstance(obj)) obj.asInstanceOf[T]
       else {
@@ -120,7 +117,7 @@ class ClassloadRewrite[T](classLoader: ClassLoader)(implicit ev: ClassTag[T]) {
     if (successes.nonEmpty) Success(successes.head)
     else {
       val prettyArgs = args.map(_.getClass.getCanonicalName).toList
-      val tried = failures.map(pretty).mkString("\n")
+      val tried = failures.map(pretty).mkString("\n\n======================\n")
       Failure(
         new IllegalArgumentException(
           s"""Unable to load rewrite $fqcn with args=${prettyArgs}. Tried the following:

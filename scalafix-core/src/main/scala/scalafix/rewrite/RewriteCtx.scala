@@ -29,11 +29,3 @@ case class RewriteCtx(tree: Tree, config: ScalafixConfig) {
   lazy val comments: AssociatedComments = AssociatedComments(tokens)
   val reporter: ScalafixReporter = config.reporter
 }
-
-case class ScalafixDatabase(database: Database, dependencyClasspath: Classpath)
-    extends Mirror {
-  def entries = database.entries
-}
-object ScalafixDatabase {
-  def empty = ScalafixDatabase(Database(Nil), Classpath(Nil))
-}

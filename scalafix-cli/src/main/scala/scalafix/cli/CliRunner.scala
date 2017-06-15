@@ -358,7 +358,7 @@ object CliRunner {
         finalRewrite = cliArgRewrite.andThen(configRewrite)
       } yield finalRewrite -> finalConfig
     val resolvedRewrite: Configured[Rewrite] =
-      resolvedRewriteAndConfig.map(_._1)
+      resolvedRewriteAndConfig.flatMap(_._1.init)
     val resolvedConfig: Configured[ScalafixConfig] =
       resolvedRewriteAndConfig.map(_._2)
 

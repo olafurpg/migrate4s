@@ -70,7 +70,7 @@ trait ScalafixMetaconfigReaders {
   ): ConfDecoder[(Rewrite, ScalafixConfig)] =
     scalafixConfigEmptyRewriteReader.flatMap {
       case (conf, config) =>
-        rewriteDecoder.read(conf).map(x => x -> config)
+        rewriteDecoder.read(conf).flatMap(_.init).map(x => x -> config)
     }
 
   def rewriteByName(mirror: Option[ScalafixDatabase]): Map[String, Rewrite] =

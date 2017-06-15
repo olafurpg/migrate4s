@@ -8,10 +8,11 @@ import scala.meta.internal.semantic.{schema => s}
 import scalafix.rewrite.ScalafixDatabase
 import scalafix.syntax._
 import dotty.tools.dotc.interfaces.Diagnostic
+import org.scalameta.logger
 
 object DottyMirror {
   def fromScalacMirror(scalacMirror: ScalafixDatabase,
-                       compiler: DottyCompiler): Mirror = {
+                       compiler: DottyCompiler): ScalafixDatabase = {
     val diagnostics = compiler.compile(
       scalacMirror.sources.map(_.input),
       scalacMirror.dependencyClasspath.shallow.map(_.toString()))
@@ -21,8 +22,14 @@ object DottyMirror {
       if (d.position().isPresent) {
         val pos = d.position().get
         val path = Paths.get(pos.source().path())
-        val attrs =
-          builder.getOrElseUpdate(path, s.Attributes(filename = path.toString))
+        val attrs = builder.getOrElseUpdate(
+          path,
+          s.Attributes(
+            dialect = "Dotty",
+            filename = compiler.sourceroot.relativize(path).toString
+          )
+        )
+
         val severity = d.level() match {
           case Diagnostic.ERROR => s.Message.Severity.ERROR
           case Diagnostic.WARNING => s.Message.Severity.WARNING
@@ -33,8 +40,10 @@ object DottyMirror {
         builder(path) = attrs.copy(messages = message +: attrs.messages)
       }
     }
-
-    val dottyMirror = s.Database.apply(builder.values.toList).toMeta(None)
-    dottyMirror
+    builder.keys.foreach(path => logger.elem(path))
+    val sourceRoot = Sourcepath(AbsolutePath(compiler.sourceroot))
+    val dottyMirror =
+      s.Database.apply(builder.values.toList).toMeta(Some(sourceRoot))
+    ScalafixDatabase(dottyMirror, scalacMirror.dependencyClasspath)
   }
 }

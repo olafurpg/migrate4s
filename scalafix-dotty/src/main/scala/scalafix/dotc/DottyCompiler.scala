@@ -6,15 +6,19 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.net.URLClassLoader
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.Optional
 import scala.meta._
 import scala.util.Try
 import scalafix.syntax._
 import dotty.tools.dotc.interfaces._
+import org.scalameta.logger
 
 case class Error(message: String, position: Option[SourcePosition])
 
 class DottyCompiler(classloader: URLClassLoader) {
+  val sourceroot: Path = Files.createTempDirectory("scalafix.DottyCompiler")
   private val cp = classloader.getURLs
     .collect { case url if url.getPath.endsWith(".jar") => url.getPath }
     .mkString(File.pathSeparator)
@@ -102,9 +106,14 @@ class DottyCompiler(classloader: URLClassLoader) {
   def compile(inputs: Seq[Input], classpath: Seq[String]): List[Diagnostic] = {
     val out = Files.createTempDirectory("scalafix").toString
     val tmpFiles = inputs.map { input =>
-      val suffix =
-        if (input.isInstanceOf[Input.File]) input.label else "Code.scala"
-      val tmpFile = Files.createTempFile("scalafix", suffix)
+      val relpath: Path = input match {
+        case Input.File(path, _) => path.toNIO
+        case Input.LabeledString(path, _) => Paths.get(path)
+        case _ => Files.createTempFile(sourceroot, "scalafix", "input.scala")
+      }
+      val tmpFile = sourceroot.resolve(relpath)
+      tmpFile.getParent.toFile.mkdirs()
+      tmpFile.toFile.createNewFile()
       Files.write(tmpFile, new String(input.chars).getBytes)
       tmpFile.toAbsolutePath.toString
     }
