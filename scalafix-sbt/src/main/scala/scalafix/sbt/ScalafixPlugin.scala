@@ -12,6 +12,8 @@ import sbt._
 import sbt.inc.Analysis
 import sbt.plugins.JvmPlugin
 import scala.meta.scalahost.sbt.ScalahostSbtPlugin
+import sbt.complete.Parser
+import scalafix.internal.sbt.ScalafixCompletions
 import scalafix.internal.sbt.CliWrapperPlugin
 
 object ScalafixPlugin extends AutoPlugin {
@@ -78,7 +80,7 @@ object ScalafixPlugin extends AutoPlugin {
     val log = streams.value.log
     scalahostCompile.value // trigger compilation
     val classpath = scalahostClasspath.value.asPath
-    val inputArgs = Def.spaceDelimited("<rewrite>").parsed
+    val inputArgs: Seq[String] = ScalafixCompletions.parser.parsed
     val directoriesToFix: Seq[String] =
       scalafixUnmanagedSources.value.flatMap(_.collect {
         case p if p.exists() => p.getAbsolutePath
