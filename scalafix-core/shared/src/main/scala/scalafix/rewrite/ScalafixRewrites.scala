@@ -17,6 +17,7 @@ object ScalafixRewrites {
     Sbt1(semanticCtx),
     ExplicitReturnTypes(semanticCtx),
     RemoveUnusedImports(semanticCtx),
+    NoAutoApply(mirror),
     NoAutoTupling(semanticCtx)
   )
   def all(semanticCtx: SemanticCtx): List[Rewrite] =
