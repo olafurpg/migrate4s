@@ -12,6 +12,7 @@ object ScalafixRewrites {
     DottyVarArgPattern
   )
   def semantic(mirror: Database): List[Rewrite] = List(
+    ExpandSugars(mirror),
     ExplicitReturnTypes(mirror),
     RemoveUnusedImports(mirror),
     NoAutoTupling(mirror)
