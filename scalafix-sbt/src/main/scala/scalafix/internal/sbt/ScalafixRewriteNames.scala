@@ -13,6 +13,8 @@ object ScalafixRewriteNames {
     "Sbt1",
     "ExplicitReturnTypes",
     "RemoveUnusedImports",
+    "NoAutoApply",
     "NoAutoTupling"
   )
 }
+

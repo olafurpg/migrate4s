@@ -12,5 +12,5 @@ object NoAutoApply {
     def qux() = List(1)
   }
   new buz().qux().toIterator.next()
-  println(1.toString())
+  new java.util.ArrayList[Int]().toString
 }
