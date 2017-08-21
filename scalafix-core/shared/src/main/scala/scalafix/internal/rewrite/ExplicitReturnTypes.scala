@@ -74,6 +74,7 @@ case class ExplicitReturnTypes(semanticCtx: SemanticCtx)
     } yield typ
 
   override def rewrite(ctx: RewriteCtx): Patch = {
+    ctx.debugSemanticCtx()
     import scala.meta._
     import ctx._
     def fix(defn: Defn, body: Term): Seq[Patch] = {
