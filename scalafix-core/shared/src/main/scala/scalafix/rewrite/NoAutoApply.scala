@@ -1,44 +1,62 @@
 package scalafix
 package rewrite
 
-import scala.annotation.tailrec
+import scalafix.syntax._
+import scala.collection.mutable
 import scala.collection.mutable
 import scala.meta._
 import scala.meta.internal.trees._
+import scalafix.util.TreeExtractors
 
 case class NoAutoApply(mirror: SemanticCtx) extends SemanticRewrite(mirror) {
+  val isMagicSymbol: Set[Symbol] = Set(
+    Symbol("_root_.scala.Any#"),
+    Symbol("_root_.java.lang.Object#")
+  )
 
-  // Find the name of this Term.Apply
-  @tailrec final def applyName(tree: Tree): Option[Name] = tree match {
-    case Term.Apply(fun, _) => applyName(fun)
-    case Term.ApplyType(fun, _) => applyName(fun)
-    case Term.Select(_, n) => Some(n)
-    case t @ Term.Name(_) => Some(t)
-    case _ => None
-  }
   override def rewrite(ctx: RewriteCtx): Patch = {
-    val isApply = mutable.Set.empty[Name]
-    ctx.tree
-      .collect {
-        case s @ Term.ApplyInfix(_, op, _, Nil) =>
-          isApply += op
-          None
-        case s @ Term.Apply(_, Nil) =>
-          applyName(s).foreach { x =>
-            ctx.debug(x)
-            isApply += x
-          }
-          None
-        case name @ Term.Name(_) if !name.isBinder =>
-          for {
-            symbol <- mirror.symbol(name.pos)
-            denot <- mirror.denotation(symbol)
-            if !denot.isJavaDefined
-            if denot.info.contains(s"()")
-            if !isApply(name)
-          } yield ctx.replaceTree(name, s"$name()")
+    var patch = Patch.empty
+    val fixed = mutable.Set.empty[Name]
+    def fix(
+        fun: Term,
+        parent: Tree,
+        targs: List[Type],
+        args: List[List[Term]]): Unit = {
+      for {
+        name <- TreeExtractors.RelevantName.unapply(fun)
+        _ = if (args.nonEmpty) fixed += name
+        if name.isReference
+        if !name.parent.exists(_.is[Term.ApplyInfix])
+        if !fixed(name)
+        symbol <- mirror.symbol(name)
+        if !isMagicSymbol(symbol.owner)
+        denot <- mirror.denotation(symbol)
+        if !denot.isJavaDefined
+        // TODO(olafur) replace denot.info.ends/startsWith hack once
+        // Type.Method once it's available
+        if (denot.info.startsWith(s"()") &&
+          !denot.info.startsWith(s"() =>")) ||
+          denot.info.contains("]()")
+        _ = if (denot.name == "toString") ctx.debug(denot.info, symbol)
+        _ = if (denot.name == "hashCode") ctx.debug(denot.info, symbol)
+      } {
+        val toAdd = if (targs.isEmpty) name else parent
+        patch += ctx.addRight(toAdd, s"()")
+        fixed += name
       }
-      .flatten
-      .asPatch
+    }
+    new Traverser {
+      override def apply(tree: Tree): Unit = {
+        tree match {
+          case t @ q"$fun[..$targs](...${args})" =>
+            fix(fun, t, targs, args)
+          case t @ q"$fun(...${args})" =>
+            fix(fun, t, Nil, args)
+          case _ =>
+        }
+        super.apply(tree)
+      }
+    }.apply(ctx.tree)
+    patch
   }
 }

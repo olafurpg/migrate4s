@@ -20,6 +20,9 @@ trait SemanticCtx {
   /** Lookup symbol at this position. */
   def symbol(position: Position): Option[Symbol]
 
+  /** Lookup symbol of this tree. */
+  def symbol(position: Tree): Option[Symbol]
+
   /** Lookup denotation of this symbol. */
   def denotation(symbol: Symbol): Option[Denotation]
 }

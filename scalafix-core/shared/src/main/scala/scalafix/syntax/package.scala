@@ -41,6 +41,10 @@ package object syntax {
       syms.exists(otherSyms.contains)
     }
     def normalized: Symbol = SymbolOps.normalize(symbol)
+    def owner: Symbol = symbol match {
+      case Symbol.Global(owner, _) => owner
+      case _ => Symbol.None
+    }
   }
   implicit class XtensionAttributes(attributes: Attributes) {
     def dialect: Dialect = ScalafixScalametaHacks.dialect(attributes.language)
