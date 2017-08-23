@@ -2,6 +2,7 @@ package fix
 
 object NoAutoApply {
   object buz {
+    override def toString(): String = ""
     def empty[T]() = List.empty[T]
   }
   val x: Iterator[Int] = ???
@@ -24,9 +25,10 @@ object NoAutoApply {
   fix.NoAutoApply.buz.empty[String]()
   var opt: Option[() => Int] = None
   opt = None
-  println(1.toString)
+  println(1.toString())
+  println(buz.toString()) // not inserted
   List(builder) map (_.result())
-  builder.##
+  builder.##()
   def lzy(f: => Int) = {
     var k = f _
     k = () => 3

@@ -1,18 +1,12 @@
 package scalafix
 package rewrite
 
-import scalafix.syntax._
-import scala.collection.mutable
 import scala.collection.mutable
 import scala.meta._
 import scala.meta.internal.trees._
 import scalafix.util.TreeExtractors
 
 case class NoAutoApply(mirror: SemanticCtx) extends SemanticRewrite(mirror) {
-  val isMagicSymbol: Set[Symbol] = Set(
-    Symbol("_root_.scala.Any#"),
-    Symbol("_root_.java.lang.Object#")
-  )
 
   override def rewrite(ctx: RewriteCtx): Patch = {
     var patch = Patch.empty
@@ -29,16 +23,13 @@ case class NoAutoApply(mirror: SemanticCtx) extends SemanticRewrite(mirror) {
         if !name.parent.exists(_.is[Term.ApplyInfix])
         if !fixed(name)
         symbol <- mirror.symbol(name)
-        if !isMagicSymbol(symbol.owner)
         denot <- mirror.denotation(symbol)
         if !denot.isJavaDefined
-        // TODO(olafur) replace denot.info.ends/startsWith hack once
-        // Type.Method once it's available
+        // TODO(olafur) replace this denot.info.ends/startsWith hack with
+        // Type.Method once it's available.
         if (denot.info.startsWith(s"()") &&
           !denot.info.startsWith(s"() =>")) ||
           denot.info.contains("]()")
-        _ = if (denot.name == "toString") ctx.debug(denot.info, symbol)
-        _ = if (denot.name == "hashCode") ctx.debug(denot.info, symbol)
       } {
         val toAdd = if (targs.isEmpty) name else parent
         patch += ctx.addRight(toAdd, s"()")

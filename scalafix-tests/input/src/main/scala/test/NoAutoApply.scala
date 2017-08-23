@@ -5,6 +5,7 @@ package fix
 
 object NoAutoApply {
   object buz {
+    override def toString(): String = ""
     def empty[T]() = List.empty[T]
   }
   val x: Iterator[Int] = ???
@@ -28,9 +29,9 @@ object NoAutoApply {
   var opt: Option[() => Int] = None
   opt = None
   println(1.toString)
+  println(buz.toString) // not inserted
   List(builder) map (_.result)
   builder.##
-  (null: scala.reflect.ClassTag[Int]).toString
   def lzy(f: => Int) = {
     var k = f _
     k = () => 3
