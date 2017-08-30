@@ -103,7 +103,11 @@ lazy val allSettings = List(
   testOptions in Test += Tests.Argument("-oD"),
   scalaVersion := ciScalaVersion.getOrElse(scala212),
   crossScalaVersions := crossVersions,
-  updateOptions := updateOptions.value.withCachedResolution(true)
+  updateOptions := updateOptions.value.withCachedResolution(true),
+  libraryDependencies += "com.lihaoyi" %% "acyclic" % "0.1.7" % Provided,
+  autoCompilerPlugins := true,
+  addCompilerPlugin("com.lihaoyi" %% "acyclic" % "0.1.7"),
+  scalacOptions += "-P:acyclic:force"
 )
 
 lazy val allJSSettings = List(

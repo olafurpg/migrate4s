@@ -2,7 +2,7 @@ package scalafix.internal.rewrite
 
 import scala.meta._
 import scalafix.Patch
-import scalafix.SemanticCtx
+import scalafix.util.SemanticCtx
 import scalafix.rewrite.RewriteCtx
 import scalafix.rewrite.SemanticRewrite
 

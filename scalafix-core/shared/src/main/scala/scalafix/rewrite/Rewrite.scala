@@ -1,12 +1,12 @@
-package scalafix
-package rewrite
+package scalafix.rewrite
 
 import scala.collection.immutable.Seq
 import scala.meta._
-import scalafix.internal.config.ScalafixMetaconfigReaders
-import scalafix.internal.config.ScalafixConfig
 import scalafix.internal.util.Failure
-import scalafix.syntax._
+import scalafix.patch.Patch
+import scalafix.util.InputOps
+import scalafix.util.SemanticCtx
+import scalafix.util.TreeOps
 import metaconfig.Conf
 import metaconfig.ConfDecoder
 import metaconfig.Configured
@@ -40,14 +40,6 @@ abstract class Rewrite(implicit val rewriteName: RewriteName) { self =>
 
   /** Returns string output of applying this single patch. */
   final def apply(ctx: RewriteCtx): String = apply(ctx, rewrite(ctx))
-  final def apply(
-      input: Input,
-      config: ScalafixConfig = ScalafixConfig.default): String = {
-    val ctx = RewriteCtx(config.dialect(input).parse[Source].get, config)
-    val patch = rewrite(ctx)
-    apply(ctx, patch)
-  }
-  final def apply(input: String): String = apply(Input.String(input))
   final def apply(ctx: RewriteCtx, patch: Patch): String = {
     val result = Patch(patch, ctx, semanticOption)
     Patch.lintMessages(patch, ctx).foreach { msg =>
@@ -62,10 +54,10 @@ abstract class Rewrite(implicit val rewriteName: RewriteName) { self =>
   final def diff(ctx: RewriteCtx): String =
     diff(ctx, rewrite(ctx))
   final protected def diff(ctx: RewriteCtx, patch: Patch): String = {
-    val original = ctx.tree.input
+    val original = TreeOps.input(ctx.tree)
     Patch.unifiedDiff(
       original,
-      Input.VirtualFile(original.label, apply(ctx, patch)))
+      Input.VirtualFile(InputOps.label(original), apply(ctx, patch)))
 
   }
 
@@ -87,9 +79,6 @@ abstract class SemanticRewrite(sctx: SemanticCtx)(implicit name: RewriteName)
 }
 
 object Rewrite {
-  val syntaxRewriteConfDecoder: ConfDecoder[Rewrite] =
-    ScalafixMetaconfigReaders.rewriteConfDecoderSyntactic(
-      ScalafixMetaconfigReaders.baseSyntacticRewriteDecoder)
   lazy val empty: Rewrite = syntactic(_ => Patch.empty)(RewriteName.empty)
   def emptyConfigured: Configured[Rewrite] = Configured.Ok(empty)
   def emptyFromSemanticCtxOpt(sctx: Option[SemanticCtx]): Rewrite =

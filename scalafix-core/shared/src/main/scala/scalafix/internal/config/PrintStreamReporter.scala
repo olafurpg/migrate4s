@@ -46,3 +46,12 @@ case class PrintStreamReporter(
   /** Returns true if this reporter has seen an error */
   override def errorCount: Int = _errorCount.get()
 }
+
+object PrintStreamReporter {
+  val default: PrintStreamReporter = PrintStreamReporter(
+    Console.out,
+    Severity.Info,
+    FilterMatcher.matchEverything,
+    includeLoggerName = false
+  )
+}

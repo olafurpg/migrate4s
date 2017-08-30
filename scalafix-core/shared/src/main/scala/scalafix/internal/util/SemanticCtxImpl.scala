@@ -54,3 +54,19 @@ case class SemanticCtxImpl(
   def withEntries(entries: Seq[Attributes]): SemanticCtx =
     copy(database = Database(entries))
 }
+
+object SemanticCtxImpl {
+  val empty: SemanticCtx =
+    SemanticCtxImpl(Database(Nil), Sourcepath(Nil), Classpath(Nil))
+  def load(classpath: Classpath): SemanticCtx =
+    SemanticCtxImpl(Database.load(classpath), Sourcepath(Nil), classpath)
+  def load(sourcepath: Sourcepath, classpath: Classpath): SemanticCtx =
+    SemanticCtxImpl(Database.load(classpath, sourcepath), sourcepath, classpath)
+  def load(
+      database: Database,
+      sourcepath: Sourcepath,
+      classpath: Classpath): SemanticCtx =
+    SemanticCtxImpl(database, sourcepath, classpath)
+  def load(bytes: Array[Byte]): SemanticCtx =
+    empty.withEntries(Database.load(bytes).entries)
+}

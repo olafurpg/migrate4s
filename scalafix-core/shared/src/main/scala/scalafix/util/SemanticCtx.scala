@@ -1,7 +1,6 @@
 package scalafix.util
 
 import scala.meta._
-import scalafix.internal.util.SemanticCtxImpl
 
 /** Context for semantic rewrites.
   *
@@ -41,20 +40,4 @@ trait SemanticCtx {
   def denotation(tree: Tree): Option[Denotation]
 
   def withEntries(entries: Seq[Attributes]): SemanticCtx
-}
-
-object SemanticCtx {
-  val empty: SemanticCtx =
-    SemanticCtxImpl(Database(Nil), Sourcepath(Nil), Classpath(Nil))
-  def load(classpath: Classpath): SemanticCtx =
-    SemanticCtxImpl(Database.load(classpath), Sourcepath(Nil), classpath)
-  def load(sourcepath: Sourcepath, classpath: Classpath): SemanticCtx =
-    SemanticCtxImpl(Database.load(classpath, sourcepath), sourcepath, classpath)
-  def load(
-      database: Database,
-      sourcepath: Sourcepath,
-      classpath: Classpath): SemanticCtx =
-    SemanticCtxImpl(database, sourcepath, classpath)
-  def load(bytes: Array[Byte]): SemanticCtx =
-    empty.withEntries(Database.load(bytes).entries)
 }

@@ -4,7 +4,7 @@ import scalafix.lint.LintSeverity
 import metaconfig.ConfDecoder
 
 case class LintConfig(
-    reporter: ScalafixReporter = ScalafixReporter.default,
+    reporter: ScalafixReporter = PrintStreamReporter.default,
     explain: Boolean = false,
     ignore: FilterMatcher = FilterMatcher.matchNothing,
     info: FilterMatcher = FilterMatcher.matchNothing,

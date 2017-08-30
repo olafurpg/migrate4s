@@ -20,7 +20,7 @@ class SemanticTests
 }
 
 object SemanticTests {
-  def sctx: SemanticCtx = SemanticCtx.load(
+  def sctx: SemanticCtx = SemanticCtx.oad(
     Sbthost.patchDatabase(
       Database.load(
         classpath,

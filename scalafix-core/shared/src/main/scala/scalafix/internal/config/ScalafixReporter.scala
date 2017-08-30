@@ -49,12 +49,7 @@ trait ScalafixReporter {
 }
 
 object ScalafixReporter {
-  val default: PrintStreamReporter = PrintStreamReporter(
-    Console.out,
-    Severity.Info,
-    FilterMatcher.matchEverything,
-    includeLoggerName = false
-  )
   implicit val scalafixReporterReader: ConfDecoder[ScalafixReporter] =
-    default.reader
+    ???
+//    default.reader
 }

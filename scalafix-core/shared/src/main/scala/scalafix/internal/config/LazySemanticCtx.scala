@@ -18,7 +18,7 @@ class LazySemanticCtx(
 }
 
 object LazySemanticCtx {
-  lazy val empty = new LazySemanticCtx(_ => None, ScalafixReporter.default)
+  lazy val empty = new LazySemanticCtx(_ => None, PrintStreamReporter.default)
   def apply(f: RewriteKind => Option[SemanticCtx]): LazySemanticCtx =
-    new LazySemanticCtx(f, ScalafixReporter.default)
+    new LazySemanticCtx(f, PrintStreamReporter.default)
 }

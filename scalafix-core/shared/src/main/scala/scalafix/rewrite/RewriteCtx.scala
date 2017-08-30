@@ -1,10 +1,9 @@
-package scalafix
-package rewrite
+package scalafix.rewrite
+
 import scala.meta._
 import scala.meta.contrib.AssociatedComments
 import scala.meta.tokens.Tokens
-import scalafix.internal.config.ScalafixConfig
-import scalafix.internal.rewrite.RewriteCtxImpl
+import scalafix.lint.LintMessage
 import scalafix.patch.PatchOps
 import scalafix.util.MatchingParens
 import scalafix.util.SemanticCtx
@@ -47,15 +46,8 @@ trait RewriteCtx extends PatchOps {
 
   // Private scalafix methods, subject for removal without notice.
   private[scalafix] def toks(t: Tree): Tokens
-  private[scalafix] def config: ScalafixConfig
+//  private[scalafix] def config: ScalafixConfig
   private[scalafix] def printLintMessage(
       msg: LintMessage,
       owner: RewriteName): Unit
-}
-
-object RewriteCtx {
-  def apply(tree: Tree): RewriteCtx =
-    apply(tree, ScalafixConfig.default)
-  private[scalafix] def apply(tree: Tree, config: ScalafixConfig): RewriteCtx =
-    RewriteCtxImpl(tree, config)
 }

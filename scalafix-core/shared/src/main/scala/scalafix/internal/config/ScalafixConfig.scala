@@ -12,7 +12,7 @@ case class ScalafixConfig(
     debug: DebugConfig = DebugConfig(),
     groupImportsByPrefix: Boolean = true,
     fatalWarnings: Boolean = true,
-    reporter: ScalafixReporter = ScalafixReporter.default,
+    reporter: ScalafixReporter = PrintStreamReporter.default,
     patches: ConfigRewritePatches = ConfigRewritePatches.default,
     dialect: Dialect = Scala211,
     lint: LintConfig = LintConfig.default
@@ -50,7 +50,7 @@ case class ScalafixConfig(
   def withOut(out: PrintStream): ScalafixConfig = copy(
     reporter = reporter match {
       case r: PrintStreamReporter => r.copy(outStream = out)
-      case _ => ScalafixReporter.default.copy(outStream = out)
+      case _ => PrintStreamReporter.default.copy(outStream = out)
     }
   )
 }
@@ -69,12 +69,12 @@ object ScalafixConfig {
     else None
   }
 
-  def fromInput(
-      input: Input,
-      sctx: LazySemanticCtx,
-      extraRewrites: List[String] = Nil)(
-      implicit decoder: ConfDecoder[Rewrite]
-  ): Configured[(Rewrite, ScalafixConfig)] =
-    configFromInput(input, sctx, extraRewrites)
+//  def fromInput(
+//      input: Input,
+//      sctx: LazySemanticCtx,
+//      extraRewrites: List[String] = Nil)(
+//      implicit decoder: ConfDecoder[Rewrite]
+//  ): Configured[(Rewrite, ScalafixConfig)] =
+//    configFromInput(input, sctx, extraRewrites)
 
 }

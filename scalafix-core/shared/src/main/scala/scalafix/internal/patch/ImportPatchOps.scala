@@ -92,7 +92,7 @@ object ImportPatchOps {
       }
     }
     val grouped: Seq[Importer] =
-      if (ctx.config.groupImportsByPrefix)
+      if (true) //  (ctx.config.groupImportsByPrefix)
         importersToAdd
           .groupBy(_.ref.syntax)
           .map {

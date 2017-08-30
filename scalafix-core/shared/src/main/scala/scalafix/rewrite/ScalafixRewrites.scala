@@ -2,6 +2,7 @@ package scalafix
 package rewrite
 
 import scalafix.internal.rewrite._
+import scalafix.internal.util.SemanticCtxImpl
 
 object ScalafixRewrites {
   val syntax: List[Rewrite] = List(
@@ -27,6 +28,6 @@ object ScalafixRewrites {
     syntax.flatMap(x => x.names.map(_ -> x)).toMap
   lazy val syntacticNames: List[String] = syntaxName2rewrite.keys.toList
   lazy val semanticNames: List[String] =
-    semantic(SemanticCtx.empty).flatMap(_.names)
+    semantic(SemanticCtxImpl.empty).flatMap(_.names)
   def allNames: List[String] = syntaxName2rewrite.keys.toList ++ semanticNames
 }

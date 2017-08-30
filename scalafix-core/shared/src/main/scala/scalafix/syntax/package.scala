@@ -8,6 +8,7 @@ import scala.meta.semanticdb.Symbol
 import scala.compat.Platform.EOL
 import scala.meta.internal.scalafix.ScalafixScalametaHacks
 import scalafix.internal.util.SymbolOps
+import scalafix.util.InputOps
 import scalafix.util.SymbolMatcher
 import scalafix.util.TreeOps
 
@@ -40,15 +41,9 @@ package object syntax {
     def matches(matcher: SymbolMatcher): Boolean =
       matcher.matches(tree)
     def parents: Stream[Tree] = TreeOps.parents(tree)
-    def input: Input = tree.tokens.headOption.map(_.input).getOrElse(Input.None)
+    def input: Input = TreeOps.input(tree)
   }
   implicit class XtensionInputScalafix(input: Input) {
-    def label: String = input match {
-      case inputs.Input.File(path, _) => path.toString()
-      case inputs.Input.VirtualFile(label, _) => label
-      case _ =>
-        s"Input.${input.productPrefix}('<${input.chars.take(10).mkString}...>')"
-          .replaceAllLiterally(EOL, "")
-    }
+    def label: String = InputOps.label(input)
   }
 }

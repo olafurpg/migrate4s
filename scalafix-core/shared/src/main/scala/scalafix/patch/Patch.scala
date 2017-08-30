@@ -1,5 +1,4 @@
-package scalafix
-package patch
+package scalafix.patch
 
 import scala.collection.immutable.Seq
 import scala.meta._
@@ -15,6 +14,8 @@ import scalafix.internal.util.Failure
 import scalafix.internal.util.TokenOps
 import scalafix.lint.LintMessage
 import scalafix.patch.TreePatch.ReplaceSymbol
+import scalafix.rewrite.RewriteCtx
+import scalafix.util.SemanticCtx
 import org.scalameta.logger
 
 /** A data structure that can produce a .patch file.
@@ -158,6 +159,7 @@ object Patch {
     val patchMap = patches
       .groupBy(x => TokenOps.hash(x.tok))
       .mapValues(_.reduce(merge).newTok)
+    q"1"
     ctx.tokens.toIterator
       .map(tok => patchMap.getOrElse(TokenOps.hash(tok), tok.syntax))
       .mkString

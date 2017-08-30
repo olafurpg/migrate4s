@@ -101,8 +101,7 @@ trait PatchOps {
   def replaceSymbol(fromSymbol: Symbol.Global, toSymbol: Symbol.Global)(
       implicit sctx: SemanticCtx): Patch
 
-  /**
-    * Replace appearances of names that reference fromSymbol with toName.
+  /** Replace appearances of names that reference fromSymbol with toName.
     *
     * toName should be a legal identifier, it cannot be a tree such as `foo()`.
     * Use this patch for example to rename a methods on a class.
