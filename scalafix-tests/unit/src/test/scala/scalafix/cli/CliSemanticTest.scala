@@ -71,4 +71,17 @@ class CliSemanticTest extends BaseCliTest {
       assert(msg.contains("Is --sourceroot correct?"))
     }
   )
+
+  checkSemantic(
+    name = "ignore stale semanticdb if contents would be unchanged",
+    args = Seq(),
+    expectedExit = ExitStatus.InvalidCommandLineOption,
+    run = runMain => {
+      runMain.apply()
+      runMain.apply() // run it twice
+    },
+    outputAssert = msg => {
+      assert(msg.isEmpty)
+    }
+  )
 }

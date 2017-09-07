@@ -237,4 +237,5 @@ class CliSyntacticTests extends BaseCliTest {
                        |""".stripMargin,
     expectedExit = ExitStatus.Ok
   )
+
 }

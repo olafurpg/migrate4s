@@ -2,6 +2,8 @@ package scalafix
 package internal.config
 
 import java.io.PrintStream
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import scala.meta._
 import scala.meta.dialects.Scala211
 import scala.meta.parsers.Parse
@@ -15,7 +17,8 @@ case class ScalafixConfig(
     reporter: ScalafixReporter = ScalafixReporter.default,
     patches: ConfigRulePatches = ConfigRulePatches.default,
     dialect: Dialect = Scala211,
-    lint: LintConfig = LintConfig.default
+    lint: LintConfig = LintConfig.default,
+    encoding: Charset = StandardCharsets.UTF_8
 ) {
 
   def withFreshReporters: ScalafixConfig = copy(
@@ -33,15 +36,17 @@ case class ScalafixConfig(
           getOrElse("reporter")(reporter) |@|
           getOrElse("patches")(patches)(patches.reader) |@|
           getOrElse("dialect")(dialect) |@|
-          getOrElse("lint")(lint)(lint.reader)
+          getOrElse("lint")(lint)(lint.reader) |@|
+          getOrElse("encoding")(encoding)
       ).map {
-        case ((((a, b), c), d), e) =>
+        case (((((a, b), c), d), e), f) =>
           copy(
             fatalWarnings = a,
             reporter = b,
             patches = c,
             dialect = d,
-            lint = e
+            lint = e,
+            encoding = f
           )
       }
 

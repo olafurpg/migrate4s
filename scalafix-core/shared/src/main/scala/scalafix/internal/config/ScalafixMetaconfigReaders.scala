@@ -14,8 +14,11 @@ import scalafix.internal.util.ClassloadRule
 import java.io.OutputStream
 import java.io.PrintStream
 import java.net.URI
+import java.nio.charset.Charset
 import java.util.regex.Pattern
 import scala.collection.immutable.Seq
+import scala.util.Failure
+import scala.util.Success
 import scala.util.control.NonFatal
 import metaconfig.Conf
 import metaconfig.ConfDecoder
@@ -30,6 +33,14 @@ object ScalafixMetaconfigReaders extends ScalafixMetaconfigReaders
 // A collection of metaconfig.Reader instances that are shared across
 trait ScalafixMetaconfigReaders {
 
+  implicit lazy val charsetDecoder: ConfDecoder[Charset] =
+    ConfDecoder.instance[Charset] {
+      case Conf.Str(name) =>
+        Try(Charset.forName(name)) match {
+          case Success(e) => Configured.ok(e)
+          case Failure(e) => Configured.exception(e)
+        }
+    }
   implicit lazy val parseReader: ConfDecoder[MetaParser] = {
     import scala.meta.parsers.Parse._
     ReaderUtil.oneOf[MetaParser](parseSource, parseStat, parseCase)

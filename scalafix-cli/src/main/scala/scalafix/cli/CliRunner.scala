@@ -3,6 +3,7 @@ package cli
 
 import java.io.File
 import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,6 +24,7 @@ import scala.util.Try
 import scala.util.control.NonFatal
 import scalafix.internal.cli.CommonOptions
 import scalafix.internal.cli.FixFile
+import scalafix.internal.cli.SafetyCheck
 import scalafix.internal.cli.ScalafixOptions
 import scalafix.internal.cli.TermDisplay
 import scalafix.internal.cli.WriteMode
@@ -38,7 +40,7 @@ import scalafix.reflect.ScalafixReflect
 import scalafix.syntax._
 import metaconfig.Configured.Ok
 import metaconfig._
-import org.scalameta.logger
+import org.langmeta.internal.io.FileIO
 
 sealed abstract case class CliRunner(
     sourceroot: AbsolutePath,
@@ -90,16 +92,20 @@ sealed abstract case class CliRunner(
   // safeguard to verify that the original file contents have not changed since the
   // creation of the .semanticdb file. Without this check, we risk overwriting
   // the latest changes written by the user.
-  private def isUpToDate(input: FixFile): Boolean =
-    if (!input.toIO.exists() && cli.outTo.nonEmpty) true
+  private def isUpToDate(input: FixFile, contentsToWrite: String): SafetyCheck =
+    if (!input.toIO.exists() && cli.outTo.nonEmpty) SafetyCheck.OkWrite
     else {
       input.semanticFile match {
-        case Some(Input.VirtualFile(_, contents)) =>
-          val fileToWrite = scala.io.Source.fromFile(input.toIO)
-          try fileToWrite.sameElements(contents.toCharArray.toIterator)
-          finally fileToWrite.close()
+        case Some(Input.VirtualFile(_, semanticdbContents)) =>
+          // Can't use input.original.chars because of megaCache:
+          // https://github.com/scalameta/scalameta/issues/1068
+          val fileToWrite = FileIO.slurp(input.original.path, config.encoding)
+          if (fileToWrite == semanticdbContents) SafetyCheck.DoNothing
+          else if (fileToWrite == semanticdbContents) SafetyCheck.OkWrite
+          else SafetyCheck.AbortStaleDb
         case _ =>
-          true // No way to check for Input.File, see https://github.com/scalameta/scalameta/issues/886
+          // No way to check for Input.File, see https://github.com/scalameta/scalameta/issues/886
+          SafetyCheck.OkWrite
       }
     }
 
@@ -142,19 +148,24 @@ sealed abstract case class CliRunner(
             }
           case WriteMode.WriteFile =>
             val outFile = replacePath(input.original.path)
-            if (isUpToDate(input)) {
-              Files.createDirectories(outFile.toNIO.getParent)
-              Files.write(outFile.toNIO, fixed.getBytes(input.original.charset))
-              ExitStatus.Ok
-            } else {
-              cli.diagnostic.error(
-                s"Stale semanticdb for ${CliRunner.pretty(outFile)}, skipping rule. Please recompile.")
-              if (cli.verbose) {
-                val diff =
-                  Patch.unifiedDiff(input.semanticFile.get, input.original)
-                common.err.println(diff)
-              }
-              ExitStatus.StaleSemanticDB
+            isUpToDate(input, fixed) match {
+              case SafetyCheck.OkWrite =>
+                Files.createDirectories(outFile.toNIO.getParent)
+                Files.write(
+                  outFile.toNIO,
+                  fixed.getBytes(input.original.charset))
+                ExitStatus.Ok
+              case SafetyCheck.DoNothing =>
+                ExitStatus.Ok
+              case SafetyCheck.AbortStaleDb =>
+                cli.diagnostic.error(
+                  s"Stale semanticdb for ${CliRunner.pretty(outFile)}, skipping rule. Please recompile.")
+                if (cli.verbose) {
+                  val diff =
+                    Patch.unifiedDiff(input.semanticFile.get, input.original)
+                  common.err.println(diff)
+                }
+                ExitStatus.StaleSemanticDB
             }
         }
     }

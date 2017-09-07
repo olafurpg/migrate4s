@@ -75,7 +75,8 @@ trait BaseCliTest extends FunSuite with DiffAssertions {
       name: String,
       args: Seq[String],
       expectedExit: ExitStatus,
-      outputAssert: String => Unit = _ => ()
+      outputAssert: String => Unit = _ => (),
+      run: (() => ExitStatus) => ExitStatus = _.apply()
   ): Unit = {
     test(name) {
       val fileIsFixed = expectedExit.isOk
@@ -84,22 +85,23 @@ trait BaseCliTest extends FunSuite with DiffAssertions {
       tmp.toFile.deleteOnExit()
       val root = ops.Path(tmp) / "input"
       ops.cp(ops.Path(BuildInfo.inputSourceroot.toPath), root)
-      val exit = Cli.runMain(
-        args ++ Seq(
-          "-r",
-          RemoveUnusedImports.toString(),
-          removeImportsPath.toString()
-        ),
-        default.common.copy(
-          workingDirectory = root.toString(),
-          out = new PrintStream(out)
+      val fileToFix = AbsolutePath(root.toNIO).resolve(removeImportsPath)
+      val runMain: () => ExitStatus = () => {
+        Cli.runMain(
+          args ++ Seq(
+            "-r",
+            RemoveUnusedImports.toString(),
+            removeImportsPath.toString()
+          ),
+          default.common.copy(
+            workingDirectory = root.toString(),
+            out = new PrintStream(out)
+          )
         )
-      )
+      }
+      val exit = run(runMain)
       val obtained = {
-        val fixed =
-          FileIO.slurp(
-            AbsolutePath(root.toNIO).resolve(removeImportsPath),
-            StandardCharsets.UTF_8)
+        val fixed = FileIO.slurp(fileToFix, StandardCharsets.UTF_8)
         if (fileIsFixed) SemanticRuleSuite.stripTestkitComments(fixed)
         else fixed
       }
