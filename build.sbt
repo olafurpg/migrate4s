@@ -464,6 +464,8 @@ lazy val websiteSettings = Seq(
       "githubOwner" -> micrositeGithubOwner.value,
       "githubRepo" -> micrositeGithubRepo.value,
       "docsUrl" -> micrositeDocumentationUrl.value,
+      "callToActionText" -> "View Documentation",
+      "callToActionUrl" -> micrositeDocumentationUrl.value,
       "scala212" -> scala212,
       "scala211" -> scala211,
       "stableVersion" -> (stableVersion in coreJVM).value, // TODO(gabro): there must be a simpler way...
