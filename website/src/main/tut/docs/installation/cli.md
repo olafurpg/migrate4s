@@ -30,3 +30,7 @@ wget -O scalafix https://github.com/scalacenter/scalafix/blob/master/scalafix?ra
 Once the scalafix cli is installed, consult the --help page for further usage instructions.
 
 > TODO(gabro): automatically include help message?
+
+```tut:evaluated:plain
+println(s"\n${scalafix.cli.Cli.helpMessage}\n")
+```

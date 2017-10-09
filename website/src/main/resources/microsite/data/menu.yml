@@ -70,3 +70,6 @@ options:
 
   - title: API Docs
     url: docs/api/
+
+  - title: Browse source code
+    url: docs/code/

@@ -162,6 +162,7 @@ lazy val reflect = project
     allSettings,
     publishSettings,
     isFullCrossVersion,
+    semanticdbSettings,
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scala-lang" % "scala-reflect" % scalaVersion.value
@@ -219,6 +220,7 @@ lazy val cli = project
     isFullCrossVersion,
     mainClass in assembly := Some("scalafix.cli.Cli"),
     assemblyJarName in assembly := "scalafix.jar",
+    semanticdbSettings,
     libraryDependencies ++= Seq(
       "org.scalameta" %% "semanticdb-sbt-runtime" % semanticdbSbt,
       "com.github.alexarchambault" %% "case-app" % "1.1.3",
@@ -518,13 +520,14 @@ lazy val unidocSettings = Seq(
 
 lazy val website = project
   .enablePlugins(MicrositesPlugin)
-  .enablePlugins(ScalaUnidocPlugin)
+  .enablePlugins(MetadocPlugin)
   .settings(
     allSettings,
     websiteSettings,
-    unidocSettings
+    target in metadoc := target.value / "site" / "docs" / "code",
+    metadocProjectFilter := inProjects(coreJVM, reflect, cli, testkit, unit)
   )
-  .dependsOn(testkit)
+  .dependsOn(testkit, cli)
 
 lazy val readme = scalatex
   .ScalatexReadme(

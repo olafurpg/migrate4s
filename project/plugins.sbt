@@ -17,5 +17,6 @@ addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.7.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.15")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "0.7.4")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.1")
+addSbtPlugin("org.scalameta" % "sbt-metadoc" % "0.1-SNAPSHOT")
 
 libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
