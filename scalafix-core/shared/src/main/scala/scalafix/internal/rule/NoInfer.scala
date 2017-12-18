@@ -37,33 +37,37 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
       .getOrElse("noInfer", "NoInfer")(NoInferConfig.default)
       .map(NoInfer(index, _))
 
-  private def isExcluded(synthetic: Synthetic): Boolean =
-    config.excludeEnclosing.nonEmpty && {
-      enclosingSymbol(synthetic).exists { enclosing =>
-        excludedSymbol.matches(enclosing)
-      }
-    }
-
-  def enclosingSymbol(synthetic: Synthetic): Option[Symbol] = {
-    for {
-      term <- synthetic.input.parse[Term].toOption
-      symbol <- index.symbol(term)
-    } yield {
-      if (symbol != Symbol.Global(Symbol.None, Signature.Term("_star_"))) {
-        symbol
-      } else {
-        val Start = synthetic.position.start
-        val replacement = ctxIndex.database.names.collectFirst {
-          case ResolvedName(Position.Range(_, _, Start), sym, _) =>
-            sym
-        }
-        replacement.getOrElse(Star)
-      }
-    }
-  }
-
   override def check(ctx: RuleCtx): Seq[LintMessage] = {
     val ctxIndex = ctx.index
+
+    def isExcluded(synthetic: Synthetic): Boolean =
+      config.excludeEnclosing.nonEmpty && {
+        enclosingSymbol(synthetic).exists { enclosing =>
+          logger.elem(enclosing)
+          excludedSymbol.matches(enclosing)
+        }
+      }
+
+    def enclosingSymbol(synthetic: Synthetic): Option[Symbol] = {
+      for {
+        term <- synthetic.input.parse[Term].toOption
+        symbol <- index.symbol(term)
+      } yield {
+        if (symbol != Symbol.Global(Symbol.None, Signature.Term("_star_"))) {
+          symbol
+        } else {
+          val Start = synthetic.position.start
+          val replacement = ctxIndex.database.names.collectFirst {
+            case ResolvedName(Position.Range(_, _, Start), sym, _) =>
+              sym
+          }
+          replacement.getOrElse {
+            Star
+          }
+        }
+      }
+    }
+
     for {
       synthetic @ Synthetic(pos, text, names) <- ctxIndex.synthetics
       if !isExcluded(synthetic)
