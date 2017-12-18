@@ -55,7 +55,7 @@ trait SemanticdbIndex {
   def denotation(tree: Tree): Option[Denotation]
 
   /** Returns this term inferred type parameters, .apply and implicits expanded */
-  def desugar(term: Term): Option[Term]
+  def desugar(tree: Tree): Option[Tree]
 
   /** Build new SemanticdbIndex with only these documents. */
   def withDocuments(documents: Seq[Document]): SemanticdbIndex

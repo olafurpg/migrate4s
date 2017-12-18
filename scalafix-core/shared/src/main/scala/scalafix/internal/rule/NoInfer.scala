@@ -2,13 +2,9 @@ package scalafix.internal.rule
 
 import scala.meta._
 import metaconfig.{Conf, Configured}
-import scalafix.lint.LintCategory
-import scalafix.lint.LintMessage
-import scalafix.rule.{Rule, RuleCtx}
-import scalafix.rule.SemanticRule
-import scalafix.util.SemanticdbIndex
-import scalafix.util.SymbolMatcher
+import scalafix._
 import scalafix.internal.config.NoInferConfig
+import scalafix.util.SymbolMatcher
 import org.scalameta.logger
 
 final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
@@ -19,7 +15,8 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
     LintCategory.error(
       """The Scala compiler sometimes infers a too generic type such as Any.
         |If this is intended behavior, then the type should be explicitly type
-        |annotated in the source.""".stripMargin
+        |annotated in the source. If you believe it's fine to infer this symbol
+        |""".stripMargin
     )
 
   override def description: String =
@@ -30,27 +27,55 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
       SymbolMatcher.normalized(NoInfer.badSymbols: _*)
     else SymbolMatcher.normalized(config.symbols: _*)
 
+  private lazy val excludedSymbol: SymbolMatcher =
+    SymbolMatcher.normalized(config.excludeEnclosing: _*)
+
+  private val Star = Symbol("_star_.")
+
   override def init(config: Conf): Configured[Rule] =
     config
       .getOrElse("noInfer", "NoInfer")(NoInferConfig.default)
       .map(NoInfer(index, _))
 
-  override def check(ctx: RuleCtx): Seq[LintMessage] =
-    ctx.index.synthetics.flatMap {
-      case synthetic @ Synthetic(pos, text, names) =>
-        val enclosing = names
-          .dropWhile(
-            _.symbol == Symbol.Global(Symbol.None, Signature.Term("_star_")))
-          .headOption
-        logger.elem(enclosing)
-        names.collect {
-          case ResolvedName(_, noInferSymbol(Symbol.Global(_, signature)), _) =>
-            val categoryId = signature.name.toLowerCase()
-            error
-              .copy(id = categoryId)
-              .at(s"Inferred ${signature.name} in $text", pos)
-        }
+  private def isExcluded(synthetic: Synthetic): Boolean =
+    config.excludeEnclosing.nonEmpty && {
+      enclosingSymbol(synthetic).exists { enclosing =>
+        excludedSymbol.matches(enclosing)
+      }
     }
+
+  def enclosingSymbol(synthetic: Synthetic): Option[Symbol] = {
+    for {
+      term <- synthetic.input.parse[Term].toOption
+      symbol <- index.symbol(term)
+    } yield {
+      if (symbol != Symbol.Global(Symbol.None, Signature.Term("_star_"))) {
+        symbol
+      } else {
+        val Start = synthetic.position.start
+        val replacement = ctxIndex.database.names.collectFirst {
+          case ResolvedName(Position.Range(_, _, Start), sym, _) =>
+            sym
+        }
+        replacement.getOrElse(Star)
+      }
+    }
+  }
+
+  override def check(ctx: RuleCtx): Seq[LintMessage] = {
+    val ctxIndex = ctx.index
+    for {
+      synthetic @ Synthetic(pos, text, names) <- ctxIndex.synthetics
+      if !isExcluded(synthetic)
+      ResolvedName(_, noInferSymbol(Symbol.Global(_, signature)), _) <- names
+    } yield {
+      val categoryId = signature.name.toLowerCase()
+      error
+        .copy(id = categoryId)
+        .at(s"Inferred ${signature.name} in $text", pos)
+    }
+  }
+
 }
 
 case object NoInfer {

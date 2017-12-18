@@ -3,6 +3,7 @@ package internal.util
 
 import scala.meta._
 import scalafix.util.SymbolMatcher
+import org.scalameta.logger
 
 case class EagerInMemorySemanticdbIndex(
     database: Database,
@@ -47,6 +48,8 @@ case class EagerInMemorySemanticdbIndex(
       symbol(pos)
     case Importee.Rename(name, _) => symbol(name)
     case Importee.Name(name) => symbol(name)
+    case Term.ApplyType(fun, _) => symbol(fun)
+    case Term.Apply(fun, _) => symbol(fun)
     case Term.Select(_, name @ Name(_)) => symbol(name)
     case Type.Select(_, name @ Name(_)) => symbol(name)
     case _ => symbol(tree.pos)
@@ -57,24 +60,23 @@ case class EagerInMemorySemanticdbIndex(
     symbol(tree).flatMap(denotation)
   private[this] val Star =
     SymbolMatcher.exact(scala.meta.Symbol("_star_."))(this)
-  def desugar(term: Term): Option[Term] = {
+  def desugar(tree: Tree): Option[Tree] = {
     for {
       synthetic <- _synthetics
-        .get(term.pos)
+        .get(tree.pos)
         .orElse {
-          term.pos match {
-            case Position.Range(input, start, end) =>
+          tree.pos match {
+            case Position.Range(input, _, end) =>
               _synthetics.get(Position.Range(input, end, end))
             case _ => None
           }
         }
       syntheticTerm <- synthetic.input.parse[Term].toOption
     } yield {
-      syntheticTerm
-        .transform {
-          case Star(_) => term
-        }
-        .asInstanceOf[Term]
+      logger.elem(syntheticTerm)
+      syntheticTerm.transform {
+        case Star(_) => tree
+      }
     }
   }
   override def names: Seq[ResolvedName] = _names.values.toSeq

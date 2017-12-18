@@ -1,4 +1,4 @@
-/* ONLY
+/*
 rule = NoInfer
 */
 package test
@@ -14,5 +14,4 @@ case object NoInferDefaults {
   }
   case class A()
   List(NoInferDefaults, A()) // assert: NoInfer.product
-  List(1).foreach(x => List(x): Any)
 }
