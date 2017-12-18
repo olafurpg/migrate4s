@@ -1,7 +1,9 @@
 package scalafix
 package internal.util
 
+import scala.collection.mutable
 import scala.meta._
+import scalafix.util.SymbolMatcher
 
 case class EagerInMemorySemanticdbIndex(
     database: Database,
@@ -28,6 +30,9 @@ case class EagerInMemorySemanticdbIndex(
     }
     builder.result()
   }
+  private lazy val _synthetics: Map[Position, Synthetic] = {
+    database.synthetics.iterator.map(s => s.position -> s).toMap
+  }
   def symbol(position: Position): Option[Symbol] =
     _names.get(position).map(_.symbol)
   def symbol(tree: Tree): Option[Symbol] = tree match {
@@ -43,6 +48,8 @@ case class EagerInMemorySemanticdbIndex(
       symbol(pos)
     case Importee.Rename(name, _) => symbol(name)
     case Importee.Name(name) => symbol(name)
+    case Term.ApplyType(fun, _) => symbol(fun)
+    case Term.Apply(fun, _) => symbol(fun)
     case Term.Select(_, name @ Name(_)) => symbol(name)
     case Type.Select(_, name @ Name(_)) => symbol(name)
     case _ => symbol(tree.pos)
@@ -51,6 +58,8 @@ case class EagerInMemorySemanticdbIndex(
     _denots.get(symbol)
   def denotation(tree: Tree): Option[Denotation] =
     symbol(tree).flatMap(denotation)
+  def desugar(tree: Tree): Tree =
+    DesugarOps.desugarTree(tree, _synthetics)(this)
   override def names: Seq[ResolvedName] = _names.values.toSeq
   def withDocuments(documents: Seq[Document]): SemanticdbIndex =
     copy(database = Database(documents))

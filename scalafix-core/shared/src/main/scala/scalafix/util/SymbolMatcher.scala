@@ -54,4 +54,8 @@ object SymbolMatcher {
   def normalized(symbol: Symbol*)(
       implicit index: SemanticdbIndex): SymbolMatcher =
     new SymbolMatcher(symbol.toList, SymbolOps.isSameNormalized)
+
+  def Star(implicit index: SemanticdbIndex): SymbolMatcher =
+    exact(SymbolOps.Star())
+
 }
