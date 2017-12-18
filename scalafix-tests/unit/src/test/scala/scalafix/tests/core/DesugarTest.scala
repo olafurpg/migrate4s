@@ -4,6 +4,7 @@ import org.scalameta.logger
 import scala.meta._
 import scala.meta.contrib._
 import scala.meta.interactive.InteractiveSemanticdb
+import scala.meta.internal.scalafix.ScalafixScalametaHacks
 import scalafix.SemanticdbIndex
 import scalafix.internal.util.EagerInMemorySemanticdbIndex
 import scalafix.testkit.DiffAssertions
@@ -20,6 +21,12 @@ class DesugarTest extends FunSuite with DiffAssertions {
         Classpath(Nil))
       val obtained = index.desugar(db.input.parse[Source].get)
       assertNoDiff(obtained.syntax, expected)
+      // TODO(olafur) figure out why this fails
+//      obtained.foreach(tree => {
+//        withClue(tree) {
+//          assert(tree.pos.input != Input.None)
+//        }
+//      })
     }
   }
 

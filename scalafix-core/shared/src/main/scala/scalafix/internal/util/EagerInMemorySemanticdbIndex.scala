@@ -3,6 +3,7 @@ package internal.util
 
 import scala.collection.mutable
 import scala.meta._
+import scala.meta.internal.scalafix.ScalafixScalametaHacks
 import scalafix.util.SymbolMatcher
 
 case class EagerInMemorySemanticdbIndex(
@@ -77,7 +78,7 @@ case class EagerInMemorySemanticdbIndex(
         syntheticTerm <- synthetic.input.parse[Term].toOption
       } yield {
         val merged = syntheticTerm.transform {
-          case Star(y: Term.Name) => tree
+          case Star(_: Term.Name) => tree
         }
         isUsedSynthetic += synthetic.position
         merged
@@ -93,7 +94,8 @@ case class EagerInMemorySemanticdbIndex(
         case base @ Desugared(desugared) if !isDone(base.pos) =>
           isDone += base.pos
           super.apply(desugared)
-        case t => super.apply(t)
+        case t =>
+          super.apply(t)
       }
     }
     DesugaringTransformer(tree)
