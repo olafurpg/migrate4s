@@ -2,6 +2,7 @@ package scalafix
 package internal.util
 
 import scala.meta._
+import scalafix.util.SymbolMatcher
 
 case class EagerInMemorySemanticdbIndex(
     database: Database,
@@ -28,6 +29,9 @@ case class EagerInMemorySemanticdbIndex(
     }
     builder.result()
   }
+  private lazy val _synthetics: Map[Position, Synthetic] = {
+    database.synthetics.iterator.map(s => s.position -> s).toMap
+  }
   def symbol(position: Position): Option[Symbol] =
     _names.get(position).map(_.symbol)
   def symbol(tree: Tree): Option[Symbol] = tree match {
@@ -51,6 +55,28 @@ case class EagerInMemorySemanticdbIndex(
     _denots.get(symbol)
   def denotation(tree: Tree): Option[Denotation] =
     symbol(tree).flatMap(denotation)
+  private[this] val Star =
+    SymbolMatcher.exact(scala.meta.Symbol("_star_."))(this)
+  def desugar(term: Term): Option[Term] = {
+    for {
+      synthetic <- _synthetics
+        .get(term.pos)
+        .orElse {
+          term.pos match {
+            case Position.Range(input, start, end) =>
+              _synthetics.get(Position.Range(input, end, end))
+            case _ => None
+          }
+        }
+      syntheticTerm <- synthetic.input.parse[Term].toOption
+    } yield {
+      syntheticTerm
+        .transform {
+          case Star(_) => term
+        }
+        .asInstanceOf[Term]
+    }
+  }
   override def names: Seq[ResolvedName] = _names.values.toSeq
   def withDocuments(documents: Seq[Document]): SemanticdbIndex =
     copy(database = Database(documents))
