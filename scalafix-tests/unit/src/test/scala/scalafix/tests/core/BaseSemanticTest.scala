@@ -10,8 +10,8 @@ import org.scalatest.FunSuite
 abstract class BaseSemanticTest(filename: String)
     extends FunSuite
     with BeforeAndAfterAll {
-  private var _db: SemanticdbIndex = _
-  private var _doc: Document = _
+  protected var _db: SemanticdbIndex = _
+  protected var _doc: Document = _
   implicit def index: SemanticdbIndex = _db
   def docs: Document = _doc
   def source: Source = docs.input.parse[Source].get
