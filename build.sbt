@@ -324,7 +324,8 @@ def unit(
         sources.in(Test) +=
           sourceDirectory.in(`scalafix-sbt`, Compile).value /
             "scala" / "scalafix" / "internal" / "sbt" / "ScalafixJarFetcher.scala",
-        libraryDependencies ++= coursierDeps ++ testsDeps
+        libraryDependencies ++= coursierDeps ++ testsDeps,
+        libraryDependencies += semanticdbCore
       ).enablePlugins(BuildInfoPlugin)
     )
 

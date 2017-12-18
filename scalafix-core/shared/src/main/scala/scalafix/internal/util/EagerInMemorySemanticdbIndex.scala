@@ -3,10 +3,7 @@ package internal.util
 
 import scala.collection.mutable
 import scala.meta._
-import scala.meta.internal.scalafix.ScalafixScalametaHacks
-import scala.meta.internal.trees.Origin
 import scalafix.util.SymbolMatcher
-import org.scalameta.logger
 
 case class EagerInMemorySemanticdbIndex(
     database: Database,
@@ -63,43 +60,43 @@ case class EagerInMemorySemanticdbIndex(
     symbol(tree).flatMap(denotation)
   private[this] val Star =
     SymbolMatcher.exact(scala.meta.Symbol("_star_."))(this)
-  object Desugared {
-    def unapply(tree: Tree): Option[Tree] = desugarOnce(tree)
-  }
-  def desugar(tree: Tree): Option[Tree] = {
-    logger.elem(database)
-    val isDone = mutable.Set.empty[Position]
-    import scala.meta.contrib._
-    Some(tree.transform {
-      case base @ Desugared(desugared) if !isDone(base.pos) =>
-        isDone += base.pos
-        logger.elem(desugared)
-        desugared
-    })
-//    None
-  }
-  def desugarOnce(tree: Tree): Option[Tree] = {
-    logger.elem(tree)
-    for {
-      synthetic <- _synthetics
-        .get(tree.pos)
-        .orElse {
-          tree.pos match {
-            case Position.Range(input, _, end) =>
-              _synthetics.get(Position.Range(input, end, end))
-            case _ => None
+  val isUsedSynthetic = mutable.Set.empty[Position]
+  def desugar(tree: Tree): Tree = {
+    def desugarOnce(tree: Tree): Option[Tree] = {
+      for {
+        synthetic <- _synthetics
+          .get(tree.pos)
+          .orElse {
+            tree.pos match {
+              case Position.Range(input, _, end) =>
+                _synthetics.get(Position.Range(input, end, end))
+              case _ => None
+            }
           }
+        if !isUsedSynthetic(synthetic.position)
+        syntheticTerm <- synthetic.input.parse[Term].toOption
+      } yield {
+        val merged = syntheticTerm.transform {
+          case Star(y: Term.Name) => tree
         }
-      syntheticTerm <- synthetic.input.parse[Term].toOption
-    } yield {
-      val merged = syntheticTerm.transform {
-        case x @ Star(y: Term.Name) =>
-          logger.elem(x, y)
-          tree
+        isUsedSynthetic += synthetic.position
+        merged
       }
-      logger.elem(tree, syntheticTerm, merged)
-      merged
     }
+    object Desugared {
+      def unapply(tree: Tree): Option[Tree] =
+        desugarOnce(tree)
+    }
+    val isDone = mutable.Set.empty[Position]
+    val DesugaringTransformer = new Transformer {
+      override def apply(tree: Tree): Tree = tree match {
+        case base @ Desugared(desugared) if !isDone(base.pos) =>
+          isDone += base.pos
+          super.apply(desugared)
+        case t => super.apply(t)
+      }
+    }
+    DesugaringTransformer(tree)
   }
   override def names: Seq[ResolvedName] = _names.values.toSeq
   def withDocuments(documents: Seq[Document]): SemanticdbIndex =
