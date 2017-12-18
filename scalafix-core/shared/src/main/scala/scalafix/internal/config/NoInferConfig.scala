@@ -5,11 +5,19 @@ import org.langmeta.Symbol
 
 import MetaconfigPendingUpstream.XtensionConfScalafix
 
-case class NoInferConfig(symbols: List[Symbol.Global] = Nil) {
+case class NoInferConfig(
+    symbols: List[Symbol.Global] = Nil,
+    excludeEnclosing: List[Symbol.Global] = Nil
+) {
   implicit val reader: ConfDecoder[NoInferConfig] =
-    ConfDecoder.instanceF[NoInferConfig](
-      _.getField(symbols).map(NoInferConfig(_))
-    )
+    ConfDecoder.instanceF[NoInferConfig] { c =>
+      (
+        c.getField(symbols) |@|
+          c.getField(excludeEnclosing)
+      ).map {
+        case (a, b) => NoInferConfig(a, b)
+      }
+    }
 }
 
 object NoInferConfig {

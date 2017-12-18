@@ -9,6 +9,7 @@ import scalafix.rule.SemanticRule
 import scalafix.util.SemanticdbIndex
 import scalafix.util.SymbolMatcher
 import scalafix.internal.config.NoInferConfig
+import org.scalameta.logger
 
 final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
     extends SemanticRule(index, "NoInfer")
@@ -36,13 +37,18 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
 
   override def check(ctx: RuleCtx): Seq[LintMessage] =
     ctx.index.synthetics.flatMap {
-      case Synthetic(pos, _, names) =>
+      case synthetic @ Synthetic(pos, text, names) =>
+        val enclosing = names
+          .dropWhile(
+            _.symbol == Symbol.Global(Symbol.None, Signature.Term("_star_")))
+          .headOption
+        logger.elem(enclosing)
         names.collect {
           case ResolvedName(_, noInferSymbol(Symbol.Global(_, signature)), _) =>
             val categoryId = signature.name.toLowerCase()
             error
               .copy(id = categoryId)
-              .at(s"Inferred ${signature.name}", pos)
+              .at(s"Inferred ${signature.name} in $text", pos)
         }
     }
 }
