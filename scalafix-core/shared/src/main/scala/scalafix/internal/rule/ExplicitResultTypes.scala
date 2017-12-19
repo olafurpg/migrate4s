@@ -94,8 +94,9 @@ case class ExplicitResultTypes(
           if (TokenOps.needsLeadingSpaceBeforeColon(replace)) " "
           else ""
         }
-      } yield ctx.addRight(replace, s"$space: ${treeSyntax(typ)}") + patch
-    }.asPatch.atomic
+      } yield
+        (ctx.addRight(replace, s"$space: ${treeSyntax(typ)}") + patch).atomic
+    }.asPatch
 
     def treeSyntax(tree: Tree): String =
       ScalafixScalametaHacks.resetOrigin(tree).syntax
