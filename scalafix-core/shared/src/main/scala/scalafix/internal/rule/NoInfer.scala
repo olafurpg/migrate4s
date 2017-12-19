@@ -4,6 +4,7 @@ import scala.meta._
 import metaconfig.{Conf, Configured}
 import scalafix._
 import scalafix.internal.config.NoInferConfig
+import scalafix.internal.util.SymbolOps
 import scalafix.util.SymbolMatcher
 import org.scalameta.logger
 
@@ -38,6 +39,8 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
       .map(NoInfer(index, _))
 
   override def check(ctx: RuleCtx): Seq[LintMessage] = {
+    val desugared = index.desugar(ctx.tree)
+
     val ctxIndex = ctx.index
 
     def isExcluded(synthetic: Synthetic): Boolean =

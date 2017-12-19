@@ -3,7 +3,6 @@ package internal.util
 
 import scala.collection.mutable
 import scala.meta._
-import scala.meta.internal.scalafix.ScalafixScalametaHacks
 import scalafix.util.SymbolMatcher
 
 case class EagerInMemorySemanticdbIndex(
@@ -61,9 +60,18 @@ case class EagerInMemorySemanticdbIndex(
     symbol(tree).flatMap(denotation)
   private[this] val Star =
     SymbolMatcher.exact(scala.meta.Symbol("_star_."))(this)
-  val isUsedSynthetic = mutable.Set.empty[Position]
+  private val isUsedSynthetic = mutable.Set.empty[Position]
+  private def isForComprehensionSynthetic(arg: Term): Boolean = arg match {
+    // Not possible to determine this by symbols since for-comprehension
+    // contract is syntactic.
+    case q"*.flatMap" | q"*.foreach" | q"*.map" | q"*.withFilter" => true
+    case Term.Apply(qual, _) => isForComprehensionSynthetic(qual)
+    case Term.ApplyType(qual, _) => isForComprehensionSynthetic(qual)
+    case _ => false
+  }
   def desugar(tree: Tree): Tree = {
     def desugarOnce(tree: Tree): Option[Tree] = {
+      if (tree.is[Enumerator]) return None // Not yet supported
       for {
         synthetic <- _synthetics
           .get(tree.pos)
@@ -76,6 +84,7 @@ case class EagerInMemorySemanticdbIndex(
           }
         if !isUsedSynthetic(synthetic.position)
         syntheticTerm <- synthetic.input.parse[Term].toOption
+        if !isForComprehensionSynthetic(syntheticTerm)
       } yield {
         val merged = syntheticTerm.transform {
           case Star(_: Term.Name) => tree
@@ -89,13 +98,40 @@ case class EagerInMemorySemanticdbIndex(
         desugarOnce(tree)
     }
     val isDone = mutable.Set.empty[Position]
+    val Dialect = scala.meta.dialects.Scala212.copy(
+      allowTypeLambdas = true,
+      allowMethodTypes = true
+    )
     val DesugaringTransformer = new Transformer {
+      object ResultType {
+        def unapply(defn: Member): Option[(Member, Type)] = {
+          for {
+            sym <- symbol(defn.name)
+            denot <- denotation(sym)
+            tpe <- Dialect(Input.Denotation(denot.signature, sym))
+              .parse[Type]
+              .toOption
+          } yield defn -> tpe
+        }
+      }
       override def apply(tree: Tree): Tree = tree match {
         case base @ Desugared(desugared) if !isDone(base.pos) =>
           isDone += base.pos
           super.apply(desugared)
-        case t =>
-          super.apply(t)
+        case _ =>
+          val next = tree match {
+            case ResultType(
+                Defn.Def(mods, pats, tparams, paramss, None, body),
+                Type.Method(_, tpe)) =>
+              Defn.Def(mods, pats, tparams, paramss, Some(tpe), body)
+            case ResultType(Defn.Val(mods, pats, None, body), tpe) =>
+              Defn.Val(mods, pats, Some(tpe), body)
+            case ResultType(Defn.Var(mods, pats, None, body), tpe) =>
+              Defn.Var(mods, pats, Some(tpe), body)
+            case _ =>
+              tree
+          }
+          super.apply(next)
       }
     }
     DesugaringTransformer(tree)

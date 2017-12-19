@@ -1,13 +1,10 @@
 package scalafix.tests.core
 
-import org.scalameta.logger
 import scala.meta._
-import scala.meta.contrib._
 import scala.meta.interactive.InteractiveSemanticdb
-import scala.meta.internal.scalafix.ScalafixScalametaHacks
-import scalafix.SemanticdbIndex
 import scalafix.internal.util.EagerInMemorySemanticdbIndex
 import scalafix.testkit.DiffAssertions
+import org.scalameta.logger
 import org.scalatest.FunSuite
 
 class DesugarTest extends FunSuite with DiffAssertions {
@@ -21,29 +18,68 @@ class DesugarTest extends FunSuite with DiffAssertions {
         Classpath(Nil))
       val obtained = index.desugar(db.input.parse[Source].get)
       assertNoDiff(obtained.syntax, expected)
-      // TODO(olafur) figure out why this fails
-//      obtained.foreach(tree => {
-//        withClue(tree) {
-//          assert(tree.pos.input != Input.None)
-//        }
-//      })
     }
   }
 
   check(
     """
-      |object DesugarTest {
-      | List(1).map(_ + 1)
-      | 'ab + "ba"
+      |object Apply {
+      |  List(1).map(_ + 1)
       |}
     """.stripMargin,
     source"""
-      object DesugarTest {
+      object Apply {
         List
           .apply[Int](1)
           .map[Int, List[Int]](_ + 1)(
             scala.collection.immutable.List.canBuildFrom[Int])
-        scala.Predef.any2stringadd[Symbol]('ab) + "ba"
+      }
+       """.syntax
+  )
+
+  check(
+    """
+      |object Conversion {
+      |   locally {
+      |     'ab + "ba"
+      |   }
+      |}
+    """.stripMargin,
+    source"""
+      object Conversion {
+        locally[String] {
+          scala.Predef.any2stringadd[Symbol]('ab) + "ba"
+        }
+      }
+       """.syntax
+  )
+
+  check(
+    """
+      |object Def {
+      |  def blah(implicit t: sourcecode.Text[Any]) = t.source
+      |  blah(1)
+      |}
+    """.stripMargin,
+    source"""
+      object Def {
+        def blah(implicit t: sourcecode.Text[Any]): String = t.source
+        blah(sourcecode.Text.generate[Any](1))
+      }
+       """.syntax
+  )
+
+  check(
+    """
+      |object For {
+      |  for (i <- 1.to(10); j <- 2.to(20)) yield i + j
+      |}
+    """.stripMargin,
+    source"""
+      object For {
+        for (i <- scala.Predef.intWrapper(1).to(10);
+             j <- scala.Predef.intWrapper(2).to(20))
+          yield i + j
       }
        """.syntax
   )
