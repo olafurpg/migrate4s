@@ -6,7 +6,7 @@ import scala.meta.Tree
 import scalafix.internal.util.SymbolOps
 
 /**
-  * Utility to match against a particular symbol.
+  * Utility to match against a particular symbo.
   *
   * Can be used both in pattern matching and regular condition testing.
   * {{{
@@ -54,4 +54,8 @@ object SymbolMatcher {
   def normalized(symbol: Symbol*)(
       implicit index: SemanticdbIndex): SymbolMatcher =
     new SymbolMatcher(symbol.toList, SymbolOps.isSameNormalized)
+
+  def Star(implicit index: SemanticdbIndex): SymbolMatcher =
+    exact(SymbolOps.Star())
+
 }

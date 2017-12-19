@@ -1,6 +1,7 @@
 package scalafix.internal.util
 
 import scala.meta._
+import org.langmeta.semanticdb.Signature
 
 object SymbolOps {
   object SignatureName {
@@ -13,6 +14,13 @@ object SymbolOps {
   object SymbolType {
     def unapply(arg: Symbol): Boolean = arg match {
       case Symbol.Global(_, Signature.Type(_)) => true
+      case _ => false
+    }
+  }
+  object Star {
+    def apply(): Symbol = Symbol.Global(Symbol.None, Signature.Term("_star_"))
+    def unapply(symbol: Symbol): Boolean = symbol match {
+      case Symbol.Global(Symbol.None, Signature.Term("_star_")) => true
       case _ => false
     }
   }

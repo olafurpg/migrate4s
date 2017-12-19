@@ -2,13 +2,16 @@ package scalafix.tests.core
 
 import scala.meta._
 import scala.meta.interactive.InteractiveSemanticdb
+import scala.tools.nsc.interactive.Global
 import scalafix.internal.util.EagerInMemorySemanticdbIndex
 import scalafix.testkit.DiffAssertions
 import org.scalameta.logger
 import org.scalatest.FunSuite
 
 class DesugarTest extends FunSuite with DiffAssertions {
-  val global = InteractiveSemanticdb.newCompiler()
+
+  val global: Global = InteractiveSemanticdb.newCompiler()
+
   def check(original: String, expected: String): Unit = {
     test(logger.revealWhitespace(original)) {
       val db = InteractiveSemanticdb.toDocument(global, original)
