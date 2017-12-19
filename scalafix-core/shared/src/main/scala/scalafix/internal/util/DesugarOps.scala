@@ -2,6 +2,8 @@ package scalafix.internal.util
 
 import scala.collection.mutable
 import scala.meta._
+import scala.util.Try
+import scala.util.control.NonFatal
 import scalafix.SemanticdbIndex
 import scalafix.util.SymbolMatcher
 
@@ -25,8 +27,11 @@ object DesugarOps {
     val Star = SymbolMatcher.Star
     val isUsedSynthetic = mutable.Set.empty[Position]
     def desugarOnce(tree: Tree): Option[Tree] = {
+      if (tree.is[Pat] || tree.is[Case]) return None // ???
+      if (tree.is[Term.Param]) return None // ???
       if (tree.is[Enumerator]) return None // Not yet supported
       if (tree.is[Defn]) return None // Makes no sense
+      if (tree.is[Term.ApplyInfix]) return None // TODO(olafur) hack
       if (tree.is[Term.Name] && tree.parent.exists(_.is[Term.ApplyInfix]))
         // TODO(olafur) hack, figure out how to add tparam for infix apply
         return None
@@ -40,14 +45,23 @@ object DesugarOps {
               case _ => None
             }
           }
+        if !isSpecialSynthetic(synthetic)
         if !isUsedSynthetic(synthetic.position)
         syntheticTerm <- synthetic.input.parse[Term].toOption
-        if !isForComprehensionSynthetic(syntheticTerm)
-      } yield {
-        val merged = syntheticTerm.transform {
-          case Star(_: Term.Name) =>
-            tree
+        merged <- try {
+          Some(syntheticTerm.transform {
+//            case nme: Type.Name if index.symbol(nme).isDefined =>
+//              SymbolOps.toTermRef(index.symbol(nme).get)
+            case Star(_: Term.Name) =>
+              tree
+          })
+        } catch {
+          case NonFatal(e) =>
+            println(
+              s"Failed to merge $syntheticTerm with $tree. ${e.getMessage}")
+            None
         }
+      } yield {
         isUsedSynthetic += synthetic.position
         merged
       }
@@ -82,11 +96,14 @@ object DesugarOps {
 
   // Not possible to determine this by symbols since for-comprehension
   // contract is syntactic.
-  private def isForComprehensionSynthetic(arg: Term): Boolean = arg match {
-    case q"*.flatMap" | q"*.foreach" | q"*.map" | q"*.withFilter" => true
-    case Term.Apply(qual, _) => isForComprehensionSynthetic(qual)
-    case Term.ApplyType(qual, _) => isForComprehensionSynthetic(qual)
-    case _ => false
+  private def isSpecialSynthetic(synthetic: Synthetic): Boolean = {
+    synthetic.text.startsWith("*.unapplySeq") ||
+    synthetic.text.startsWith("*.unapply") ||
+    synthetic.text.startsWith("*.withFilter") ||
+    synthetic.text.startsWith("*.foreach") ||
+    synthetic.text.startsWith("*.map") ||
+    synthetic.text.startsWith("*.flatMap") ||
+    synthetic.text.startsWith("*.foreach")
   }
 
   private lazy val TypeDialect = scala.meta.dialects.Scala212.copy(

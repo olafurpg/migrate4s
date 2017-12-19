@@ -105,4 +105,25 @@ class DesugarTest extends FunSuite with DiffAssertions {
        }
         """.syntax
   )
+
+  check(
+    """
+      |object Infix2 {
+      |  "str" :: Nil
+      |}
+    """.stripMargin,
+    source"".syntax
+  )
+
+  check(
+    """
+      |object Unapply {
+      |  null match {
+      |    case List(1, 2) =>
+      |  }
+      |}
+    """.stripMargin,
+    source"""
+        """.syntax
+  )
 }
