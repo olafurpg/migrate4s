@@ -38,9 +38,14 @@ object SymbolOps {
     }
   }
   def toTermRef(symbol: Symbol): Term.Ref = {
+    toRef(symbol).asInstanceOf[Term.Ref]
+  }
+  def toRef(symbol: Symbol): Ref = {
     symbol match {
       case Root(signature) =>
         Term.Name(signature.name)
+      case Symbol.Global(qual, Signature.Type(name)) =>
+        Type.Select(toTermRef(qual), Type.Name(name))
       case Symbol.Global(qual, signature) =>
         Term.Select(toTermRef(qual), Term.Name(signature.name))
     }

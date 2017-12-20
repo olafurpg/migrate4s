@@ -6,7 +6,7 @@ import scala.meta.internal.scalafix.ScalafixScalametaHacks._
 import scala.util.control.NonFatal
 import scalafix.SemanticdbIndex
 import scalafix.internal.util.ScalametaEnrichments._
-import org.scalameta.logger
+import scalafix.rule.RuleCtx
 
 object DesugarOps {
 
@@ -51,11 +51,16 @@ object DesugarOps {
         synthetic <- index.synthetic(term.pos)
         if !synthetic.isTypeParam || !infixEnds(synthetic.position)
         if synthetic.isSupported
+//        if synthetic.isApply ||
+//          !(term.is[Term.Apply] ||
+//            term.is[Term.ApplyType])
         if !isDone(synthetic)
         syntheticTerm <- synthetic.input.parse[Term].toOption
       } yield {
         isDone += synthetic
         val result = syntheticTerm.transform {
+          case name: Type.Name =>
+            TypeSyntax.prettify(name, RuleCtx(tree), shortenNames = false)._1
           case index.Star(_: Term.Name) =>
             term
         }
@@ -67,6 +72,7 @@ object DesugarOps {
         tree match {
           case Term.ApplyInfix(lhs, op, Nil, args) =>
             infixEnds += tree.pos.endOffset
+            args.lastOption.foreach(arg => infixEnds += arg.pos.endOffset)
             desugarOnce(op) match {
               case Some(d) =>
                 val next = d match {
@@ -81,6 +87,11 @@ object DesugarOps {
                 super.apply(tree)
             }
           case term: Term =>
+            term match {
+              case Term.Assign(_, _: Term.ApplyInfix) =>
+                infixEnds += term.pos.endOffset
+              case _ =>
+            }
             desugarOnce(term).fold(super.apply(tree))(this.apply)
           case _ =>
             val next = tree match {
@@ -194,11 +205,16 @@ object DesugarOps {
         implicit index: SemanticdbIndex): Option[(Member, Type)] = {
       for {
         sym <- index.symbol(defn.name)
+        if false
         denot <- index.denotation(sym)
         tpe <- TypeDialect(Input.Denotation(denot.signature, sym))
           .parse[Type]
           .toOption
-      } yield defn -> tpe
+      } yield {
+        val prettyType =
+          TypeSyntax.prettify(tpe, RuleCtx(defn), shortenNames = false)._1
+        defn -> prettyType
+      }
     }
   }
 }

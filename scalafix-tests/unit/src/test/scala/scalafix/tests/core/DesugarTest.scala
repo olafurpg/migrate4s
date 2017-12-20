@@ -140,6 +140,17 @@ class DesugarTest extends BaseDesugarTest {
     source"""
        object Infix2 { "str" :: Nil }
        """.syntax
-
+  )
+  // ditto: named parameters also affected
+  check(
+    """
+      |object Infix2 {
+      |  def foo(lst: List[String]) = lst
+      |  foo(lst = "str" :: Nil)
+      |}
+    """.stripMargin,
+    source"""
+       object Infix2 { "str" :: Nil }
+       """.syntax
   )
 }
