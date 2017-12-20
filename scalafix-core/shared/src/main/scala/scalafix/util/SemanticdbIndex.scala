@@ -55,15 +55,36 @@ trait SemanticdbIndex {
   def denotation(tree: Tree): Option[Denotation]
 
   /** Returns this term inferred type parameters, .apply and implicits expanded */
+  def synthetic(position: Position): Option[Synthetic]
+
+  /** Returns this term inferred type parameters, .apply and implicits expanded */
   def desugar(tree: Tree): Tree
 
   /** Build new SemanticdbIndex with only these documents. */
   def withDocuments(documents: Seq[Document]): SemanticdbIndex
 
+  val Star: SymbolMatcher = SymbolMatcher.Star(this)
+
   object Symbol {
     def unapply(tree: Tree): Option[Symbol] = symbol(tree)
     def unapply(pos: Position): Option[Symbol] = symbol(pos)
   }
+
+  object Desugar {
+    def unapply(arg: Term): Option[Term] = {
+      for {
+        synthetic <- synthetic(arg.pos)
+        term <- synthetic.input.parse[Term].toOption
+      } yield {
+        val result = term.transform {
+          case Star(_: Term.Name) =>
+            arg
+        }
+        result.asInstanceOf[Term]
+      }
+    }
+  }
+
 }
 
 object SemanticdbIndex {

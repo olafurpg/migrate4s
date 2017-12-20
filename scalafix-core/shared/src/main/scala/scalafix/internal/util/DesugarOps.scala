@@ -2,10 +2,11 @@ package scalafix.internal.util
 
 import scala.collection.mutable
 import scala.meta._
-import scala.util.Try
+import scala.meta.internal.scalafix.ScalafixScalametaHacks._
 import scala.util.control.NonFatal
 import scalafix.SemanticdbIndex
-import scalafix.util.SymbolMatcher
+import scalafix.internal.util.ScalametaEnrichments._
+import org.scalameta.logger
 
 object DesugarOps {
 
@@ -22,9 +23,86 @@ object DesugarOps {
     * "Desugar" is kind of a misnomer since it does not for example desugar
     * for comprehensions.
     */
-  def desugarTree(tree: Tree, _synthetics: Map[Position, Synthetic])(
+  def desugarTree(tree: Tree)(implicit index: SemanticdbIndex): Tree = {
+    implicit class XtensionPosition(val pos: Position) {
+      def isOffset: Boolean =
+        pos != Position.None &&
+          pos.start == pos.end
+    }
+    implicit class XtensionBang(val x: Any) {
+      def unary_![B]: B = x.asInstanceOf[B]
+    }
+    implicit class XtensionSynthetic(val s: Synthetic) {
+      def isConversion: Boolean = !s.text.startsWith("*")
+      def isImplicitArg: Boolean = s.text.startsWith("*(")
+      def isTypeParam: Boolean = s.text.startsWith("*[")
+      def isApply: Boolean = s.text.startsWith("*.apply")
+      def isSupported: Boolean =
+        isConversion ||
+          isImplicitArg ||
+          isTypeParam ||
+          isApply
+    }
+    val isDone = mutable.Set.empty[Synthetic]
+    val infixEnds = mutable.Set.empty[Position]
+
+    def desugarOnce(term: Tree): Option[Term] = {
+      for {
+        synthetic <- index.synthetic(term.pos)
+        if !synthetic.isTypeParam || !infixEnds(synthetic.position)
+        if synthetic.isSupported
+        if !isDone(synthetic)
+        syntheticTerm <- synthetic.input.parse[Term].toOption
+      } yield {
+        isDone += synthetic
+        val result = syntheticTerm.transform {
+          case index.Star(_: Term.Name) =>
+            term
+        }
+        result.asInstanceOf[Term]
+      }
+    }
+    new Transformer {
+      override def apply(tree: Tree): Tree = {
+        tree match {
+          case Term.ApplyInfix(lhs, op, Nil, args) =>
+            infixEnds += tree.pos.endOffset
+            desugarOnce(op) match {
+              case Some(d) =>
+                val next = d match {
+                  case Term.ApplyType(Term.Name(op2), targs)
+                      if op2 == op.value =>
+                    copyOrigin(Term.ApplyInfix(lhs, op, targs, args), tree)
+                  case _ =>
+                    tree
+                }
+                desugarOnce(next).fold(super.apply(next))(this.apply)
+              case _ =>
+                super.apply(tree)
+            }
+          case term: Term =>
+            desugarOnce(term).fold(super.apply(tree))(this.apply)
+          case _ =>
+            val next = tree match {
+              case ResultType(
+                  Defn.Def(mods, pats, tparams, paramss, None, body),
+                  Type.Method(_, tpe)) =>
+                Defn.Def(mods, pats, tparams, paramss, Some(tpe), body)
+              case ResultType(Defn.Val(mods, pats, None, body), tpe) =>
+                Defn.Val(mods, pats, Some(tpe), body)
+              case ResultType(Defn.Var(mods, pats, None, body), tpe) =>
+                Defn.Var(mods, pats, Some(tpe), body)
+              case _ =>
+                tree
+            }
+            super.apply(next)
+        }
+      }
+    }.apply(tree)
+  }
+
+  def desugarTreeOld(tree: Tree, _synthetics: Map[Position, Synthetic])(
       implicit index: SemanticdbIndex): Tree = {
-    val Star = SymbolMatcher.Star
     val isUsedSynthetic = mutable.Set.empty[Position]
     def desugarOnce(tree: Tree): Option[Tree] = {
       if (tree.is[Pat] || tree.is[Case]) return None // ???
@@ -52,7 +130,7 @@ object DesugarOps {
           Some(syntheticTerm.transform {
 //            case nme: Type.Name if index.symbol(nme).isDefined =>
 //              SymbolOps.toTermRef(index.symbol(nme).get)
-            case Star(_: Term.Name) =>
+            case index.Star(_: Term.Name) =>
               tree
           })
         } catch {

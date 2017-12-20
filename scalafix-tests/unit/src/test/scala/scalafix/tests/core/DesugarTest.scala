@@ -8,7 +8,7 @@ import scalafix.testkit.DiffAssertions
 import org.scalameta.logger
 import org.scalatest.FunSuite
 
-class DesugarTest extends FunSuite with DiffAssertions {
+class BaseDesugarTest extends FunSuite with DiffAssertions {
 
   val global: Global = InteractiveSemanticdb.newCompiler()
 
@@ -20,21 +20,26 @@ class DesugarTest extends FunSuite with DiffAssertions {
         Sourcepath(Nil),
         Classpath(Nil))
       val obtained = index.desugar(db.input.parse[Source].get)
-      assertNoDiff(obtained.syntax, expected)
+      if (obtained.structure != expected.parse[Source].get.structure) {
+        assertNoDiff(obtained.syntax, expected)
+      }
     }
   }
+}
+
+class DesugarTest extends BaseDesugarTest {
 
   check(
     """
       |object Apply {
-      |  List(1).map(_ + 1)
+      |  List(1).map(_ + List(1).head)
       |}
     """.stripMargin,
     source"""
       object Apply {
         List
           .apply[Int](1)
-          .map[Int, List[Int]](_ + 1)(
+          .map[Int, List[Int]](_ + List.apply[Int](1).head)(
             scala.collection.immutable.List.canBuildFrom[Int])
       }
        """.syntax
@@ -86,7 +91,7 @@ class DesugarTest extends FunSuite with DiffAssertions {
       }
        """.syntax
   )
-
+//
   check(
     """
       |object Infix {
@@ -101,18 +106,13 @@ class DesugarTest extends FunSuite with DiffAssertions {
          sealed trait ADT
          case class A() extends ADT
          case class B() extends ADT
-         val x: List[ADT] = (List.apply[A](A.apply()) ++ List.apply[B](B.apply()))(scala.collection.immutable.List.canBuildFrom[Product with Serializable with ADT {}])
+         val x: List[ADT] = (
+         List.apply[A](A.apply()) ++[Product with Serializable with ADT {}, List[ADT]]
+           List.apply[B](B.apply()))(
+             scala.collection.immutable.List
+               .canBuildFrom[Product with Serializable with ADT {}])
        }
         """.syntax
-  )
-
-  check(
-    """
-      |object Infix2 {
-      |  "str" :: Nil
-      |}
-    """.stripMargin,
-    source"".syntax
   )
 
   check(
@@ -124,6 +124,22 @@ class DesugarTest extends FunSuite with DiffAssertions {
       |}
     """.stripMargin,
     source"""
+            object Unapply {
+              null match {
+                case List(1, 2) =>
+              }
+            }
         """.syntax
+  )
+
+  // infix type positions are buggy
+  check(
+    """
+      |object Infix2 { "str" :: Nil }
+    """.stripMargin,
+    source"""
+       object Infix2 { "str" :: Nil }
+       """.syntax
+
   )
 }
