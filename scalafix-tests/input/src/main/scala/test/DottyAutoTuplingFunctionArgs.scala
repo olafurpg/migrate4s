@@ -1,4 +1,4 @@
-/*
+/* ONLY
 rules = DottyAutoTuplingFunctionArgs
  */
 package test
@@ -15,6 +15,13 @@ object DottyAutoTuplingFunctionArgs {
   }
   val xs = List("3", "1", "0").zipWithIndex
   xs.filter { case (w, i) => w == i.toString }
+
+  def any(xs: List[Any]): List[Int] = xs.map { case (x, y) => 1 }
+  def anyIntPair(xs: List[(Int, Any)]): List[Int] = xs.map { case (x, y) => 1 }
+  def anyAnyPair(xs: List[(Any, Any)]): List[Int] = xs.map { case (x, y) => 1 } // false negative
+  def tparam[T](xs: List[T]): List[Int] = xs.map { case (x, y) => 1 }
+
+  def product2(xs: List[Product2[Int, Int]]): List[Int] = xs.map { case (x, y) => 1 }
 
   // should not rewrite the below
   xs.map { case (w, i) if i > 1 => s"$w-$i" } // case with guards
@@ -33,8 +40,4 @@ object DottyAutoTuplingFunctionArgs {
   def foo(xs: List[(A, A)]) = xs.map {
     case (x: B, y: A) => 1
   } // typed parameters not matching tuple element types
-  def any(xs: List[Any]): List[Int] = xs.map { case (x, y) => 1 }
-  def anyIntPair(xs: List[(Int, Any)]): List[Int] = xs.map { case (x, y) => 1 }
-  def anyAnyPair(xs: List[(Any, Any)]): List[Int] = xs.map { case (x, y) => 1 } // false negative
-  def tparam[T](xs: List[T]): List[Int] = xs.map { case (x, y) => 1 }
 }

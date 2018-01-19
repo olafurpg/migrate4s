@@ -6,7 +6,7 @@ object Dependencies {
   val scalametaV = "2.1.2"
   val metaconfigV = "0.5.4"
   def semanticdbSbt = "0.4.0"
-  def dotty = "0.1.1-bin-20170530-f8f52cc-NIGHTLY"
+  def dotty = "0.5.0-RC1"
   def scala210 = "2.10.6"
   // NOTE(olafur) downgraded from 2.11.12 and 2.12.4 because of non-reproducible error
   // https://travis-ci.org/scalacenter/scalafix/jobs/303142842#L4658

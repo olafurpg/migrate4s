@@ -10,7 +10,7 @@ _Since v0.5.8_
 Removes pattern-matching decomposition if function arguments can be automatically tupled. See [http://dotty.epfl.ch/docs/reference/auto-parameter-tupling.html](http://dotty.epfl.ch/docs/reference/auto-parameter-tupling.html)
 
 ```scala
-val ranges: List[(Int, Int)] = ((1, 5), (9, 11))
+val ranges: List[(Int, Int)] = List((1, 5), (9, 11))
 // before
 ranges.map { case (start, end) => end - start }
 // after

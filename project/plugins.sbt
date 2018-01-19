@@ -4,7 +4,7 @@ addSbtPlugin(
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
 addSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0")
-addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.1.1")
+addSbtPlugin("ch.epfl.lamp" % "sbt-dotty" % "0.1.7")
 addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.2.0")
 // exclude is a workaround for https://github.com/sbt/sbt-assembly/issues/236#issuecomment-294452474
