@@ -7,6 +7,7 @@ import scala.reflect.ClassTag
 import scala.reflect.macros.blackbox
 
 object Macros {
+
   def deriveFields[T]: Fields[T] = macro deriveFieldsImpl[T]
   def deriveFieldsImpl[T: c.WeakTypeTag](
       c: blackbox.Context): c.universe.Tree = {
@@ -20,10 +21,10 @@ object Macros {
     val ctor = Tclass.primaryConstructor.asMethod
     val fields = for {
       (params, i) <- ctor.paramLists.zipWithIndex
-      param <- params
+      (param, j) <- params.zipWithIndex
     } yield {
       val default = if (i == 0 && param.asTerm.isParamWithDefault) {
-        val nme = TermName(termNames.CONSTRUCTOR + "$default$" + (i + 1)).encodedName.toTermName
+        val nme = TermName(termNames.CONSTRUCTOR + "$default$" + (j + 1)).encodedName.toTermName
         val getter = T.companion.member(nme)
         val defaultValue =
           q"_root_.scalafix.internal.config.DefaultValue($getter)"

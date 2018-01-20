@@ -14,7 +14,7 @@ case class AllTheAnnotations(
     @SettingDescription("Description")
     @DeprecatedSetting("Use newFeature instead", "2.1")
     setting: Int = 2,
-    setting2: String
+    setting2: String = "default"
 )
 
 object AllTheAnnotations {
@@ -26,6 +26,7 @@ class SettingsSuite extends FunSuite {
   test("Settings[T]") {
     val List(s1, s2) = Settings[AllTheAnnotations].settings
     assert(s1.name == "setting")
+    assert(s1.field.defaultValue.get.value == 2)
     assert(
       s1.extraNames == List(
         "extraName",
@@ -49,6 +50,7 @@ class SettingsSuite extends FunSuite {
     )
 
     assert(s2.name == "setting2")
+    assert(s2.field.defaultValue.get.value == "default")
     assert(s2.annotations.isEmpty)
   }
 }
