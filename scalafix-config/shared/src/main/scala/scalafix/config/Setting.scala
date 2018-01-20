@@ -1,7 +1,8 @@
-package scalafix.internal.config
+package scalafix.config
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.ClassTag
+import scalafix.config._
 
 final class Setting(val field: Field) {
   def name: String = field.name

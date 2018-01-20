@@ -1,15 +1,7 @@
-package scalafix.internal.config
+package scalafix.config
 
 import scala.annotation.StaticAnnotation
 import scala.reflect.ClassTag
-
-case class DefaultValue[+T](value: T, show: () => String)
-
-object DefaultValue {
-  def apply[T](e: T)(implicit ev: DefaultValueShow[T]): DefaultValue[T] = {
-    DefaultValue(e, () => ev.show(e))
-  }
-}
 
 final case class Field(
     name: String,

@@ -1,4 +1,4 @@
-package scalafix.internal.config
+package scalafix.config
 
 import scala.annotation.StaticAnnotation
 

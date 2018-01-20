@@ -1,4 +1,6 @@
-package scalafix.internal.config
+package scalafix.config
+
+import scalafix.config.DeprecatedSettingName
 
 final class Settings[T](val settings: List[Setting]) {
   object Deprecated {

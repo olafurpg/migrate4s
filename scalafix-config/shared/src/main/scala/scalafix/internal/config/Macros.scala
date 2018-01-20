@@ -5,8 +5,26 @@ import scala.language.experimental.macros
 import scala.annotation.StaticAnnotation
 import scala.reflect.ClassTag
 import scala.reflect.macros.blackbox
+import scalafix.config.ConfigDecoder
+import scalafix.config.Fields
 
 object Macros {
+  def deriveConfigImpl[T: c.WeakTypeTag](c: blackbox.Context)(
+      default: c.Tree): c.universe.Tree = {
+    import c.universe._
+    val T = weakTypeOf[T]
+
+    io.circe.generic.semiauto.deriveFor
+
+    val result = q"""
+       val decoder = _root_.io.circe.generic.semiauto.deriveDecoder[$T => $T]
+       val settings = _root_.scalafix.config.Settings[$T]
+       _root_.scalafix.internal.config.CirceConfigDecoder.fromDecoder($default, decoder, settings)
+     """
+    println(result)
+
+    result
+  }
 
   def deriveFields[T]: Fields[T] = macro deriveFieldsImpl[T]
   def deriveFieldsImpl[T: c.WeakTypeTag](
@@ -27,7 +45,7 @@ object Macros {
         val nme = TermName(termNames.CONSTRUCTOR + "$default$" + (j + 1)).encodedName.toTermName
         val getter = T.companion.member(nme)
         val defaultValue =
-          q"_root_.scalafix.internal.config.DefaultValue($getter)"
+          q"_root_.scalafix.config.DefaultValue($getter)"
         q"new $some($defaultValue)"
       } else q"$none"
       val annots = param.annotations.collect {
@@ -41,7 +59,7 @@ object Macros {
       )
 
       val classtag = c.inferImplicitValue(paramTpe)
-      val field = q"""new _root_.scalafix.internal.config.Field(
+      val field = q"""new _root_.scalafix.config.Field(
            ${param.name.decodedName.toString},
            $default,
            $classtag,
@@ -53,4 +71,5 @@ object Macros {
     val result = q"new ${weakTypeOf[Fields[T]]}($args)"
     c.untypecheck(result)
   }
+
 }

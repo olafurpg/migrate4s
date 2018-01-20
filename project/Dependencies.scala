@@ -32,7 +32,8 @@ object Dependencies {
     List(
       "io.circe" %%% "circe-core" % circeV,
       "io.circe" %%% "circe-generic" % circeV,
-      "io.circe" %%% "circe-parser" % circeV
+      "io.circe" %%% "circe-parser" % circeV,
+      "io.circe" %% "circe-config" % "0.4.0"
     )
   }
 
