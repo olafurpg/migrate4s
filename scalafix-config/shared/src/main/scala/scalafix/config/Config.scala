@@ -19,5 +19,6 @@ trait ConfigDecoder[T] {
 }
 
 object ConfigDecoder {
-  def derive[T](default: T): ConfigDecoder[T] = macro Macros.deriveConfigImpl[T]
+  def derive[T](default: T, name: String): ConfigDecoder[T] =
+    macro Macros.deriveConfigImpl[T]
 }

@@ -2,6 +2,8 @@ package scalafix
 package rule
 
 import scala.meta._
+import scalafix.config.Config
+import scalafix.config.Setting
 import scalafix.internal.config.MetaconfigPendingUpstream
 import scalafix.internal.config.ScalafixMetaconfigReaders
 import scalafix.internal.config.ScalafixConfig
@@ -62,6 +64,11 @@ abstract class Rule(ruleName: RuleName) { self =>
     */
   def init(config: Conf): Configured[Rule] =
     Configured.Ok(this)
+
+  def settings: List[Setting] = Nil
+
+  def loadConfig(config: Config): Either[List[String], Rule] =
+    Right(this)
 
   /** Combine this rule with another rule. */
   final def merge(other: Rule): Rule = Rule.merge(this, other)

@@ -9,17 +9,15 @@ import scalafix.config.ConfigDecoder
 import scalafix.config.Fields
 
 object Macros {
-  def deriveConfigImpl[T: c.WeakTypeTag](c: blackbox.Context)(
-      default: c.Tree): c.universe.Tree = {
+  def deriveConfigImpl[T: c.WeakTypeTag](
+      c: blackbox.Context)(default: c.Tree, name: c.Tree): c.universe.Tree = {
     import c.universe._
     val T = weakTypeOf[T]
-
-    io.circe.generic.semiauto.deriveFor
-
     val result = q"""
-       val decoder = _root_.io.circe.generic.semiauto.deriveDecoder[$T => $T]
+       import _root_.io.circe.generic.auto._
+       val decoder = _root_.scala.Predef.implicitly[_root_.io.circe.Decoder[$T => $T]]
        val settings = _root_.scalafix.config.Settings[$T]
-       _root_.scalafix.internal.config.CirceConfigDecoder.fromDecoder($default, decoder, settings)
+       _root_.scalafix.internal.config.CirceConfigDecoder.fromDecoder[$T]($default, $name)(decoder, settings)
      """
     println(result)
 

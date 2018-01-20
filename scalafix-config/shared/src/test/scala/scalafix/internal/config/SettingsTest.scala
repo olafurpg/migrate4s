@@ -1,10 +1,8 @@
 package scalafix.internal.config
 
+import java.io.File
 import org.scalatest.FunSuite
 import scalafix.config._
-import com.typesafe.config.ConfigFactory
-import io.circe.HCursor
-import io.circe.Json
 
 case class AllTheAnnotations(
     @SettingDescription("descriptioon")
@@ -18,20 +16,26 @@ case class AllTheAnnotations(
     @SettingDescription("Description")
     @DeprecatedSetting("Use newFeature instead", "2.1")
     setting: Int = 2,
-    setting2: String = "default"
+    setting2: String = "default",
+    custom: Custom[Int] = new Custom(33, "bla")
 )
 
+class Custom[T](e: T, foo: String)
+
 object AllTheAnnotations {
+
   implicit lazy val fields: Fields[AllTheAnnotations] =
     Macros.deriveFields[AllTheAnnotations]
 }
 
 class ConfDecoderSuite extends FunSuite {
   test("ConfDecoder[T]") {
-    val decoder = ConfigDecoder.derive[AllTheAnnotations](AllTheAnnotations())
-    val config = HoconConfig.fromString("""
-                                          |setting2=blah
-                                          |setting=5423
+    val decoder = ConfigDecoder
+      .derive[AllTheAnnotations](AllTheAnnotations(), "AllTheAnnotations")
+    val config = HoconConfig.fromString("""AllTheAnnotations {
+                                          |  setting2=bla23
+                                          | #  setting=5423
+                                          |}
                                           |""".stripMargin)
     val obtained = decoder.decode(config)
     println(obtained)

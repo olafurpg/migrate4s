@@ -141,8 +141,8 @@ val core = MultiScalaCrossProject(
     .enablePlugins(BuildInfoPlugin)
 )
 
-val core211 = core(scala211, _.dependsOn(diff211))
-val core212 = core(scala212, _.dependsOn(diff212))
+val core211 = core(scala211, _.dependsOn(diff211, config211))
+val core212 = core(scala212, _.dependsOn(diff212, config212))
 
 lazy val core211JVM = core211.jvm
 lazy val core211JS = core211.js
