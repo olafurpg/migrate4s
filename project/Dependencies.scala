@@ -5,6 +5,7 @@ import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 object Dependencies {
   val scalametaV = "2.1.2"
   val metaconfigV = "0.5.4"
+  val circeV = "0.9.1"
   def semanticdbSbt = "0.4.0"
   def dotty = "0.1.1-bin-20170530-f8f52cc-NIGHTLY"
   def scala210 = "2.10.6"
@@ -26,6 +27,14 @@ object Dependencies {
 
   def scalameta = Def.setting("org.scalameta" %%% "contrib" % scalametaV)
   def scalatest = Def.setting("org.scalatest" %%% "scalatest" % "3.0.0")
+
+  def circe = Def.setting {
+    List(
+      "io.circe" %%% "circe-core" % circeV,
+      "io.circe" %%% "circe-generic" % circeV,
+      "io.circe" %%% "circe-parser" % circeV
+    )
+  }
 
   def testsDeps = List(
     // integration property tests

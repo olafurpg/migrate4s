@@ -104,6 +104,26 @@ lazy val diff211JS = diff211.js
 lazy val diff212JVM = diff212.jvm
 lazy val diff212JS = diff212.js
 
+val config = MultiScalaCrossProject(
+  "config",
+  _.settings(
+    moduleName := "scalafix-config",
+    description := "JVM/JS library to read .scalafix.conf.",
+    libraryDependencies ++= circe.value,
+    libraryDependencies ++= List(
+      scalaOrganization.value % "scala-reflect" % scalaVersion.value
+    )
+  ).jsSettings(allJSSettings)
+)
+
+val config211 = config(scala211)
+val config212 = config(scala212)
+
+lazy val config211JVM = config211.jvm
+lazy val config211JS = config211.js
+lazy val config212JVM = config212.jvm
+lazy val config212JS = config212.js
+
 val core = MultiScalaCrossProject(
   "core",
   _.settings(
