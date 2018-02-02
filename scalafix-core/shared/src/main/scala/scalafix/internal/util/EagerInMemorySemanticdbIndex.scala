@@ -3,6 +3,19 @@ package internal.util
 
 import scala.meta._
 
+class SymbolKey(val symbol: Symbol) {
+  override def equals(obj: scala.Any): Boolean =
+    this.eq(obj.asInstanceOf[AnyRef]) || (obj match {
+      case other: SymbolKey =>
+        if (symbol.isInstanceOf[Symbol.Local]) other.symbol.eq(symbol)
+        else other.symbol.equals(symbol)
+      case _ => false
+    })
+  override def hashCode(): Int =
+    if (symbol.isInstanceOf[Symbol.Local]) System.identityHashCode(symbol)
+    else symbol.hashCode()
+}
+
 case class EagerInMemorySemanticdbIndex(
     database: Database,
     sourcepath: Sourcepath,
@@ -10,10 +23,10 @@ case class EagerInMemorySemanticdbIndex(
     extends SemanticdbIndex {
   override def toString: String =
     s"$productPrefix($sourcepath, $classpath, database.size=${database.documents.length})"
-  override def hashCode(): Int = database.hashCode()
-  private lazy val _denots: Map[Symbol, Denotation] = {
-    val builder = Map.newBuilder[Symbol, Denotation]
-    database.symbols.foreach(r => builder += (r.symbol -> r.denotation))
+  private lazy val _denots: Map[SymbolKey, Denotation] = {
+    val builder = Map.newBuilder[SymbolKey, Denotation]
+    database.symbols.foreach(r =>
+      builder += (new SymbolKey(r.symbol) -> r.denotation))
     builder.result()
   }
   private lazy val _names: Map[Position, ResolvedName] = {
@@ -48,7 +61,7 @@ case class EagerInMemorySemanticdbIndex(
     case _ => symbol(tree.pos)
   }
   def denotation(symbol: Symbol): Option[Denotation] =
-    _denots.get(symbol)
+    _denots.get(new SymbolKey(symbol))
   def denotation(tree: Tree): Option[Denotation] =
     symbol(tree).flatMap(denotation)
   override def names: Seq[ResolvedName] = _names.values.toSeq
