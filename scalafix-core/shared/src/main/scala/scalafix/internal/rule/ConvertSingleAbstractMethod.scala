@@ -12,9 +12,8 @@ import scala.collection.mutable
 
 import scalafix.internal.util.PatchBuilder
 
-/* 
+/*
 see http://www.scala-lang.org/files/archive/spec/2.12/06-expressions.html#sam-conversion
-
 SAM Conversion
 
 ```
@@ -24,14 +23,14 @@ type U <: S // (SAM4)
 val x = new U { def m(x1: T1, ..., xn: TN): T }
 ```
 
-An expression (p1, ..., pN) => body of function type (T1, ..., TN) => T is 
+An expression (p1, ..., pN) => body of function type (T1, ..., TN) => T is
 sam-convertible to the expected type S if the following holds:
 
 * [ ] SAM1: the class C of S declares an abstract method m with signature (p1: A1, ..., pN: AN): R;
 * [ ] SAM2: besides m, C must not declare or inherit any other deferred value members;
 * [ ] SAM3: the method m must have a single argument list;
-* [ ] SAM4: there must be a type U that is a subtype of S, so that the expression 
-            new U { final def m(p1: A1, ..., pN: AN): R = body } is well-typed 
+* [ ] SAM4: there must be a type U that is a subtype of S, so that the expression
+            new U { final def m(p1: A1, ..., pN: AN): R = body } is well-typed
             (conforming to the expected type S);
 * [ ] SAM5: for the purpose of scoping, m should be considered a static member
             (U's members are not in scope in body);

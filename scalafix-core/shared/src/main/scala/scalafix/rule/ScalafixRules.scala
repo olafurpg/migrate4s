@@ -6,6 +6,7 @@ import scalafix.internal.config._
 
 object ScalafixRules {
   val syntax: List[Rule] = List(
+    SAM,
     ProcedureSyntax,
     DottyVolatileLazyVal,
     RemoveXmlLiterals,
