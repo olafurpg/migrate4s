@@ -14,6 +14,7 @@ TimeoutException
 //  , ExecutionException
 //  , TimeoutException // ERROR
 //}
+import RemoveUnusedImports.Unused.b, RemoveUnusedImports.Unused.d
 
 object RemoveUnusedImports {
   val NonFatal(a) = new Exception
@@ -24,4 +25,10 @@ object RemoveUnusedImports {
   ExecutionContext.defaultReporter
   new RichBoolean(true)
   new TimeoutException
+  println(b + d)
+  object Unused {
+    val b = 1
+    val c = 1
+    val d = 1
+  }
 }

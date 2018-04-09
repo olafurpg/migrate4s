@@ -1,4 +1,4 @@
-/*
+/* ONLY
 rule = RemoveUnusedImports
  */
 package test
@@ -23,6 +23,7 @@ import scala.concurrent.{ // formatting caveat
 //  , ExecutionException
 //  , TimeoutException // ERROR
 //}
+import RemoveUnusedImports.Unused.b, RemoveUnusedImports.Unused.c, RemoveUnusedImports.Unused.d
 
 object RemoveUnusedImports {
   import Future._
@@ -34,4 +35,11 @@ object RemoveUnusedImports {
   ExecutionContext.defaultReporter
   new RichBoolean(true)
   new TimeoutException
+  println(b + d)
+  object Unused {
+    val b = 1
+    val c = 1
+    val d = 1
+  }
 }
+
