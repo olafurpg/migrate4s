@@ -70,7 +70,7 @@ trait SymKind {
   def isPackageObject: Boolean
 }
 
-trait SymProperty {
+trait SymProperties {
   def isMacro: Boolean
   def isAbstract: Boolean
   def isFinal: Boolean
@@ -87,7 +87,7 @@ trait SymProperty {
   def isEnum: Boolean
 }
 
-trait Access {
+trait SymAccess {
   def isPrivateThis: Boolean
   def isPrivate: Option[Sym]
   def isProtectedThis: Boolean
@@ -96,10 +96,12 @@ trait Access {
 }
 
 trait SymInfo {
-  def kind: SymKind
-  def prop: SymProperty
+  def sym: Sym
   def owner: Sym
   def name: String
+  def kind: SymKind
+  def props: SymProperties
+  def access: SymAccess
   private[scalafix] def tpe: s.Type
 }
 
