@@ -162,6 +162,7 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
       document <- ctx.index.documents.view
       ResolvedName(
         pos,
+
         disabledSymbolInSynthetics(symbol @ Symbol.Global(_, _), disabled),
         false
       ) <- document.synthetics.view.flatMap(_.names)
