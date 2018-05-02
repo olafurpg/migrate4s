@@ -97,7 +97,7 @@ sealed abstract case class CliRunner(
         code
       }
     }
-    display.completedTask(msg, exit == ExitStatus.Ok)
+    display.completedTask(msg, exit.isOk)
     display.stop()
     exit
   }

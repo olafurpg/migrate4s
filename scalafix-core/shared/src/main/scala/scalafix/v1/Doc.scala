@@ -15,3 +15,20 @@ final class Doc private[scalafix] (
     val tokenList: TokenList,
     val comments: AssociatedComments
 )
+object Doc {
+  def apply(tree: Tree): Doc = {
+    val tokens = tree.tokens
+    val input = tokens.headOption match {
+      case Some(token) => token.input
+      case _ => Input.None
+    }
+    new Doc(
+      tree = tree,
+      tokens = tokens,
+      input = input,
+      matching = MatchingParens(tokens),
+      tokenList = TokenList(tokens),
+      comments = AssociatedComments(tokens)
+    )
+  }
+}
