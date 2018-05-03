@@ -78,6 +78,11 @@ abstract class SemanticRuleSuite(
           }
         }
 
+      if (!Patch.isAllTokenPatchAtomic(patch))
+        throw new TestFailedException(
+          s"One or more rules used by test ${diffTest.filename} emit non-atomic " +
+            "top level patches. To fix this, please use `.atomic` on individual or group " +
+            "of patches that need to be atomically applied.", 0)
       val expectedLintMessages = CommentAssertion.extract(sdoc.tokens)
       val diff = AssertDiff(messages, expectedLintMessages)
 

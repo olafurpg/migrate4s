@@ -14,7 +14,7 @@ case class FqnRule(index: v0.SemanticdbIndex)
       val fqnRule = SymbolMatcher.exact(Symbol("test.FqnRule."))
       ctx.tree.collect {
         case fqnRule(t: Term.Name) =>
-          ctx.addLeft(t, "/* matched */ ")
+          ctx.addLeft(t, "/* matched */ ").atomic
       }.asPatch
     }
 }
@@ -22,7 +22,7 @@ case class FqnRule(index: v0.SemanticdbIndex)
 case object FqnRule2 extends v0.Rule("FqnRule2") {
   override def fix(ctx: v0.RuleCtx): Patch =
     ctx.tree.collectFirst {
-      case n: Name => ctx.replaceTree(n, n.value + "2")
+      case n: Name => ctx.replaceTree(n, n.value + "2").atomic
     }.asPatch
 }
 
@@ -31,9 +31,9 @@ case object PatchTokenWithEmptyRange
   override def fix(ctx: v0.RuleCtx): Patch = {
     ctx.tokens.collect {
       case tok @ Token.Interpolation.SpliceEnd() =>
-        ctx.addRight(tok, "a")
+        ctx.addRight(tok, "a").atomic
       case tok @ Token.Xml.SpliceEnd() =>
-        ctx.addRight(tok, "a")
+        ctx.addRight(tok, "a").atomic
     }
   }.asPatch
 }
