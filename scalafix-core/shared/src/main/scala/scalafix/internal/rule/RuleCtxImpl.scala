@@ -22,7 +22,6 @@ import scalafix.syntax._
 import scalafix.util.MatchingParens
 import scalafix.util.SemanticdbIndex
 import scalafix.util.TokenList
-
 import org.scalameta.FileLine
 import org.scalameta.logger
 

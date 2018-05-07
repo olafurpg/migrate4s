@@ -9,6 +9,7 @@ import scalafix.syntax._
 import metaconfig.Conf
 import metaconfig.ConfDecoder
 import metaconfig.Configured
+import scalafix.v1.Doc
 
 /** A Scalafix Rule.
   *
@@ -44,11 +45,7 @@ import metaconfig.Configured
   */
 abstract class Rule(ruleName: RuleName) { self =>
 
-  /** Returns linter messages to report violations of this rule. */
-  def check(ctx: RuleCtx): Seq[LintMessage] = Nil
-
-  /** Returns a patch to fix violations of this rule. */
-  def fix(ctx: RuleCtx): Patch = Patch.empty
+  def fix(implicit doc: Doc): Patch = Patch.empty
 
   /** Initialize this rule with the given user configuration.
     *
@@ -65,6 +62,13 @@ abstract class Rule(ruleName: RuleName) { self =>
 
   /** Combine this rule with another rule. */
   final def merge(other: Rule): Rule = Rule.merge(this, other)
+
+  /** Returns linter messages to report violations of this rule. */
+  def check(ctx: RuleCtx): Seq[LintMessage] = Nil
+
+  /** Returns a patch to fix violations of this rule. */
+  def fix(ctx: RuleCtx): Patch = Patch.empty
+
 
   /** Returns string output of applying this single patch. */
   final def apply(ctx: RuleCtx): String =
@@ -116,10 +120,9 @@ abstract class Rule(ruleName: RuleName) { self =>
   protected[scalafix] def semanticOption: Option[SemanticdbIndex] = None
 }
 
-abstract class SemanticRule(index: SemanticdbIndex, name: RuleName)
-    extends Rule(name) {
-  implicit val ImplicitSemanticdbIndex: SemanticdbIndex = index
-  override def semanticOption: Option[SemanticdbIndex] = Some(index)
+abstract class SemanticRule(name: RuleName) extends Rule(name) {
+  implicit val ImplicitIndex = SemanticdbIndex.empty
+  def this(index: SemanticdbIndex, name: RuleName) = this(name)
 }
 
 object Rule {
@@ -139,12 +142,6 @@ object Rule {
       rules.foldLeft(Map.empty[RuleName, Patch])(_ ++ _.fixWithName(ctx))
     override def fix(ctx: RuleCtx): Patch =
       Patch.empty ++ rules.map(_.fix(ctx))
-    override def semanticOption: Option[SemanticdbIndex] =
-      rules
-        .collectFirst {
-          case r if r.semanticOption.isDefined => r.semanticOption
-        }
-        .getOrElse(None)
   }
   val syntaxRuleConfDecoder: ConfDecoder[Rule] =
     ScalafixMetaconfigReaders.ruleConfDecoderSyntactic(

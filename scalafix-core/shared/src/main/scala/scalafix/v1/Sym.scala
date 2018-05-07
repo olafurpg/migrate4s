@@ -27,7 +27,10 @@ object Sym {
   val RootPackage: Sym = new Sym(Symbols.RootPackage)
   val EmptyPackage: Sym = new Sym(Symbols.EmptyPackage)
   val None: Sym = new Sym(Symbols.None)
-  def apply(sym: String): Sym = new Sym(sym)
+  def apply(sym: String): Sym = {
+    sym.desc // assert that it parses as a symbol
+    new Sym(sym)
+  }
 
   object Root {
     def unapply(sym: Sym): Boolean =
