@@ -1,4 +1,4 @@
-/*
+/* SKIP
 rule = NoInfer
 */
 package test

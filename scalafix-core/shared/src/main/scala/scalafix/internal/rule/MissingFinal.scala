@@ -5,6 +5,7 @@ import scala.meta.transversers.Traverser
 import scalafix.lint.LintCategory
 import scalafix.patch.Patch
 import scalafix.rule.RuleCtx
+import scalafix.v1.SemanticDoc
 import scalafix.{SemanticRule, SemanticdbIndex}
 
 final case class MissingFinal(index: SemanticdbIndex)
@@ -21,9 +22,11 @@ final case class MissingFinal(index: SemanticdbIndex)
       "Some constructions should have final modifier"
     )
 
-  override def fix(ctx: RuleCtx): Patch = {
+  override def fix(ctx: RuleCtx): Patch = ???
+
+  override def fix(implicit doc: SemanticDoc): Patch = {
     def isSealed(tpe: Type): Boolean =
-      ctx.index.denotation(tpe).exists(_.isSealed)
+      doc.info(tpe).props.isSealed
 
     def leaksSealedParent(mods: List[Mod], templ: Template): Boolean =
       templ.inits.exists(i => isSealed(i.tpe)) &&
@@ -31,11 +34,11 @@ final case class MissingFinal(index: SemanticdbIndex)
 
     def addFinal(mods: Seq[Mod], d: Defn): Patch =
       (mods.find(!_.is[Mod.Annot]) match {
-        case Some(mod) => ctx.addLeft(mod, "final ")
+        case Some(mod) => Patch.addLeft(mod, "final ")
         case None =>
           mods.lastOption match {
-            case Some(lastMod) => ctx.addRight(lastMod, " final")
-            case None => ctx.addLeft(d, "final ")
+            case Some(lastMod) => Patch.addRight(lastMod, " final")
+            case None => Patch.addLeft(d, "final ")
           }
       }).atomic
 
@@ -43,20 +46,20 @@ final case class MissingFinal(index: SemanticdbIndex)
       mods.exists(_.is[Mod.Case]) &&
         !mods.exists(m => m.is[Mod.Final] || m.is[Mod.Abstract])
 
-    collect(ctx.tree) {
+    collect(doc.tree) {
       case (t @ Defn.Class(mods, _, _, _, _), parentPropagatesOuterRef)
           if isNonFinalConcreteCaseClass(mods) && !parentPropagatesOuterRef =>
         (Some(addFinal(mods, t)), PropagatesOuterRef)
       case (t @ Defn.Class(mods, _, _, _, templ), _)
           if leaksSealedParent(mods, templ) =>
-        val lint = ctx.lint(
+        val lint = Patch.lint(
           error
             .copy(id = "class")
             .at("Class extends sealed parent", t.pos))
         (Some(lint), PropagatesOuterRef)
       case (t @ Defn.Trait(mods, _, _, _, templ), _)
           if leaksSealedParent(mods, templ) =>
-        val lint = ctx.lint(
+        val lint = Patch.lint(
           error
             .copy(id = "trait")
             .at("Trait extends sealed parent", t.pos))

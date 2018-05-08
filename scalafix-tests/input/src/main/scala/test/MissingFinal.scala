@@ -1,4 +1,4 @@
-/*
+/* ONLY
 rules = MissingFinal
  */
 package test

@@ -65,6 +65,9 @@ object Sym {
     private[scalafix] def tpe: s.Type =
       info.tpe.getOrElse(s.Type())
   }
+  object Info {
+    val empty = new Sym.Info(s.SymbolInformation())
+  }
 
   final class Kind private[Sym] (info: s.SymbolInformation) {
     def isClass: Boolean = k.isClass

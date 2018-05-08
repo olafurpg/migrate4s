@@ -39,34 +39,14 @@ object SemanticRuleSuite {
 }
 
 abstract class SemanticRuleSuite(
-    val index: SemanticdbIndex,
+    val sourceDirectories: List[AbsolutePath],
+    val classpath: Classpath,
     val expectedOutputSourceroot: Seq[AbsolutePath]
 ) extends FunSuite
     with DiffAssertions
     with BeforeAndAfterAll { self =>
-  def this(
-      index: SemanticdbIndex,
-      inputSourceroot: AbsolutePath,
-      expectedOutputSourceroot: Seq[AbsolutePath]
-  ) = this(
-    index,
-    expectedOutputSourceroot
-  )
-  def this(
-      database: Database,
-      inputSourceroot: AbsolutePath,
-      expectedOutputSourceroot: Seq[AbsolutePath]
-  ) =
-    this(
-      EagerInMemorySemanticdbIndex(
-        database,
-        Sourcepath(inputSourceroot),
-        Classpath(Nil)),
-      inputSourceroot,
-      expectedOutputSourceroot
-    )
 
-  def scalaVersion = scala.util.Properties.versionNumberString
+  private def scalaVersion = scala.util.Properties.versionNumberString
   private def scalaVersionDirectory: Option[String] =
     if (scalaVersion.startsWith("2.11")) Some("scala-2.11")
     else if (scalaVersion.startsWith("2.12")) Some("scala-2.12")
@@ -75,13 +55,10 @@ abstract class SemanticRuleSuite(
   def runOn(diffTest: DiffTest): Unit = {
     test(diffTest.name) {
       val (rule, config) = diffTest.config.apply()
-      val ctx: RuleCtx = RuleCtx(
-        config.dialect(diffTest.original).parse[Source].get,
-        config.copy(dialect = diffTest.document.dialect)
-      )
-      val patches = rule.fixWithName(ctx)
+      val doc = diffTest.doc
+      val patches = rule.fixWithName(doc)
       val (obtainedWithComment, obtainedLintMessages) =
-        Patch.apply(patches, ctx, rule.semanticOption)
+        Patch.apply(patches, doc, rule.semanticOption)
 
       val patch = patches.values.asPatch
       val tokens = obtainedWithComment.tokenize.get
@@ -107,7 +84,7 @@ abstract class SemanticRuleSuite(
           }
         }
 
-      val expectedLintMessages = CommentAssertion.extract(ctx.tokens)
+      val expectedLintMessages = CommentAssertion.extract(doc.tokens)
       val diff = AssertDiff(obtainedLintMessages, expectedLintMessages)
 
       if (diff.isFailure) {
@@ -129,11 +106,12 @@ abstract class SemanticRuleSuite(
 
   /** Helper method to print out index for individual files */
   def debugFile(filename: String): Unit = {
-    index.documents.foreach { entry =>
-      if (entry.input.label.contains(filename)) {
-        logger.elem(entry)
-      }
-    }
+    ???
+//    index.documents.foreach { entry =>
+//      if (entry.input.label.contains(filename)) {
+//        logger.elem(entry)
+//      }
+//    }
   }
 
   override def afterAll(): Unit = {
@@ -146,7 +124,8 @@ abstract class SemanticRuleSuite(
     super.afterAll()
   }
   lazy val testsToRun =
-    DiffTest.testToRun(DiffTest.fromSemanticdbIndex(index))
+    DiffTest.testToRun(
+      DiffTest.fromSourceDirectories(sourceDirectories, classpath))
   def runAllTests(): Unit = {
     testsToRun.foreach(runOn)
   }

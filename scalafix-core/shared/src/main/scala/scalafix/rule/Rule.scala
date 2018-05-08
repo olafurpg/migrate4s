@@ -10,6 +10,7 @@ import metaconfig.Conf
 import metaconfig.ConfDecoder
 import metaconfig.Configured
 import scalafix.v1.Doc
+import scalafix.v1.SemanticDoc
 
 /** A Scalafix Rule.
   *
@@ -46,6 +47,7 @@ import scalafix.v1.Doc
 abstract class Rule(ruleName: RuleName) { self =>
 
   def fix(implicit doc: Doc): Patch = Patch.empty
+  def fix(implicit doc: SemanticDoc): Patch = Patch.empty
 
   /** Initialize this rule with the given user configuration.
     *

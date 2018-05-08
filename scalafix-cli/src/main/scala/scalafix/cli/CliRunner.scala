@@ -31,17 +31,13 @@ import scalafix.internal.config.RuleKind
 import scalafix.internal.config.ScalafixConfig
 import scalafix.internal.diff.DiffDisable
 import scalafix.internal.jgit.JGitDiff
-import scalafix.internal.util.{
-  EagerInMemorySemanticdbIndex,
-  Failure,
-  SuppressOps
-}
+import scalafix.internal.util.{EagerInMemorySemanticdbIndex, Failure, SuppressOps}
 import scalafix.reflect.ScalafixReflect
 import scalafix.syntax._
 import metaconfig.Configured.Ok
 import metaconfig._
 import metaconfig.ConfError
-import scalafix.internal.cli.ClasspathOps
+import scalafix.internal.reflect.ClasspathOps
 
 sealed abstract case class CliRunner(
     sourceroot: AbsolutePath,
@@ -512,7 +508,7 @@ object CliRunner {
       val decoder = ScalafixReflect.fromLazySemanticdbIndex(lazySemanticdbIndex)
       fixFiles.andThen { inputs =>
         val configured = resolvedConfigInput.andThen(input =>
-          ScalafixConfig.fromInput(input, lazySemanticdbIndex, rules)(decoder))
+          ScalafixConfig.fromInput(input, rules)(decoder))
         configured.map { configuration =>
           val (finalRule, scalafixConfig) = configuration
           val withOut = scalafixConfig.withOut(common.err)
