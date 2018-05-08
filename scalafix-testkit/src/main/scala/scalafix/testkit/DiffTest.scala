@@ -1,31 +1,34 @@
 package scalafix.testkit
 
+import org.langmeta.internal.ScalafixLangmetaHacks._
 import org.langmeta.internal.io.FileIO
 import org.langmeta.internal.io.PathIO
-import scala.meta._
-import scalafix.SemanticdbIndex
-import scalafix.Rule
-import scalafix.internal.config.LazySemanticdbIndex
-import scalafix.internal.config.ScalafixConfig
-import scalafix.reflect.ScalafixReflect
 import org.scalatest.exceptions.TestFailedException
+import scala.meta._
+import scalafix.Rule
+import scalafix.SemanticdbIndex
+import scalafix.internal.config.ScalafixConfig
 import scalafix.internal.reflect.ClasspathOps
-import scalafix.internal.rule.DocOps._
+import scalafix.reflect.ScalafixReflect
 import scalafix.v1.SemanticDoc
-import org.langmeta.internal.ScalafixLangmetaHacks._
+
+case class TestInputs(
+    rule: Rule,
+    config: ScalafixConfig,
+    doc: SemanticDoc
+)
 
 case class DiffTest(
     filename: RelativePath,
-    doc: SemanticDoc,
-    config: () => (Rule, ScalafixConfig),
+    inputs: () => TestInputs,
     isSkip: Boolean,
     isOnly: Boolean) {
 
-  @deprecated("Use doc instead", "0.6.0")
-  def document: SemanticDoc = doc
+  @deprecated("Use inputs().doc instead", "0.6.0")
+  def document: SemanticDoc = inputs().doc
 
-  @deprecated("Use doc.input instead", "0.6.0")
-  def input: Input = doc.input
+  @deprecated("Use inputs().doc.input instead", "0.6.0")
+  def input: Input = inputs().doc.input
 
   def name: String = filename.toString()
 }
@@ -60,13 +63,13 @@ object DiffTest {
         relpath <- FileIO.listAllFilesRecursively(dir).files
         if PathIO.extension(relpath.toNIO) == "scala"
       } yield {
-        val doc = SemanticDoc.fromPath(
-          relpath,
-          classpath,
-          symtab,
-          ScalafixConfig.DefaultDialect)
-        val config: () => (Rule, ScalafixConfig) = { () =>
-          doc.input.tokenize.get
+        val inputs: () => TestInputs = { () =>
+          val doc = SemanticDoc.fromPath(
+            relpath,
+            classpath,
+            symtab,
+            ScalafixConfig.DefaultDialect)
+          val (rule, config) = doc.input.tokenize.get
             .collectFirst {
               case comment: Token.Comment =>
                 assertNotONLY(comment)
@@ -79,11 +82,11 @@ object DiffTest {
             .getOrElse(throw new TestFailedException(
               s"Missing scalafix configuration inside comment at top of file $relpath",
               0))
+          TestInputs(rule, config, doc)
         }
         DiffTest(
           filename = relpath,
-          doc = doc,
-          config = config,
+          inputs = inputs,
           isSkip = false,
           isOnly = false
         )

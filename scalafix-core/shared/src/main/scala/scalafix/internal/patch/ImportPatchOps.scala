@@ -13,34 +13,32 @@ import scalafix.patch.TreePatch.ImportPatch
 import scalafix.rule.RuleCtx
 import scalafix.syntax._
 import scalafix.util.Newline
+import scalafix.v1.SemanticDoc
+import scalafix.v1.Sym
 
 object ImportPatchOps {
   object symbols {
-    val Scala: Symbol = Symbol("_root_.scala.")
-    val Predef: Symbol = Symbol("_root_.scala.Predef.")
-    val Java: Symbol = Symbol("_root_.java.lang.")
-    val Immutable: Symbol = Symbol("_root_.scala.collection.immutable.")
+    val Scala: Sym = Sym("_root_.scala.")
+    val Predef: Sym = Sym("_root_.scala.Predef.")
+    val Java: Sym = Sym("_root_.java.lang.")
+    val Immutable: Sym = Sym("_root_.scala.collection.immutable.")
   }
 
-  def isPredef(symbol: Symbol): Boolean = {
+  def isPredef(symbol: Sym): Boolean = {
     import symbols._
-    symbol match {
-      case Symbol.Global(`Immutable`, Signature.Type("List" | "Map" | "Set")) =>
-        true
-      case Symbol.Global(owner, _) =>
-        owner == Scala ||
-          owner == Predef ||
-          owner == Java
-      case _ => false
-    }
+    val owner = symbol.owner
+    // TODO this is a hack!
+    owner == Scala ||
+    owner == Predef ||
+    owner == Java
   }
 
-  private def fallbackToken(ctx: RuleCtx): Token = {
+  private def fallbackToken(ctx: SemanticDoc): Token = {
     def loop(tree: Tree): Token = tree match {
       case Source((stat: Pkg) :: _) => loop(stat)
-      case Source(_) => ctx.toks(tree).head
+      case Source(_) => tree.tokens.head
       case Pkg(_, stat :: _) => loop(stat)
-      case els => ctx.tokenList.prev(ctx.tokenList.prev(ctx.toks(els).head))
+      case els => ctx.tokenList.prev(ctx.tokenList.prev(els.tokens.head))
     }
     loop(ctx.tree)
   }
@@ -71,21 +69,28 @@ object ImportPatchOps {
       ctx: RuleCtx,
       importPatches: Seq[ImportPatch])(
       implicit index: SemanticdbIndex): Iterable[Patch] = {
-    val allImports = ctx.tree.collect { case i: Import => i }
+    ???
+  }
+
+  private[scalafix] def superNaiveImportPatchToTokenPatchConverter(
+      doc: SemanticDoc,
+      importPatches: Seq[ImportPatch]): Iterable[Patch] = {
+    implicit val semanticDoc = doc
+    val allImports = doc.tree.collect { case i: Import => i }
     val allImporters = allImports.flatMap(_.importers)
     lazy val allImportersSyntax = allImporters.map(_.syntax)
     val allImportees = allImporters.flatMap(_.importees)
     val allNamedImports = allImportees.collect {
-      case Importee.Name(n) if index.names.contains(n.pos) =>
-        n.symbol
+      case Importee.Name(n) if !n.sym.isNone =>
+        n.sym
       // TODO(olafur) handle rename.
     }
-    val allImporteeSymbols = allImportees.flatMap(importee =>
-      importee.symbol.map(_.normalized -> importee))
-    val globalImports = getGlobalImports(ctx.tree)
+    val allImporteeSymbols =
+      allImportees.map(importee => importee.sym.normalized -> importee)
+    val globalImports = getGlobalImports(doc.tree)
     val editToken: Token = {
-      if (globalImports.isEmpty) fallbackToken(ctx)
-      else ctx.toks(globalImports.last).last
+      if (globalImports.isEmpty) fallbackToken(doc)
+      else globalImports.last.tokens.last
     }
     val isRemovedImportee = mutable.LinkedHashSet.empty[Importee]
     importPatches.foreach {
@@ -97,15 +102,16 @@ object ImportPatchOps {
       case _ =>
     }
     val importersToAdd = {
-      val isAlreadyImported = mutable.Set.empty[Symbol]
+      val isAlreadyImported = mutable.Set.empty[Sym]
       for { // register global imports
         import_ <- globalImports
         importer <- import_.importers
         importee <- importer.importees
-        symbol <- index.symbol(importee).toList
-        underlying <- SymbolOps.underlyingSymbols(symbol)
+        symbol = importee.sym
+        if !symbol.isNone
+        underlying <- SymbolOps.underlyingSymbols(Symbol(symbol.value))
       } {
-        isAlreadyImported += underlying
+        isAlreadyImported += underlying.sym
       }
       importPatches.flatMap {
         case TreePatch.AddGlobalSymbol(symbol)
@@ -113,7 +119,7 @@ object ImportPatchOps {
               !isAlreadyImported(symbol) &&
               !isPredef(symbol) =>
           isAlreadyImported += symbol
-          SymbolOps.toImporter(symbol).toList
+          SymbolOps.toImporter(symbol.msymbol).toList
         case TreePatch.AddGlobalImport(importer)
             // best effort deduplication for syntactic addGlobalImport(Importer)
             if !allImportersSyntax.contains(importer.syntax) =>
@@ -122,7 +128,7 @@ object ImportPatchOps {
       }
     }
     val grouped: Seq[Importer] =
-      if (ctx.config.groupImportsByPrefix)
+      if (doc.doc.config.groupImportsByPrefix)
         importersToAdd
           .groupBy(_.ref.syntax)
           .map {
@@ -144,7 +150,7 @@ object ImportPatchOps {
     val extraPatches =
       grouped
         .sortBy(_.ref.syntax)
-        .map(is => ctx.addRight(editToken, s"\nimport ${is.syntax}"))
+        .map(is => doc.addRight(editToken, s"\nimport ${is.syntax}"))
     val isRemovedImporter =
       allImporters.toIterator
         .filter(_.importees.forall(isRemovedImportee))
@@ -155,7 +161,7 @@ object ImportPatchOps {
           case Token.Space() => true
           case _ => false
         }
-        .map(ctx.removeToken(_))
+        .map(Patch.removeToken)
         .asPatch
     val curlyBraceRemoves = allImporters.map { importer =>
       val keptImportees = importer.importees.filterNot(isRemovedImportee)
@@ -163,21 +169,18 @@ object ImportPatchOps {
       keptImportees match {
         case (Importee.Wildcard() | Importee.Name(_)) +: Nil
             if hasRemovedImportee =>
-          ctx
-            .toks(importer)
-            .collectFirst {
-              case open @ Token.LeftBrace() =>
-                ctx.matchingParens
-                  .close(open)
-                  .map { close =>
-                    ctx.removeToken(open) +
-                      removeSpaces(ctx.tokenList.trailing(open)) +
-                      ctx.removeToken(close) +
-                      removeSpaces(ctx.tokenList.leading(close))
-                  }
-                  .asPatch
-            }
-            .asPatch
+          importer.tokens.collectFirst {
+            case open @ Token.LeftBrace() =>
+              doc.matchingParens
+                .close(open)
+                .map { close =>
+                  Patch.removeToken(open) +
+                    removeSpaces(doc.tokenList.trailing(open)) +
+                    Patch.removeToken(close) +
+                    removeSpaces(doc.tokenList.leading(close))
+                }
+                .asPatch
+          }.asPatch
         case _ => Patch.empty
       }
     }
@@ -187,11 +190,11 @@ object ImportPatchOps {
     val isRemovedImport =
       allImports.filter(_.importers.forall(isRemovedImporter))
     def remove(toRemove: Tree) = {
-      val tokens = ctx.toks(toRemove)
+      val tokens = doc.toks(toRemove)
       def removeFirstComma(lst: Iterable[Token]): Iterable[Patch] = {
         lst
           .takeWhile {
-            case lf @ Token.LF() if ctx.tokenList.prev(lf).is[Token.Comma] =>
+            case lf @ Token.LF() if doc.tokenList.prev(lf).is[Token.Comma] =>
               true
             case Token.Space() => true
             case comma @ Token.Comma() =>
@@ -201,10 +204,10 @@ object ImportPatchOps {
               true
             case _ => false
           }
-          .map(ctx.removeToken(_))
+          .map(Patch.removeToken)
       }
       val leadingComma =
-        removeFirstComma(ctx.tokenList.leading(tokens.head))
+        removeFirstComma(doc.tokenList.leading(tokens.head))
       val hadLeadingComma = leadingComma.exists {
         case TokenPatch.Add(comma: Token.Comma, _, _, keepTok @ false) =>
           isRemovedComma.get(comma).contains(toRemove)
@@ -212,14 +215,14 @@ object ImportPatchOps {
       }
       val trailingComma =
         if (hadLeadingComma) List(Patch.empty)
-        else removeFirstComma(ctx.tokenList.trailing(tokens.last))
-      ctx.removeTokens(tokens) ++ trailingComma ++ leadingComma
+        else removeFirstComma(doc.tokenList.trailing(tokens.last))
+      Patch.removeTokens(tokens) ++ trailingComma ++ leadingComma
     }
 
     val leadingNewlines = isRemovedImport.map { i =>
       var newline = false
-      ctx.tokenList
-        .leading(ctx.toks(i).head)
+      doc.tokenList
+        .leading(doc.toks(i).head)
         .takeWhile(x =>
           !newline && {
             x.is[Token.Space] || {
@@ -228,7 +231,7 @@ object ImportPatchOps {
               isNewline
             }
         })
-        .map(tok => ctx.removeToken(tok))
+        .map(tok => Patch.removeToken(tok))
         .asPatch
     }
 

@@ -4,6 +4,7 @@ import scala.meta.Tree
 import scala.meta.internal.{semanticdb3 => s}
 import scala.meta.internal.semanticdb3.SymbolInformation.{Property => p}
 import scala.meta.internal.semanticdb3.Scala._
+import scalafix.internal.util.SymbolOps
 
 final class Sym private (val value: String) {
   def isNone: Boolean = value.isNone
@@ -13,6 +14,10 @@ final class Sym private (val value: String) {
   def isLocal: Boolean = value.isLocal
   def owner: Sym = Sym(value.owner)
   def info(doc: SemanticDoc): Sym.Info = doc.info(this)
+
+  // TODO: remove
+  def normalized: Sym = Sym(SymbolOps.normalize(scala.meta.Symbol(value)).syntax)
+  def msymbol: scala.meta.Symbol = scala.meta.Symbol(value)
 
   override def toString: String = value
   override def equals(obj: Any): Boolean =

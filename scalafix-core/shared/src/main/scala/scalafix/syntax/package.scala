@@ -8,6 +8,8 @@ import scalafix.internal.util.SymbolOps
 import scalafix.internal.util.DenotationOps
 import scalafix.util.SymbolMatcher
 import scalafix.util.TreeOps
+import scalafix.v1.SemanticDoc
+import scalafix.v1.Sym
 
 package object syntax {
   implicit class XtensionRefSymbolOpt(tree: Tree)(
@@ -15,11 +17,19 @@ package object syntax {
     def symbol: Option[Symbol] = index.symbol(tree.pos)
     def denotation: Option[Denotation] = index.denotation(tree)
   }
+  implicit class XtensionTreeSemanticDoc(tree: Tree)(
+    implicit doc: SemanticDoc) {
+    def sym: Sym = doc.symbol(tree)
+    def info: Sym.Info = doc.info(tree)
+  }
   implicit class XtensionParsedOpt[T](parsed: Parsed[T]) {
     def toOption: Option[T] = parsed match {
       case parsers.Parsed.Success(tree) => Some(tree)
       case _ => None
     }
+  }
+  implicit class XtensionSymbolScalafix(symbol: Symbol){
+    def sym: Sym = Sym(symbol.syntax)
   }
   implicit class XtensionSymbolSemanticdbIndex(symbol: Symbol)(
       implicit index: SemanticdbIndex) {

@@ -14,6 +14,7 @@ import scalafix.lint.LintMessage
 import scalafix.patch._
 import scalafix.rule.RuleName
 import scalafix.util.TreeExtractors.Mods
+import scalafix.v1.SemanticDoc
 
 /** EscapeHatch is an algorithm to selectively disable rules. There
   * are two mechanisms to do so: anchored comments and the
@@ -27,9 +28,9 @@ class EscapeHatch private (
 
   def filter(
       patchesByName: Map[RuleName, Patch],
-      ctx: RuleCtx,
-      index: SemanticdbIndex,
-      diff: DiffDisable): (Patch, List[LintMessage]) = {
+      doc: SemanticDoc
+  ): (Patch, List[LintMessage]) = {
+    val diff = doc.doc.diffDisable
     val usedEscapes = mutable.Set.empty[EscapeFilter]
     val lintMessages = List.newBuilder[LintMessage]
 
@@ -48,7 +49,7 @@ class EscapeHatch private (
     def loop(name: RuleName, patch: Patch): Patch = patch match {
       case AtomicPatch(underlying) =>
         val hasDisabledPatch = {
-          val patches = Patch.treePatchApply(underlying)(ctx, index)
+          val patches = Patch.treePatchApply(underlying, doc)
           patches.exists { tp =>
             val byGit = diff.isDisabled(tp.tok.pos)
             val byEscape = isDisabledByEscape(name, tp.tok.pos.start)
@@ -99,6 +100,15 @@ class EscapeHatch private (
         .map(UnusedWarning.at)
     val warnings = lintMessages.result() ++ unusedWarnings
     (patches, warnings)
+  }
+
+  def filter(
+      patchesByName: Map[RuleName, Patch],
+      ctx: RuleCtx,
+      index: SemanticdbIndex,
+      diff: DiffDisable): (Patch, List[LintMessage]) = {
+    ???
+
   }
 }
 

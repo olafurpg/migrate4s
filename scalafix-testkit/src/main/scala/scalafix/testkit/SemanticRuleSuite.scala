@@ -54,8 +54,7 @@ abstract class SemanticRuleSuite(
 
   def runOn(diffTest: DiffTest): Unit = {
     test(diffTest.name) {
-      val (rule, config) = diffTest.config.apply()
-      val doc = diffTest.doc
+      val TestInputs(rule, config, doc) = diffTest.inputs()
       val patches = rule.fixWithName(doc)
       val (obtainedWithComment, obtainedLintMessages) =
         Patch.apply(patches, doc, rule.semanticOption)

@@ -19,7 +19,8 @@ import org.scalameta.logger
 import scalafix.internal.config.ScalafixMetaconfigReaders
 import scalafix.internal.util.SymbolOps.Root
 import scalafix.patch.TreePatch.AddGlobalImport
-import scalafix.patch.TreePatch.RemoveGlobalImport
+import scalafix.v1.SemanticDoc
+import scalafix.v1.Sym
 
 /** A data structure that can produce a .patch file.
   *
@@ -89,11 +90,11 @@ private[scalafix] object TokenPatch {
 abstract class TreePatch extends Patch
 private[scalafix] object TreePatch {
   abstract class ImportPatch extends TreePatch
-  case class RemoveGlobalImport(symbol: Symbol) extends ImportPatch
+  case class RemoveGlobalImport(symbol: Sym) extends ImportPatch
   case class RemoveImportee(importee: Importee) extends ImportPatch
   case class AddGlobalImport(importer: Importer) extends ImportPatch
-  case class AddGlobalSymbol(symbol: Symbol) extends ImportPatch
-  case class ReplaceSymbol(from: Symbol.Global, to: Symbol.Global)
+  case class AddGlobalSymbol(symbol: Sym) extends ImportPatch
+  case class ReplaceSymbol(from: Sym, to: Sym)
       extends TreePatch
 }
 
@@ -192,9 +193,16 @@ object Patch extends PatchOps {
     (tokenPatchApply(ctx, patches), lints)
   }
 
-  def treePatchApply(patch: Patch)(
-      implicit ctx: RuleCtx,
-      index: SemanticdbIndex): Iterable[TokenPatch] = {
+  private[scalafix] def apply(
+      patchesByName: Map[scalafix.rule.RuleName, scalafix.Patch],
+      doc: SemanticDoc
+  ): (String, List[LintMessage]) = {
+    val (patch, lints) = doc.doc.escapeHatch.filter(patchesByName, doc)
+    val patches = treePatchApply(patch, doc)
+    (tokenPatchApply(ctx, patches), lints)
+  }
+
+  def treePatchApply(patch: Patch, doc: SemanticDoc): Iterable[TokenPatch] = {
     val base = underlying(patch)
     val moveSymbol = underlying(
       ReplaceSymbolOps.naiveMoveSymbolPatch(base.collect {
@@ -220,6 +228,12 @@ object Patch extends PatchOps {
         }
     }
     importTokenPatches ++ tokenPatches
+  }
+
+  def treePatchApply(patch: Patch)(
+      implicit ctx: RuleCtx,
+      index: SemanticdbIndex): Iterable[TokenPatch] = {
+    ???
   }
 
   private def tokenPatchApply(

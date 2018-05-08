@@ -9,6 +9,7 @@ import scalafix.syntax._
 import metaconfig.Conf
 import metaconfig.ConfDecoder
 import metaconfig.Configured
+import scalafix.rule.Rule.CompositeRule
 import scalafix.v1.Doc
 import scalafix.v1.SemanticDoc
 
@@ -47,7 +48,6 @@ import scalafix.v1.SemanticDoc
 abstract class Rule(ruleName: RuleName) { self =>
 
   def fix(implicit doc: Doc): Patch = Patch.empty
-  def fix(implicit doc: SemanticDoc): Patch = Patch.empty
 
   /** Initialize this rule with the given user configuration.
     *
@@ -70,7 +70,6 @@ abstract class Rule(ruleName: RuleName) { self =>
 
   /** Returns a patch to fix violations of this rule. */
   def fix(ctx: RuleCtx): Patch = Patch.empty
-
 
   /** Returns string output of applying this single patch. */
   final def apply(ctx: RuleCtx): String =
@@ -106,8 +105,18 @@ abstract class Rule(ruleName: RuleName) { self =>
 
   private[scalafix] final def allNames: List[String] =
     name.identifiers.map(_.value)
+
   protected[scalafix] def fixWithName(ctx: RuleCtx): Map[RuleName, Patch] =
     Map(name -> (fix(ctx) ++ check(ctx).map(ctx.lint)))
+  final private[scalafix] def fixWithName(
+      doc: SemanticDoc): Map[RuleName, Patch] = this match {
+    case c: CompositeRule =>
+      c.rules.foldLeft(Map.empty[RuleName, Patch])(_ ++ _.fixWithName(doc))
+    case r: SemanticRule =>
+      Map(r.name -> r.fix(doc))
+    case r =>
+      Map(r.name -> r.fix(doc.doc))
+  }
 
   final override def toString: String = name.toString
   final def name: RuleName = ruleName
@@ -124,12 +133,19 @@ abstract class Rule(ruleName: RuleName) { self =>
 
 abstract class SemanticRule(name: RuleName) extends Rule(name) {
   implicit val ImplicitIndex = SemanticdbIndex.empty
+
+  // TODO deprecate
   def this(index: SemanticdbIndex, name: RuleName) = this(name)
+
+  def fix(implicit doc: SemanticDoc): Patch = Patch.empty
 }
 
 object Rule {
+
   private[scalafix] class CompositeRule(val rules: List[Rule])
-      extends Rule(rules.foldLeft(RuleName.empty)(_ + _.name)) {
+      extends SemanticRule(rules.foldLeft(RuleName.empty)(_ + _.name)) {
+    require(!rules.exists(_.isInstanceOf[CompositeRule]), name.toString)
+
     override def init(config: Conf): Configured[Rule] = {
       MetaconfigPendingUpstream
         .flipSeq(rules.map(_.init(config)))
@@ -144,6 +160,14 @@ object Rule {
       rules.foldLeft(Map.empty[RuleName, Patch])(_ ++ _.fixWithName(ctx))
     override def fix(ctx: RuleCtx): Patch =
       Patch.empty ++ rules.map(_.fix(ctx))
+    override def fix(implicit doc: Doc): Patch =
+      Patch.empty ++ rules.map(_.fix(doc))
+    override def fix(implicit doc: SemanticDoc): Patch =
+      Patch.empty ++ rules.map {
+        case s: SemanticRule => s.fix(doc)
+        case r => r.fix(doc.doc)
+      }
+
   }
   val syntaxRuleConfDecoder: ConfDecoder[Rule] =
     ScalafixMetaconfigReaders.ruleConfDecoderSyntactic(

@@ -28,9 +28,12 @@ final class SemanticDoc private[scalafix] (
   def tree: Tree = doc.tree
   def tokens: Tokens = doc.tokens
   def input: Input = doc.input
-  def matching: MatchingParens = doc.matching
+  def matchingParens: MatchingParens = doc.matchingParens
   def tokenList: TokenList = doc.tokenList
   def comments: AssociatedComments = doc.comments
+
+  // TODO: remove
+  def toks(tree: Tree): Tokens = doc.toks(tree)
 
   // ============
   // Semantic API
