@@ -57,7 +57,7 @@ abstract class SemanticRuleSuite(
       val TestInputs(rule, config, doc) = diffTest.inputs()
       val patches = rule.fixWithName(doc)
       val (obtainedWithComment, obtainedLintMessages) =
-        Patch.apply(patches, doc, rule.semanticOption)
+        Patch.apply(patches, doc)
 
       val patch = patches.values.asPatch
       val tokens = obtainedWithComment.tokenize.get

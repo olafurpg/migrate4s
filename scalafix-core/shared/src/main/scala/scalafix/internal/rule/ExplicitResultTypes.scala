@@ -23,6 +23,7 @@ import scalafix.internal.util.EagerInMemorySemanticdbIndex
 import scalafix.internal.util.PrettyResult
 import scalafix.internal.util.QualifyStrategy
 import scalafix.internal.util.PrettyType
+import scalafix.v1.SemanticDoc
 
 case class ExplicitResultTypes(
     index: SemanticdbIndex,
@@ -77,7 +78,7 @@ case class ExplicitResultTypes(
   }
   import scala.meta.internal.{semanticdb3 => s}
   def toType(
-      ctx: RuleCtx,
+      ctx: SemanticDoc,
       pos: Position,
       info: s.SymbolInformation): Option[PrettyResult[Type]] = {
     try {
@@ -109,7 +110,7 @@ case class ExplicitResultTypes(
     }
   }
 
-  override def fix(ctx: RuleCtx): Patch = {
+  override def fix(implicit ctx: SemanticDoc): Patch = {
     val table = index.asInstanceOf[EagerInMemorySemanticdbIndex]
     def defnType(defn: Defn): Option[(Type, Patch)] =
       for {

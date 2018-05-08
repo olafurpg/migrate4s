@@ -19,6 +19,7 @@ import org.scalameta.logger
 import scalafix.internal.config.ScalafixMetaconfigReaders
 import scalafix.internal.util.SymbolOps.Root
 import scalafix.patch.TreePatch.AddGlobalImport
+import scalafix.patch.TreePatch.RemoveGlobalImport
 import scalafix.v1.SemanticDoc
 import scalafix.v1.Sym
 
@@ -94,8 +95,9 @@ private[scalafix] object TreePatch {
   case class RemoveImportee(importee: Importee) extends ImportPatch
   case class AddGlobalImport(importer: Importer) extends ImportPatch
   case class AddGlobalSymbol(symbol: Sym) extends ImportPatch
-  case class ReplaceSymbol(from: Sym, to: Sym)
-      extends TreePatch
+  case class ReplaceSymbol(from: Sym, to: Sym) extends TreePatch {
+    def msymbols: (Symbol, Symbol) = (from.msymbol, to.msymbol)
+  }
 }
 
 // implementation detail
@@ -133,29 +135,28 @@ object Patch extends PatchOps {
     tree.tokens.headOption.fold(Patch.empty)(addLeft(_, toAdd))
 
   // Semantic patch ops.
-  def removeGlobalImport(symbol: Symbol)(
-      implicit index: SemanticdbIndex): Patch =
-    RemoveGlobalImport(symbol)
-  def addGlobalImport(symbol: Symbol)(implicit index: SemanticdbIndex): Patch =
-    TreePatch.AddGlobalSymbol(symbol)
+  def removeGlobalImport(symbol: Symbol)(implicit doc: SemanticDoc): Patch =
+    RemoveGlobalImport(symbol.sym)
+  def addGlobalImport(symbol: Symbol)(implicit doc: SemanticDoc): Patch =
+    TreePatch.AddGlobalSymbol(symbol.sym)
   def replaceSymbol(fromSymbol: Symbol.Global, toSymbol: Symbol.Global)(
-      implicit index: SemanticdbIndex): Patch =
-    TreePatch.ReplaceSymbol(fromSymbol, toSymbol)
+      implicit doc: SemanticDoc): Patch =
+    TreePatch.ReplaceSymbol(fromSymbol.sym, toSymbol.sym)
   def replaceSymbols(toReplace: (String, String)*)(
-      implicit index: SemanticdbIndex): Patch =
+      implicit doc: SemanticDoc): Patch =
     toReplace.foldLeft(Patch.empty) {
       case (a, (from, to)) =>
         val (fromSymbol, toSymbol) =
           ScalafixMetaconfigReaders.parseReplaceSymbol(from, to).get
-        a + replaceSymbol(fromSymbol, toSymbol)
+        a + ReplaceSymbol(fromSymbol, toSymbol)
     }
   def replaceSymbols(toReplace: scala.collection.Seq[(String, String)])(
       implicit noop: DummyImplicit,
-      index: SemanticdbIndex): Patch =
+      doc: SemanticDoc): Patch =
     replaceSymbols(toReplace: _*)
   def renameSymbol(fromSymbol: Symbol.Global, toName: String)(
-      implicit index: SemanticdbIndex): Patch =
-    TreePatch.ReplaceSymbol(fromSymbol, Root(Signature.Term(toName)))
+      implicit doc: SemanticDoc): Patch =
+    TreePatch.ReplaceSymbol(fromSymbol.sym, Root(Signature.Term(toName)).sym)
   def lint(msg: LintMessage): Patch =
     LintPatch(msg)
 
@@ -199,7 +200,7 @@ object Patch extends PatchOps {
   ): (String, List[LintMessage]) = {
     val (patch, lints) = doc.doc.escapeHatch.filter(patchesByName, doc)
     val patches = treePatchApply(patch, doc)
-    (tokenPatchApply(ctx, patches), lints)
+    (tokenPatchApply(doc, patches), lints)
   }
 
   def treePatchApply(patch: Patch, doc: SemanticDoc): Iterable[TokenPatch] = {
@@ -207,16 +208,15 @@ object Patch extends PatchOps {
     val moveSymbol = underlying(
       ReplaceSymbolOps.naiveMoveSymbolPatch(base.collect {
         case m: ReplaceSymbol => m
-      }))
+      })(doc))
     val patches = base.filterNot(_.isInstanceOf[ReplaceSymbol]) ++ moveSymbol
     val tokenPatches = patches.collect { case e: TokenPatch => e }
     val importPatches = patches.collect { case e: ImportPatch => e }
     val importTokenPatches = {
-      val result =
-        ImportPatchOps.superNaiveImportPatchToTokenPatchConverter(
-          ctx,
-          importPatches
-        )
+      val result = ImportPatchOps.superNaiveImportPatchToTokenPatchConverter(
+        doc,
+        importPatches
+      )
 
       Patch
         .underlying(result.asPatch)
@@ -237,14 +237,21 @@ object Patch extends PatchOps {
   }
 
   private def tokenPatchApply(
-      ctx: RuleCtx,
+      doc: SemanticDoc,
       patches: Iterable[TokenPatch]): String = {
     val patchMap = patches
       .groupBy(x => TokenOps.hash(x.tok))
       .mapValues(_.reduce(merge).newTok)
-    ctx.tokens.toIterator
+    doc.tokens.toIterator
       .map(tok => patchMap.getOrElse(TokenOps.hash(tok), tok.syntax))
       .mkString
+  }
+
+  private def tokenPatchApply(
+      ctx: RuleCtx,
+      patches: Iterable[TokenPatch]): String = {
+    ???
+
   }
 
   private def underlying(patch: Patch): Seq[Patch] = {

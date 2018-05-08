@@ -20,6 +20,7 @@ package object syntax {
   implicit class XtensionTreeSemanticDoc(tree: Tree)(
     implicit doc: SemanticDoc) {
     def sym: Sym = doc.symbol(tree)
+    def syms: Iterator[Sym] = doc.symbols(tree)
     def info: Sym.Info = doc.info(tree)
   }
   implicit class XtensionParsedOpt[T](parsed: Parsed[T]) {

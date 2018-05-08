@@ -2,6 +2,7 @@ package scalafix
 package internal.config
 
 import scala.meta.Ref
+import scalafix.syntax._
 import scala.meta._
 import scala.meta.parsers.Parse
 import scala.meta.semanticdb.Symbol
@@ -27,6 +28,7 @@ import metaconfig.Configured.Ok
 import scalafix.internal.config.MetaconfigParser.{parser => hoconParser}
 import scalafix.internal.rule.ConfigRule
 import scalafix.patch.TreePatch
+import scalafix.v1.Sym
 
 object ScalafixMetaconfigReaders extends ScalafixMetaconfigReaders
 // A collection of metaconfig.Reader instances that are shared across
@@ -135,11 +137,11 @@ trait ScalafixMetaconfigReaders {
       Configured.error(s"$what requires the semantic API."): Configured[T])(f)
   }
 
-  def parseReplaceSymbol(
-      from: String,
-      to: String): Configured[(Symbol.Global, Symbol.Global)] =
-    symbolGlobalReader.read(Conf.Str(from)) |@|
-      symbolGlobalReader.read(Conf.Str(to))
+  def parseReplaceSymbol(from: String, to: String): Configured[(Sym, Sym)] =
+    (
+      symbolGlobalReader.read(Conf.Str(from)) |@|
+        symbolGlobalReader.read(Conf.Str(to))
+    ).map { case (a, b) => (a.sym, b.sym) }
 
   def classloadRuleDecoder(index: LazySemanticdbIndex): ConfDecoder[Rule] =
     ConfDecoder.instance[Rule] {
@@ -192,7 +194,7 @@ trait ScalafixMetaconfigReaders {
       (
         c.get[Symbol.Global]("from") |@|
           c.get[Symbol.Global]("to")
-      ).map { case (a, b) => ReplaceSymbol(a, b) }
+      ).map { case (a, b) => ReplaceSymbol(a.sym, b.sym) }
     }
 
   def ruleConfDecoderSyntactic(
@@ -281,7 +283,7 @@ trait ScalafixMetaconfigReaders {
   implicit lazy val RemoveGlobalImportReader: ConfDecoder[RemoveGlobalImport] =
     termRefReader.flatMap { ref =>
       parseSymbol(s"_root_.$ref.").map { s =>
-        RemoveGlobalImport(s)
+        RemoveGlobalImport(s.sym)
       }
     }
 

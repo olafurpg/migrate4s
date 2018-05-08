@@ -11,7 +11,8 @@ import scalafix.internal.reflect.RuleCompiler
 
 class SemanticTests
     extends SemanticRuleSuite(
-      index,
+      index.sourcepath.shallow,
+      defaultClasspath,
       Seq(
         AbsolutePath(BuildInfo.outputSourceroot),
         AbsolutePath(BuildInfo.outputDottySourceroot)

@@ -11,6 +11,7 @@ import scalafix.Patch
 import scalafix.patch.PatchOps
 import scalafix.util.SemanticdbIndex
 import DeprecatedPatchOps.DeprecationMessage
+import scalafix.v1.SemanticDoc
 
 trait DeprecatedPatchOps extends PatchOps {
   @deprecated(DeprecationMessage, "0.6.0")
@@ -50,27 +51,27 @@ trait DeprecatedPatchOps extends PatchOps {
   // Semantic patch ops.
   @deprecated(DeprecationMessage, "0.6.0")
   final def removeGlobalImport(symbol: Symbol)(
-      implicit index: SemanticdbIndex): Patch =
+      implicit doc: SemanticDoc): Patch =
     Patch.removeGlobalImport(symbol)
   @deprecated(DeprecationMessage, "0.6.0")
-  final def addGlobalImport(symbol: Symbol)(implicit index: SemanticdbIndex): Patch =
+  final def addGlobalImport(symbol: Symbol)(implicit doc: SemanticDoc): Patch =
     Patch.addGlobalImport(symbol)
   @deprecated(DeprecationMessage, "0.6.0")
   final def replaceSymbol(fromSymbol: Symbol.Global, toSymbol: Symbol.Global)(
-      implicit index: SemanticdbIndex): Patch =
+      implicit doc: SemanticDoc): Patch =
     Patch.replaceSymbol(fromSymbol, toSymbol)
   @deprecated(DeprecationMessage, "0.6.0")
   final def replaceSymbols(toReplace: (String, String)*)(
-      implicit index: SemanticdbIndex): Patch =
+      implicit doc: SemanticDoc): Patch =
     Patch.replaceSymbols(toReplace: _*)
   @deprecated(DeprecationMessage, "0.6.0")
   final def replaceSymbols(toReplace: Seq[(String, String)])(
       implicit noop: DummyImplicit,
-      index: SemanticdbIndex): Patch =
+      doc: SemanticDoc): Patch =
     Patch.replaceSymbols(toReplace)
   @deprecated(DeprecationMessage, "0.6.0")
   final def renameSymbol(fromSymbol: Symbol.Global, toName: String)(
-      implicit index: SemanticdbIndex): Patch =
+      implicit doc: SemanticDoc): Patch =
     Patch.renameSymbol(fromSymbol, toName)
   @deprecated(DeprecationMessage, "0.6.0")
   final def lint(msg: LintMessage): Patch =
@@ -78,5 +79,5 @@ trait DeprecatedPatchOps extends PatchOps {
 }
 
 object DeprecatedPatchOps {
-  private [scalafix] final val DeprecationMessage = "Use scalafix.Patch instead"
+  private[scalafix] final val DeprecationMessage = "Use scalafix.Patch instead"
 }
