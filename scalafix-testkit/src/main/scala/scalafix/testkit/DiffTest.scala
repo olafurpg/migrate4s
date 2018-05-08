@@ -30,7 +30,7 @@ case class DiffTest(
   @deprecated("Use inputs().doc.input instead", "0.6.0")
   def input: Input = inputs().doc.input
 
-  def name: String = filename.toString()
+  def name: String = filename.toNIO.getFileName.toString.stripSuffix(".scala")
 }
 
 object DiffTest {

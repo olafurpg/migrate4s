@@ -13,18 +13,24 @@ object DocOps {
   implicit class XtensionRelativePathScalafix(path: RelativePath) {
     // TODO: replace with RelativePath.toURI once https://github.com/scalameta/scalameta/issues/1523 is fixed
     def toRelativeURI: URI = {
-      val reluri =
-        path.toNIO.asScala.iterator.map(_.getFileName.toString).mkString("/")
-      URI.create(URLEncoder.encode(reluri, StandardCharsets.UTF_8.name()))
+      val reluri = path.toNIO.asScala.iterator.map { path =>
+        URLEncoder.encode(
+          path.getFileName.toString,
+          StandardCharsets.UTF_8.name())
+      }
+      URI.create(reluri.mkString("/"))
     }
   }
 
   implicit class XtensionClasspathScalafix(cp: Classpath) {
     def resolveSemanticdb(path: RelativePath): Option[AbsolutePath] = {
-      cp.shallow.find { root =>
-        root.isDirectory &&
-        root.resolve("META-INF").resolve("semanticdb").resolve(path).isFile
-      }
+      cp.shallow.iterator
+        .filter(_.isDirectory)
+        .map(
+          _.resolve("META-INF")
+            .resolve("semanticdb")
+            .resolve(path.toString() + ".semanticdb"))
+        .collectFirst { case p if p.isFile => p }
     }
   }
 
