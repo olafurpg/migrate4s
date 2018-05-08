@@ -110,7 +110,6 @@ object SemanticDoc {
     val reluri = path.toRelativeURI.toString
     classpath.resolveSemanticdb(path) match {
       case Some(abspath) =>
-        pprint.log(abspath)
         val in = Files.newInputStream(abspath.toNIO)
         val sdocs =
           try s.TextDocuments.parseFrom(in).documents

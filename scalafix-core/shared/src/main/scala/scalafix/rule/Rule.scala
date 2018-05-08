@@ -132,7 +132,7 @@ abstract class Rule(ruleName: RuleName) { self =>
 }
 
 abstract class SemanticRule(name: RuleName) extends Rule(name) {
-  implicit val ImplicitIndex = SemanticdbIndex.empty
+  implicit def ImplicitIndex: SemanticdbIndex = ???
 
   // TODO deprecate
   def this(index: SemanticdbIndex, name: RuleName) = this(name)

@@ -24,6 +24,7 @@ import scalafix.internal.util.PrettyResult
 import scalafix.internal.util.QualifyStrategy
 import scalafix.internal.util.PrettyType
 import scalafix.v1.SemanticDoc
+import scalafix.v1.Sym
 
 case class ExplicitResultTypes(
     index: SemanticdbIndex,
@@ -80,12 +81,12 @@ case class ExplicitResultTypes(
   def toType(
       ctx: SemanticDoc,
       pos: Position,
-      info: s.SymbolInformation): Option[PrettyResult[Type]] = {
+      info: Sym.Info): Option[PrettyResult[Type]] = {
     try {
-      val tpe = info.tpe.get.tag match {
+      val tpe = info.tpe.tag match {
         case s.Type.Tag.METHOD_TYPE =>
-          info.tpe.get.methodType.get.returnType.get
-        case _ => info.tpe.get
+          info.tpe.methodType.get.returnType.get
+        case _ => info.tpe
       }
       Some(
         PrettyType.toType(
@@ -96,9 +97,9 @@ case class ExplicitResultTypes(
         ))
     } catch {
       case NonFatal(e) =>
-        if (config.fatalWarnings) {
+        if (config.fatalWarnings || true) {
           val sw = new StringWriter()
-          sw.append(info.toProtoString)
+          sw.append(info.info.toProtoString)
             .append("\n")
           e.printStackTrace(new PrintWriter(sw))
           ctx.config.reporter.error(sw.toString, pos)
@@ -111,17 +112,17 @@ case class ExplicitResultTypes(
   }
 
   override def fix(implicit ctx: SemanticDoc): Patch = {
-    val table = index.asInstanceOf[EagerInMemorySemanticdbIndex]
     def defnType(defn: Defn): Option[(Type, Patch)] =
       for {
         name <- defnName(defn)
-        defnSymbol <- name.symbol
-        info <- table.info(defnSymbol.syntax)
+        defnSymbol  = name.sym
+        info = ctx.info(defnSymbol)
+        if !info.isNone
         result <- toType(ctx, name.pos, info)
       } yield {
         val addGlobalImports = result.imports.map { s =>
           val symbol = Symbol(s)
-          ctx.addGlobalImport(symbol)
+          Patch.addGlobalImport(symbol)
         }
         result.tree -> addGlobalImports.asPatch
       }
@@ -170,13 +171,7 @@ case class ExplicitResultTypes(
       def hasParentWihTemplate: Boolean =
         defn.parent.exists(_.is[Template])
 
-      def isLocal =
-        if (config.skipLocalImplicits) nm.symbol match {
-          case Some(value) => value.isInstanceOf[scala.meta.Symbol.Local]
-          case None => false
-        } else false
-
-      isImplicit && !isLocal || {
+      isImplicit && !nm.sym.isLocal || {
         hasParentWihTemplate &&
         !defn.hasMod(mod"implicit") &&
         !matchesSimpleDefinition() &&

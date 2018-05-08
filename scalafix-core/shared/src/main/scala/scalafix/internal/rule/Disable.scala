@@ -80,8 +80,8 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
       .getOrElse("disable", "Disable")(DisableConfig.default)
       .map(Disable(index, _))
 
-  private val safeBlock = new DisableSymbolMatcher(config.allSafeBlocks)
-  private val disabledSymbolInSynthetics =
+  private lazy val safeBlock = new DisableSymbolMatcher(config.allSafeBlocks)
+  private lazy val disabledSymbolInSynthetics =
     new DisableSymbolMatcher(config.ifSynthetic)
 
   private def createLintMessage(

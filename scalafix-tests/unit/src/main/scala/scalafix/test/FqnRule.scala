@@ -4,8 +4,7 @@ import scala.meta._
 import scala.meta.contrib._
 import scalafix._
 
-case class FqnRule(index: SemanticdbIndex)
-    extends SemanticRule(index, "FqnRule") {
+case object FqnRule extends SemanticRule("FqnRule") {
   override def fix(ctx: RuleCtx): Patch =
     ctx.addGlobalImport(importer"scala.collection.immutable")
 }

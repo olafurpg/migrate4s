@@ -1,6 +1,7 @@
 package scalafix.v1
 
 import scala.meta.Tree
+import scala.{meta => m}
 import scala.meta.internal.{semanticdb3 => s}
 import scala.meta.internal.semanticdb3.SymbolInformation.{Property => p}
 import scala.meta.internal.semanticdb3.Scala._
@@ -16,8 +17,11 @@ final class Sym private (val value: String) {
   def info(doc: SemanticDoc): Sym.Info = doc.info(this)
 
   // TODO: remove
-  def normalized: Sym = Sym(SymbolOps.normalize(scala.meta.Symbol(value)).syntax)
-  def msymbol: scala.meta.Symbol = scala.meta.Symbol(value)
+  def normalized: Sym =
+    Sym(SymbolOps.normalize(scala.meta.Symbol(value)).syntax)
+  def msymbol: m.Symbol =
+    if (isLocal) m.Symbol.Local(value)
+    else m.Symbol(value)
 
   override def toString: String = value
   override def equals(obj: Any): Boolean =
@@ -33,7 +37,9 @@ object Sym {
   val EmptyPackage: Sym = new Sym(Symbols.EmptyPackage)
   val None: Sym = new Sym(Symbols.None)
   def apply(sym: String): Sym = {
-    sym.desc // assert that it parses as a symbol
+    if (!sym.startsWith("local")) {
+      sym.desc // assert that it parses as a symbol
+    }
     new Sym(sym)
   }
 
@@ -57,7 +63,10 @@ object Sym {
       }
   }
 
-  final class Info private[scalafix] (info: s.SymbolInformation) {
+  final class Info private[scalafix] (
+      private[scalafix] val info: s.SymbolInformation
+  ) {
+    def isNone: Boolean = info.symbol.isEmpty
     def sym: Sym = new Sym(info.symbol)
     def owner: Sym = new Sym(info.owner)
     def name: String = info.name

@@ -8,7 +8,8 @@ import metaconfig.ConfDecoder
 
 object ScalafixReflect {
   def syntactic: ConfDecoder[Rule] =
-    fromLazySemanticdbIndex(LazySemanticdbIndex.empty)
+    fromLazySemanticdbIndex(
+      LazySemanticdbIndex(_ => Some(SemanticdbIndex.empty)))
 
   def semantic(index: SemanticdbIndex): ConfDecoder[Rule] =
     fromLazySemanticdbIndex(LazySemanticdbIndex(_ => Some(index)))
