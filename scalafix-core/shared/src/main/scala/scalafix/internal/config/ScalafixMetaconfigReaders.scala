@@ -173,7 +173,7 @@ trait ScalafixMetaconfigReaders {
       (
         c.get[Symbol.Global]("from") |@|
           c.get[Symbol.Global]("to")
-      ).map { case (a, b) => ReplaceSymbol(a, b) }
+      ).map { case (a, b) => ReplaceSymbol(a, b).atomic }
     }
 
   def ruleConfDecoderSyntactic(
