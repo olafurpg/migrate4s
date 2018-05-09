@@ -91,7 +91,7 @@ case class ExplicitResultTypes(
       Some(
         PrettyType.toType(
           tpe,
-          index.asInstanceOf[EagerInMemorySemanticdbIndex],
+          ctx.symtab,
           if (config.unsafeShortenNames) QualifyStrategy.Readable
           else QualifyStrategy.Full
         ))
@@ -115,7 +115,7 @@ case class ExplicitResultTypes(
     def defnType(defn: Defn): Option[(Type, Patch)] =
       for {
         name <- defnName(defn)
-        defnSymbol  = name.sym
+        defnSymbol = name.sym
         info = ctx.info(defnSymbol)
         if !info.isNone
         result <- toType(ctx, name.pos, info)
@@ -143,7 +143,7 @@ case class ExplicitResultTypes(
           if (TokenOps.needsLeadingSpaceBeforeColon(replace)) " "
           else ""
         }
-      } yield ctx.addRight(replace, s"$space: ${treeSyntax(typ)}") + patch
+      } yield Patch.addRight(replace, s"$space: ${treeSyntax(typ)}") + patch
     }.asPatch.atomic
 
     def treeSyntax(tree: Tree): String =

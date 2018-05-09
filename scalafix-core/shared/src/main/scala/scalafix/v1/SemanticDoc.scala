@@ -64,9 +64,9 @@ final class SemanticDoc private[scalafix] (
     if (sym.isNone) {
       Sym.Info.empty
     } else if (sym.isLocal) {
-      new Sym.Info(locals.getOrElse(sym.value, s.SymbolInformation()))
+      new Sym.Info(locals.getOrElse(sym.value, throw new NoSuchElementException(sym.value)))
     } else {
-      new Sym.Info(symtab.info(sym.value).getOrElse(s.SymbolInformation()))
+      new Sym.Info(symtab.info(sym.value).getOrElse(throw new NoSuchElementException(sym.value)))
     }
   }
 

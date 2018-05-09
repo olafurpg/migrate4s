@@ -142,6 +142,7 @@ trait ScalafixMetaconfigReaders {
       symbolGlobalReader.read(Conf.Str(from)) |@|
         symbolGlobalReader.read(Conf.Str(to))
     ).map { case (a, b) => (a.sym, b.sym) }
+  scala.Seq
 
   def classloadRuleDecoder(index: LazySemanticdbIndex): ConfDecoder[Rule] =
     ConfDecoder.instance[Rule] {

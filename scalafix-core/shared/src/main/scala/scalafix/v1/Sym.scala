@@ -23,7 +23,9 @@ final class Sym private (val value: String) {
     if (isLocal) m.Symbol.Local(value)
     else m.Symbol(value)
 
-  override def toString: String = value
+  override def toString: String =
+    if (isNone) "Sym.None"
+    else value
   override def equals(obj: Any): Boolean =
     this.eq(obj.asInstanceOf[AnyRef]) || (obj match {
       case s: Sym => value == s.value
@@ -75,6 +77,8 @@ object Sym {
     def access: Accessibility =
       new Accessibility(info.accessibility.getOrElse(s.Accessibility()))
 
+    override def toString: String = s"Sym.Info(${info.symbol})"
+
     // privates
     private[scalafix] def tpe: s.Type =
       info.tpe.getOrElse(s.Type())
@@ -98,6 +102,8 @@ object Sym {
     def isTypeParameter: Boolean = k.isTypeParameter
     def isPackage: Boolean = k.isPackage
     def isPackageObject: Boolean = k.isPackageObject
+
+    override def toString: String = s"Sym.Kind(${info.symbol})"
 
     // privates
     private[this] def k = info.kind
