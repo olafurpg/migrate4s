@@ -59,8 +59,10 @@ object DiffTest {
         s"Unable to load symbol table for classpath $classpath")
     }
     sourceDirectories.flatMap { dir =>
+      pprint.log(dir)
       for {
         relpath <- FileIO.listAllFilesRecursively(dir).files
+        if relpath.toNIO.startsWith("scala")
         if PathIO.extension(relpath.toNIO) == "scala"
       } yield {
         val inputs: () => TestInputs = { () =>

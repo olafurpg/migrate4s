@@ -39,10 +39,13 @@ object Sym {
   val EmptyPackage: Sym = new Sym(Symbols.EmptyPackage)
   val None: Sym = new Sym(Symbols.None)
   def apply(sym: String): Sym = {
-    if (!sym.startsWith("local")) {
-      sym.desc // assert that it parses as a symbol
+    if (sym.isEmpty) Sym.None
+    else {
+      if (!sym.startsWith("local")) {
+        sym.desc // assert that it parses as a symbol
+      }
+      new Sym(sym)
     }
-    new Sym(sym)
   }
 
   object Root {

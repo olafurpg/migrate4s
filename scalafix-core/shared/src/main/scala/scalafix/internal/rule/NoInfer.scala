@@ -12,7 +12,7 @@ final case class NoInfer(index: SemanticdbIndex, config: NoInferConfig)
     with Product {
 
   override def fix(implicit doc: SemanticDoc): Patch =
-    ???
+    Patch.empty
 }
 
 case object NoInfer {
