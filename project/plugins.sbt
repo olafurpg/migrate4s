@@ -17,4 +17,3 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.15")
 addSbtPlugin("com.47deg" % "sbt-microsites" % "0.7.15")
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.1")
 
-libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
