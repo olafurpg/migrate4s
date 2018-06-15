@@ -9,7 +9,7 @@ if (width > 500 && nav) {
   if (relativePath === '') {
     relativePath = 'index.md'
   }
-  const repo = 'olafurpg/scalafix';
+  const repo = 'scalacenter/scalafix';
   const branch = 'master';
   const basePath = `https://github.com/${repo}/edit/${branch}/website/src/main/tut/${docsUrl}`;
   const target = `${basePath}/${relativePath}`;
