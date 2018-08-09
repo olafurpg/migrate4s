@@ -85,4 +85,8 @@ final case class ScalafixMainArgsImpl(args: Args = Args.default)
   override def withCharset(charset: Charset): ScalafixMainArgs =
     copy(args = args.copy(charset = charset))
 
+  override def withVerbose(verbose: Boolean): ScalafixMainArgs =
+    copy(args = args.copy(verbose = verbose))
+
+
 }

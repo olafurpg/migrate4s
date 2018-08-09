@@ -106,4 +106,9 @@ public interface ScalafixMainArgs {
      * @param charset Charset for reading source files from disk. Defaults to UTF-8.
      */
     ScalafixMainArgs withCharset(Charset charset);
+
+    /**
+     * @param verbose If true, print out verbose diagnostics.
+     */
+    ScalafixMainArgs withVerbose(boolean verbose);
 }
