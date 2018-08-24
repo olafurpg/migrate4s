@@ -3,14 +3,14 @@ package scalafix.internal.config
 import metaconfig._
 import metaconfig.annotation.{Description, ExampleValue}
 import metaconfig.generic.Surface
-import scalafix.v0.Symbol
+import scalafix.v1.Symbol
 import scalafix.internal.util.SymbolOps
 
 case class DisabledSymbol(
     @ExampleValue("scala.sys.process.Process")
     @Description(
       "A single symbol to ban. Cannot be used together with the regex option.")
-    symbol: Option[Symbol.Global],
+    symbol: Option[Symbol],
     @Description("Custom message.")
     message: Option[String],
     @Description("Custom id for error messages.")
@@ -29,10 +29,15 @@ case class DisabledSymbol(
                     |}""".stripMargin)
     regex: Option[FilterMatcher]) {
 
+  private val normalizedSymbol = symbol.map(SymbolOps.normalize)
+
   def matches(symbol: Symbol): Boolean = {
-    this.symbol match {
+    normalizedSymbol match {
       case Some(s) =>
-        SymbolOps.isSameNormalized(symbol, s)
+        if (s == symbol) {
+          pprint.log(List(s, symbol))
+        }
+        s == symbol
       case None =>
         regex match {
           case Some(r) => r.matches(symbol.toString)
@@ -55,7 +60,7 @@ object DisabledSymbol {
   implicit val reader: ConfDecoder[DisabledSymbol] =
     ConfDecoder.instance[DisabledSymbol] {
       case c: Conf.Obj =>
-        (c.getOption[Symbol.Global]("symbol") |@|
+        (c.getOption[Symbol]("symbol") |@|
           c.getOption[String]("message") |@|
           c.getOption[String]("id") |@|
           c.getOption[FilterMatcher]("regex"))
@@ -72,9 +77,7 @@ object DisabledSymbol {
                 ConfError.message("Either symbol or regex must be specified."))
           }
       case s: Conf.Str =>
-        symbolGlobalReader
-          .read(s)
-          .map(sym => DisabledSymbol(Some(sym), None, None, None))
+        s.as[Symbol].map(sym => DisabledSymbol(Some(sym), None, None, None))
     }
 }
 
@@ -149,8 +152,6 @@ case class DisableConfig(
       """.stripMargin)
     unlessInside: List[UnlessInsideBlock] = Nil
 ) {
-  lazy val allSafeBlocks: List[DisabledSymbol] =
-    unlessInside.flatMap(_.safeBlocks)
   lazy val allDisabledSymbols: List[DisabledSymbol] =
     symbols ++ ifSynthetic ++ unlessInside.flatMap(_.symbols)
 }

@@ -3,7 +3,6 @@ package scalafix.internal.v1
 import metaconfig.Conf
 import metaconfig.Configured
 import scala.meta.tokens.Tokens
-import scalafix.internal.config.DisableConfig
 import scalafix.internal.config.MetaconfigPendingUpstream
 import scalafix.internal.rule._
 import scalafix.internal.util.SuppressOps
@@ -83,6 +82,7 @@ object Rules {
       legacySyntacticRules
 
   val builtin: List[Rule] = List(
+    Disable(),
     RemoveUnusedImports,
     RemoveUnusedTerms,
     NoAutoTupling,
@@ -98,7 +98,6 @@ object Rules {
   val legacySemanticRules: List[LegacySemanticRule] = {
     val semantics = List[v0.SemanticdbIndex => v0.Rule](
       index => ExplicitResultTypes(index),
-      index => Disable(index, DisableConfig.default),
       index => MissingFinal(index)
     )
     semantics.map { fn =>

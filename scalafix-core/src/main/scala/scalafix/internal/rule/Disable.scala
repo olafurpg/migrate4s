@@ -6,7 +6,9 @@ import scala.meta.transversers.Traverser
 import scalafix.internal.config.{DisableConfig, DisabledSymbol}
 import scalafix.internal.v0.InputSynthetic
 import scalafix.internal.util.SymbolOps
-import scalafix.v0._
+import scalafix.internal.v0.LegacyCodePrinter
+import scalafix.v0
+import scalafix.v1._
 
 object Disable {
 
@@ -45,73 +47,76 @@ object Disable {
     }
   }
 
-  final class DisableSymbolMatcher(symbols: List[DisabledSymbol])(
-      implicit index: SemanticdbIndex) {
-    def findMatch(symbol: Symbol): Option[DisabledSymbol] =
-      symbols.find(_.matches(symbol))
+  final class DisableSymbolMatcher(symbols: List[DisabledSymbol]) {
+    def findMatch(symbol: Symbol): Option[DisabledSymbol] = {
+      if (!symbol.isGlobal) None
+      else {
+        val normalized = SymbolOps.normalize(symbol)
+        symbols.find(_.matches(normalized))
+      }
+    }
 
-    def unapply(tree: Tree): Option[(Tree, DisabledSymbol)] =
-      index
-        .symbol(tree)
-        .flatMap(findMatch(_).map(ds => (tree, ds)))
+    def unapply(tree: Tree)(
+        implicit doc: SemanticDoc): Option[(Tree, DisabledSymbol)] =
+      findMatch(tree.symbol).map(ds => (tree, ds))
 
     def unapply(symbol: Symbol): Option[(Symbol, DisabledSymbol)] =
       findMatch(symbol).map(ds => (symbol, ds))
   }
 }
 
-final case class Disable(index: SemanticdbIndex, config: DisableConfig)
-    extends SemanticRule(index, "Disable") {
+final case class Disable(config: DisableConfig = DisableConfig.default)
+    extends SemanticRule("Disable") {
 
   import Disable._
-
-  private lazy val errorCategory: LintCategory =
-    LintCategory.error(
-      """Some constructs are unsafe to use and should be avoided""".stripMargin
-    )
 
   override def description: String =
     "Linter that reports an error on a configurable set of symbols."
 
-  override def init(config: Conf): Configured[Rule] =
+  override def withConfig(config: Conf): Configured[Rule] =
     config
       .getOrElse("disable", "Disable")(DisableConfig.default)
-      .map(Disable(index, _))
+      .map(Disable(_))
 
-  private val safeBlocks = new DisableSymbolMatcher(config.allSafeBlocks)
-  private val disabledSymbolInSynthetics =
+  private val unlessInside =
+    new DisableSymbolMatcher(config.unlessInside.flatMap(_.symbols))
+  private val ifSynthetic =
     new DisableSymbolMatcher(config.ifSynthetic)
 
-  private def createLintMessage(
-      symbol: Symbol.Global,
+  private def createDiagnostic(
+      symbol: Symbol,
       disabled: DisabledSymbol,
       pos: Position,
       details: String = ""): Diagnostic = {
-    val message = disabled.message.getOrElse(
-      s"${symbol.signature.name} is disabled$details")
-
-    val id = disabled.id.getOrElse(symbol.signature.name)
-
-    errorCategory
-      .copy(id = id)
-      .at(message, pos)
+    val message =
+      disabled.message.getOrElse(s"${symbol.displayName} is disabled$details")
+    val id = disabled.id.getOrElse(symbol.displayName)
+    Diagnostic(id, message, pos)
   }
 
-  private def checkTree(ctx: RuleCtx): Seq[Diagnostic] = {
+  private def checkTree(implicit ctx: SemanticDoc): Seq[Diagnostic] = {
     def filterBlockedSymbolsInBlock(
         blockedSymbols: List[DisabledSymbol],
-        block: Tree): List[DisabledSymbol] =
-      ctx.index.symbol(block) match {
-        case Some(symbolBlock: Symbol.Global) =>
-          val symbolsInMatchedBlocks =
-            config.unlessInside.flatMap(
-              u =>
-                if (u.safeBlocks.exists(_.matches(symbolBlock))) u.symbols
-                else List.empty)
-          val res = blockedSymbols.filterNot(symbolsInMatchedBlocks.contains)
-          res
-        case _ => blockedSymbols
+        block: Tree): List[DisabledSymbol] = {
+      val symbol = block.symbol.normalized
+      if (!symbol.isGlobal) blockedSymbols
+      else {
+        val symbolsInMatchedBlocks =
+          config.unlessInside.flatMap { u =>
+          pprint.log(u.safeBlocks.map(_.symbol))
+            if (u.safeBlocks.exists(_.matches(symbol))) {
+              ???
+              u.symbols
+            } else {
+              List.empty
+            }
+          }
+        pprint.log(symbol)
+        pprint.log(blockedSymbols.map(_.symbol))
+        pprint.log(symbolsInMatchedBlocks.map(_.symbol))
+        blockedSymbols.filterNot(symbolsInMatchedBlocks.contains)
       }
+    }
 
     def skipTermSelect(term: Term): Boolean = term match {
       case _: Term.Name => true
@@ -119,15 +124,18 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
       case _ => false
     }
 
-    def handleName(t: Name, blockedSymbols: List[DisabledSymbol])
-      : Either[Diagnostic, List[DisabledSymbol]] = {
+    def handleName(
+        t: Name,
+        blockedSymbols: List[DisabledSymbol]
+    ): Either[Diagnostic, List[DisabledSymbol]] = {
       val isBlocked = new DisableSymbolMatcher(blockedSymbols)
-      ctx.index.symbol(t) match {
-        case Some(isBlocked(s: Symbol.Global, disabled)) =>
-          SymbolOps.normalize(s) match {
-            case g: Symbol.Global if g.signature.name != "<init>" =>
-              Left(createLintMessage(g, disabled, t.pos))
-            case _ => Right(blockedSymbols)
+      t.symbol match {
+        case isBlocked(s: Symbol, disabled) =>
+          val g = SymbolOps.normalize(s)
+          if (g.displayName != "<init>") {
+            Left(createDiagnostic(g, disabled, t.pos))
+          } else {
+            Right(blockedSymbols)
           }
         case _ => Right(blockedSymbols)
       }
@@ -141,13 +149,13 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
         handleName(name, blockedSymbols)
       case (
           Term.Apply(
-            Term.Select(block @ safeBlocks(_, _), Term.Name("apply")),
+            Term.Select(block @ unlessInside(_, _), Term.Name("apply")),
             _
           ),
           blockedSymbols
           ) =>
         Right(filterBlockedSymbolsInBlock(blockedSymbols, block)) // <Block>.apply
-      case (Term.Apply(block @ safeBlocks(_, _), _), blockedSymbols) =>
+      case (Term.Apply(block @ unlessInside(_, _), _), blockedSymbols) =>
         Right(filterBlockedSymbolsInBlock(blockedSymbols, block)) // <Block>(...)
       case (_: Defn.Def, _) =>
         Right(config.allDisabledSymbols) // reset blocked symbols in def
@@ -158,14 +166,18 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
     }).result(ctx.tree)
   }
 
-  private def checkSynthetics(ctx: RuleCtx): Seq[Diagnostic] = {
+  def synthetics(doc: SemanticDoc): Seq[v0.Synthetic] =
+    doc.internal.textDocument.synthetics.map(s =>
+      new LegacyCodePrinter(doc).convertSynthetic(s))
+
+  private def checkSynthetics(implicit ctx: SemanticDoc): Seq[Diagnostic] = {
     for {
-      synthetic <- ctx.index.synthetics.view
-      ResolvedName(
-        pos,
-        disabledSymbolInSynthetics(symbol @ Symbol.Global(_, _), disabled),
-        false
-      ) <- synthetic.names
+      synthetic <- synthetics(ctx)
+      (pos, ifSynthetic(symbol, disabled)) <- {
+        synthetic.names.map { s =>
+          (s.position, Symbol(s.symbol.syntax))
+        }
+      }
     } yield {
       val (details, caret) = pos.input match {
         case synth @ Input.Stream(InputSynthetic(_, input, start, end), _) =>
@@ -176,11 +188,12 @@ final case class Disable(index: SemanticdbIndex, config: DisableConfig)
         case _ =>
           "" -> pos
       }
-      createLintMessage(symbol, disabled, caret, details)
+      createDiagnostic(symbol, disabled, caret, details)
     }
   }
 
-  override def check(ctx: RuleCtx): Seq[Diagnostic] = {
-    checkTree(ctx) ++ checkSynthetics(ctx)
+  override def fix(implicit ctx: SemanticDoc): Patch = {
+    val diagnostics = checkTree(ctx) ++ checkSynthetics(ctx)
+    diagnostics.map(Patch.lint).asPatch
   }
 }
