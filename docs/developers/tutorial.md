@@ -10,7 +10,7 @@ In this tutorial, you will learn how to
 - use `SymbolInfo` to look up method signatures
 - use `Diagnostic` to report linter errors
 - use `withConfiguration` to make a rule configurable
-- publish the rule so you can run it on any Scala codebase
+- publish the rule so others can try it on their own codebase
 
 We are going to implement two different rules. The first rule is a semantic
 rewrite `NamedLiteralArguments` that produces the following diff
@@ -44,15 +44,15 @@ cd named-literal-arguments
 cd scalafix
 sbt
 ...
-[info] sbt server started at local:///Users/ollie/.sbt/1.0/server/93fc24de3bb97dec3e5b/sock
+[info] sbt server started at local://$HOME/.sbt/1.0/server/93fc24de3bb97dec3e5b/sock
 sbt:scalafix>
 ```
 
 This starts an sbt shell session from where you can run the test suite with
 `tests/test`.
 
-Import the build into IntelliJ with the action "New project from existing
-sources" and select the `scalafix/build.sbt` file.
+Optionally, if you use IntelliJ, import the build like normal with the action
+"New project from existing sources" and select the `scalafix/build.sbt` file.
 
 The sections in this tutorial follow the chronological order of the git history
 so feel free to checkout older commits.
@@ -86,7 +86,7 @@ output/src
 ```
 
 Checkout the commit
-[55f9196163ab0a](https://github.com/olafurpg/named-literal-arguments/commit/4e0127d501cf652b5d4ce6a24fba8afc1a9c54ea),
+[55f9196163ab0a](https://github.com/olafurpg/named-literal-arguments/commit/55f9196163ab0a5dde22364ab1f7880bf4a5dc54),
 run `tests/test` and see the tests fail
 
 ```diff
@@ -104,7 +104,7 @@ The diff tells us that the expected fix (contents of `output` file) does not
 match the output from running `NamedLiteralArguments` on the `input` file. We
 expected the output to be `complete(isSuccess = true)` but the obtained output
 was `complete(true)`. The `NamedLiteralArguments` rule currently returns
-`Patch.empty` so the test failure is normal.
+`Patch.empty` so the test failure is expected.
 
 ## Use pattern matching to find interesting tree nodes
 
@@ -122,7 +122,7 @@ Let's break this down:
 - `doc.tree.collect { case => ...}`: perform a top-to-bottom traversal of the
   syntax tree
 - we construct a Scalameta
-  ["quasi-quote"](https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md)
+  ["quasiquote"](https://github.com/scalameta/scalameta/blob/master/notes/quasiquotes.md)
   pattern `q"true"` which matches any tree node that represents the boolean
   literal `true`.
 - `Patch.addLeft(t, "isSuccess = ")`: describes a refactoring on the source code
@@ -130,12 +130,12 @@ Let's break this down:
 - `List[Patch].asPatch`: helper method to convert a list of patches into a
   single patch.
 
-This solution is simple but it is buggy
+This solution is simple but it is incomplete
 
 - the rewrite triggers only for the literal `true` but not `false`
 - the rewrite triggers for any `true` literal even if it is not a function
-  argument. For example, `val done = true` becomes `val done = isSuccess = true`
-  which will not compile.
+  argument. For example, `val done = true` becomes
+  `val done = isSuccess = true`.
 
 The first improvement we make is to handle both `true` and `false` literals.
 
@@ -144,10 +144,9 @@ The first improvement we make is to handle both `true` and `false` literals.
 +  case t @ Lit.Boolean(_) =>
 ```
 
-We replace the `q"true"` quasi-quote with `Lit.Boolean(_)`. Quasi-quotes are
-great for constructing static tree nodes but pattern matching against named tree
-nodes like `Lit.Boolean(_)` can be more flexible when you need fine-grained
-control.
+We replace the `q"true"` quasiquote with `Lit.Boolean(_)`. Quasiquotes are great
+for constructing static tree nodes but pattern matching against named tree nodes
+like `Lit.Boolean(_)` can be more flexible when you need fine-grained control.
 
 To fine the name of a tree node you can use
 [AST Explorer](http://astexplorer.net/#/gist/ec56167ffafb20cbd8d68f24a37043a9/74efb238ad02abaa8fa69fc80342563efa8a1bdc)
@@ -194,8 +193,8 @@ case Term.Apply(_, args) =>
 
 ## Use `SymbolInfo` to lookup method signatures
 
-Our rule is still buggy because we have hard-coded `isSuccess`. Let's add a test
-case to reproduce this bug
+Our rule is still because we have hard-coded `isSuccess`. Let's add a test case
+to reproduce this bug
 
 ```scala
 def complete(isSuccess: Boolean): Unit = ()

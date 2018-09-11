@@ -18,6 +18,8 @@ package object website {
     url(name, s"docs/rules/$name")
   }
 
+  def isUndocumented = Set("ExplicitResultTypes")
+
   def allRulesTable(reporter: Reporter): String = {
     val rules = Rules
       .all()
@@ -32,7 +34,8 @@ package object website {
           .resolve("docs")
           .resolve("rules")
           .resolve(rule.name.value + ".md")
-        if (!Files.isRegularFile(docPath.toNIO)) {
+        if (!isUndocumented(rule.name.value) &&
+          !Files.isRegularFile(docPath.toNIO)) {
           reporter.warning(s"Missing $docPath")
         }
         tr(

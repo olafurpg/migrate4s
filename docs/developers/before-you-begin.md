@@ -8,17 +8,18 @@ ask yourself the following questions first.
 
 ## Do you want a linter or rewrite?
 
-- Rewrites can automatically fix problems, which is ideal but means rewrites can
-  only address problems that have obvious solutions.
-
+- Rewrites can automatically fix problems but can only address problems that
+  have un-ambiguous solutions.
 - Linters highlight problematic code without providing a fix, which means they
-  demand more interaction from the user but can at the same time target a larger
-  problem space than rewrites.
+  require the user to fix the problem. Linters are not limited to problems that
+  have unambiguous solutions so linters can address a larger problem space than
+  rewrites.
 
 ## Is your rule syntactic or semantic?
 
-- Syntactic rules are simple to run since they don't require compilation but
-  syntactic rules are limited since they don't have access to symbols and types.
+- Syntactic rules are simple to run because they don't require compiling input
+  sources beforehand but syntactic rules are limited since they don't have
+  access to symbols and types.
 - Semantic rules are are slower and more complicated to run since they require
   compilation but at the same time semantic rules are able to perform more
   advanced analysis since they have access to symbols and types.
@@ -27,15 +28,16 @@ ask yourself the following questions first.
 
 - If you are doing a one-off migration script for your company codebase then it
   might be OK to manually fix trickier corner cases.
-- If your linter catches critical production bugs it's maybe OK that it has a
-  few false positives. If your linter catches low-importance bugs like enforcing
-  a code style then false positives are not acceptable.
+- If your linter detects serious production bugs it's maybe OK that it has a few
+  false positives. If your linter reports low-importance issues like "method
+  name should start with lowercase character" then false positives are not
+  acceptable.
 
 ## What diff does the rewrite produce?
 
 Before implementing a rule, it's good to manually migrate/refactor a few
-examples first. Manual refactoring is great to discover corner and estimate how
-complicated the rule needs to be.
+examples first. Manual refactoring is great to discover corner cases and
+estimate how complicated the rule needs to be.
 
 ## Who will use your rule?
 
