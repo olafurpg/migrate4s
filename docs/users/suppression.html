@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Suppressing rules · Scalafix</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Sometimes you need to ignore the output from Scalafix. Scalafix provides two"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Suppressing rules · Scalafix"/><meta property="og:type" content="website"/><meta property="og:url" content="https://olafurpg.github.io//scalafix/index.html"/><meta property="og:description" content="Sometimes you need to ignore the output from Scalafix. Scalafix provides two"/><meta property="og:image" content="https://olafurpg.github.io//scalafix/img/scalacenter2x.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://olafurpg.github.io//scalafix/img/scalacenter2x.png"/><link rel="shortcut icon" href="/scalafix/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><link rel="stylesheet" href="/scalafix/css/main.css"/></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/scalafix/"><img class="logo" src="/scalafix/img/scalacenter2x.png" alt="Scalafix"/><h2 class="headerTitleWithLogo">Scalafix</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/scalafix/docs/users/installation.html" target="_self">User guide</a></li><li class=""><a href="/scalafix/docs/developers/setup.html" target="_self">Developer guide</a></li><li class=""><a href="https://github.com/calacenter/scalafix" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Usage</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Usage</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/installation.html">Installation</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/configuration.html">Configuration</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/scalafix/docs/users/suppression.html">Suppressing rules</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Rules</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/overview.html">All rules</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/ExplicitResultTypes.html">ExplicitResultTypes</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/NoAutoTupling.html">NoAutoTupling</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/RemoveUnused.html">RemoveUnused</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/DisableSyntax.html">DisableSyntax</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/LeakingImplicitClassVal.html">LeakingImplicitClassVal</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/NoValInForComprehension.html">NoValInForComprehension</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/ProcedureSyntax.html">ProcedureSyntax</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Misc</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/related-projects.html">Related projects</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Suppressing rules · Scalafix</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Sometimes you need to ignore the output from Scalafix. Scalafix provides two"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Suppressing rules · Scalafix"/><meta property="og:type" content="website"/><meta property="og:url" content="https://olafurpg.github.io//scalafix/index.html"/><meta property="og:description" content="Sometimes you need to ignore the output from Scalafix. Scalafix provides two"/><meta property="og:image" content="https://olafurpg.github.io//scalafix/img/scalacenter2x.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://olafurpg.github.io//scalafix/img/scalacenter2x.png"/><link rel="shortcut icon" href="/scalafix/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><link rel="stylesheet" href="/scalafix/css/main.css"/></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/scalafix/"><img class="logo" src="/scalafix/img/scalacenter2x.png" alt="Scalafix"/><h2 class="headerTitleWithLogo">Scalafix</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/scalafix/docs/users/installation.html" target="_self">User guide</a></li><li class=""><a href="/scalafix/docs/developers/setup.html" target="_self">Developer guide</a></li><li class=""><a href="https://github.com/calacenter/scalafix" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Usage</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Usage</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/installation.html">Installation</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/configuration.html">Configuration</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/scalafix/docs/users/suppression.html">Suppressing rules</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Rules</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/overview.html">All rules</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/RemoveUnused.html">RemoveUnused</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/DisableSyntax.html">DisableSyntax</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/NoAutoTupling.html">NoAutoTupling</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/LeakingImplicitClassVal.html">LeakingImplicitClassVal</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/NoValInForComprehension.html">NoValInForComprehension</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/rules/ProcedureSyntax.html">ProcedureSyntax</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">Misc</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/users/related-projects.html">Related projects</a></li></ul></div></div></section></div><script>
             document.addEventListener('DOMContentLoaded', function() {
               createToggler('#navToggler', '#docsNav', 'docsSliderActive');
               createToggler('#tocToggler', 'body', 'tocActive');
@@ -13,6 +13,10 @@
               function createToggler(togglerSelector, targetSelector, className) {
                 var toggler = document.querySelector(togglerSelector);
                 var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
 
                 toggler.onclick = function(event) {
                   event.preventDefault();
@@ -31,15 +35,18 @@ don't work.</li>
 </ul>
 <h2><a class="anchor" aria-hidden="true" id="annotations"></a><a href="#annotations" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Annotations</h2>
 <p>It's possible to suppress Scalafix with <code>@SuppressWarnings</code> annotations. The
-<code>@SuppressWarnings</code> annotation is supported my many different tools so it's
+<code>@SuppressWarnings</code> annotation is supported by many different tools so it's
 recommended to prefix the suppression with <code>scalafix:</code>.</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(
+<p>For example, imagine we have configured the <code>DisableSyntax</code> rule to report
+errors for the usage of <code>null</code> and <code>asInstanceOf</code> but we want to suppress those
+errors inside a particular <code>getUser</code> method</p>
+<pre><code class="hljs css language-scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(
   <span class="hljs-string">"scalafix:DisableSyntax.keywords.null"</span>,
-  <span class="hljs-string">"scalafix:Disable.asInstanceOf"</span>
+  <span class="hljs-string">"scalafix:DisableSyntax.asInstanceOf"</span>
 ))
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>: <span class="hljs-type">Unit</span> = {
-    foo(<span class="hljs-literal">null</span>)
-    <span class="hljs-number">1.</span>asInstanceOf[<span class="hljs-type">String</span>]
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getUser</span></span>(name: <span class="hljs-type">String</span>): <span class="hljs-type">User</span> = {
+  <span class="hljs-keyword">if</span> (name != <span class="hljs-literal">null</span>) database.getUser(name)
+  <span class="hljs-keyword">else</span> defaultPerson.asInstanceOf[<span class="hljs-type">User</span>]
 }
 </code></pre>
 <p>The <code>scalafix:</code> prefix can be left out if desired. However, when the <code>scalafix:</code>
@@ -48,14 +55,14 @@ Scalafix reports for suppressions that can be removed.</p>
 <blockquote>
 <p>The <code>@SuppressWarnings</code> annotation is detected without compilation. Any
 annotation matching the syntax <code>@SuppressWarnings(..)</code> regardless if it's
-<code>java.lang.SuppressWarnings</code> or <code>com.example.SuppressWarnings</code> will not will
+<code>java.lang.SuppressWarnings</code> or <code>com.example.SuppressWarnings</code> will will
 trigger the suppression mechanism. This is done in order to support
 <code>@SuppressWarnings</code> for syntactic rules like <code>DisableSyntax</code>.</p>
 </blockquote>
 <h3><a class="anchor" aria-hidden="true" id="suppress-all-rules-with-all"></a><a href="#suppress-all-rules-with-all" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Suppress all rules with &quot;all&quot;</h3>
 <p>A convenient way to disable all rules is to inform the standard keyword <code>all</code> in
 the annotation:</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(<span class="hljs-string">"all"</span>))
+<pre><code class="hljs css language-scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(<span class="hljs-string">"all"</span>))
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>: <span class="hljs-type">Unit</span> = {
     foo(<span class="hljs-literal">null</span>)
     <span class="hljs-number">1.</span>asInstanceOf[<span class="hljs-type">String</span>]
@@ -72,10 +79,10 @@ using <code>scalafix:ok</code> and regions using the <code>scalafix:off</code>/<
 <h3><a class="anchor" aria-hidden="true" id="suppress-expressions-with-scalafix-ok"></a><a href="#suppress-expressions-with-scalafix-ok" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Suppress expressions with <code>scalafix:ok</code></h3>
 <p>Use <code>// scalafix:ok</code> comments to suppress Scalafix for an entire expression. The
 <code>scalafix:ok</code> comment can appear after an expression like this</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>) <span class="hljs-comment">// scalafix:ok</span>
+<pre><code class="hljs css language-scala"><span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>) <span class="hljs-comment">// scalafix:ok</span>
 </code></pre>
 <p>The <code>scalafix:ok</code> comment can also appear before an expression like this</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-comment">// scalafix:ok</span>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">// scalafix:ok</span>
 <span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>)
 </code></pre>
 <p>The benefit of <code>scalafix:ok</code> comments is that the suppression is automatically
@@ -87,7 +94,7 @@ arbitrary range of lines. This is the last resort when neither
 <code>@SuppressWarnings</code> annotations or <code>scalafix:ok</code> comments are sufficient.</p>
 <p>A <code>scalafix:off</code> can optionally be matched with a <code>scalafix:on</code> comment to
 re-enable Scalafix</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-comment">// scalafix:off</span>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">// scalafix:off</span>
 foo(<span class="hljs-literal">null</span>)
 <span class="hljs-number">1.</span>asInstanceOf[<span class="hljs-type">String</span>]
 <span class="hljs-comment">// scalafix:on</span>
@@ -97,18 +104,18 @@ rest of the source file.</p>
 <h3><a class="anchor" aria-hidden="true" id="selectively-suppress-individual-rules"></a><a href="#selectively-suppress-individual-rules" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Selectively suppress individual rules</h3>
 <p>Both <code>scalafix:ok</code> and <code>scalafix:off</code> can selectively disable a list of rules.
 You can provide the list of rules to be disabled separated by commas:</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-comment">// scalafix:off DisableSyntax.keywords.null, Disable.asInstanceOf</span>
+<pre><code class="hljs css language-scala"><span class="hljs-comment">// scalafix:off DisableSyntax.keywords.null, Disable.asInstanceOf</span>
 foo(<span class="hljs-literal">null</span>)
 <span class="hljs-number">1.</span>asInstanceOf[<span class="hljs-type">String</span>]
 <span class="hljs-comment">// scalafix:on</span>
 </code></pre>
-<pre><code class="hljs css languages- scala"><span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>) <span class="hljs-comment">// scalafix:ok Disable.Any</span>
+<pre><code class="hljs css language-scala"><span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>) <span class="hljs-comment">// scalafix:ok Disable.Any</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="document-reason-for-suppression"></a><a href="#document-reason-for-suppression" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Document reason for suppression</h3>
 <p>You can optionally include a description after a semicolon <code>;</code> for why a
 suppression is needed. The description is only for informational purposes for
 the person reading the code and will be ignored by Scalafix:</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-keyword">var</span> x: <span class="hljs-type">Int</span> = <span class="hljs-number">0</span> <span class="hljs-comment">// scalafix:ok DisableSyntax.keywords.var; I need mutability</span>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">var</span> x: <span class="hljs-type">Int</span> = <span class="hljs-number">0</span> <span class="hljs-comment">// scalafix:ok DisableSyntax.keywords.var; I need mutability</span>
 
 <span class="hljs-comment">// scalafix:off; temporarily disabling all rules until the code below gets refactored</span>
 </code></pre>
@@ -116,7 +123,7 @@ the person reading the code and will be ignored by Scalafix:</p>
 <p>As code evolves, a <code>scalafix:ok</code> comment or <code>@SuppressWarnings(&quot;scalafix:Rule&quot;)</code>
 annotation may become outdated. Scalafix reports warnings when it encounters
 unused Scalafix suppressions, which you are safe to remove</p>
-<pre><code class="hljs css languages- scala">project/<span class="hljs-type">Dependencies</span>.scala:<span class="hljs-number">4</span>:<span class="hljs-number">19</span>: warning: <span class="hljs-type">Unused</span> <span class="hljs-type">Scalafix</span> suppression,
+<pre><code class="hljs css language-scala">project/<span class="hljs-type">Dependencies</span>.scala:<span class="hljs-number">4</span>:<span class="hljs-number">19</span>: warning: <span class="hljs-type">Unused</span> <span class="hljs-type">Scalafix</span> suppression,
                                           <span class="hljs-keyword">this</span> can be removed
 [warn]   <span class="hljs-keyword">val</span> x = <span class="hljs-type">List</span>(<span class="hljs-number">1</span>) <span class="hljs-comment">// scalafix:ok</span>
 [warn]                   ^^^^^^^^^^^^^^
@@ -126,7 +133,7 @@ unused Scalafix suppressions, which you are safe to remove</p>
 source file. Be mindful not to introduce overlaps between the two as it can
 cause confusion and counter-intuitive behavior. Scalafix handles overlaps by
 giving precedence to the <code>@SuppressWarnings</code> annotation:</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(<span class="hljs-string">"scalafix:DisableSyntax.keywords.null"</span>))
+<pre><code class="hljs css language-scala"><span class="hljs-meta">@SuppressWarnings</span>(<span class="hljs-type">Array</span>(<span class="hljs-string">"scalafix:DisableSyntax.keywords.null"</span>))
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">overlap</span></span>(): <span class="hljs-type">Unit</span> = {
   <span class="hljs-keyword">val</span> a = <span class="hljs-literal">null</span>
   <span class="hljs-comment">// scalafix:on DisableSyntax.keywords.null</span>

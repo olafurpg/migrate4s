@@ -22,7 +22,7 @@ into the root directory of your repo. The tests are written using
 <p>The scalacenter/scalafix.g8 template boilerplate already setups a project which
 uses scalafix-testkit.</p>
 <p>The anatomy of a scalafix-testkit project is like this</p>
-<pre><code class="hljs css languages- scala">scalafix
+<pre><code class="hljs css language-scala">scalafix
 ├── rules    <span class="hljs-comment">// rule implementations</span>
 ├── input    <span class="hljs-comment">// code that runs through rule</span>
 ├── output   <span class="hljs-comment">// expected output from running input on rules</span>
@@ -42,11 +42,11 @@ rule and the expected output in the <code>output</code> project.</p></li>
 line with the comment <code>// assert: &lt;LintCategory&gt;</code>. For an example, see the
 Disable test suite:</p></li>
 </ul>
-<pre><code class="hljs css languages- scala"><span class="hljs-keyword">val</span> x = <span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>)<span class="hljs-comment">// assert: Disable.Any</span>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> x = <span class="hljs-type">List</span>(<span class="hljs-number">1</span>, <span class="hljs-string">""</span>)<span class="hljs-comment">// assert: Disable.Any</span>
 </code></pre>
 <p>It's also possible to assert the offset position and the message contents with a
 multiline comment:</p>
-<pre><code class="hljs css languages- scala"><span class="hljs-type">Option</span>(<span class="hljs-number">1</span>).get <span class="hljs-comment">/* assert: Disable.get
+<pre><code class="hljs css language-scala"><span class="hljs-type">Option</span>(<span class="hljs-number">1</span>).get <span class="hljs-comment">/* assert: Disable.get
           ^
 Option.get is the root of all evils
 

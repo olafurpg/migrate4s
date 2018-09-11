@@ -14,6 +14,10 @@
                 var toggler = document.querySelector(togglerSelector);
                 var target = document.querySelector(targetSelector);
 
+                if (!toggler) {
+                  return;
+                }
+
                 toggler.onclick = function(event) {
                   event.preventDefault();
 
@@ -35,7 +39,7 @@ sbt tests/test
 </code></pre>
 <p>The <code>--rule=&lt;reponame&gt;</code> option should match the name of your GitHub repository.
 The template generates a <code>scalafix/</code> directory with four different sbt projects</p>
-<pre><code class="hljs css languages- scala">scalafix
+<pre><code class="hljs css language-scala">scalafix
 ├── rules  <span class="hljs-comment">// rule implementations</span>
 ├── input  <span class="hljs-comment">// code to be analyzed by rule</span>
 ├── output <span class="hljs-comment">// expected output from running input on rules</span>
@@ -43,9 +47,7 @@ The template generates a <code>scalafix/</code> directory with four different sb
 </code></pre>
 <p>The <code>scalafix/</code> directory is a self-contained sbt build and can live in the same
 directory as your existing library.</p>
-<p>To run unit tests, execute <code>tests/test</code>. For a productive edit/test/debug
-workflow, it's recommended to open an sbt shell and re-run the tests on file
-save</p>
+<p>To run unit tests, execute <code>tests/test</code>.</p>
 <pre><code class="hljs"><span class="hljs-meta">$</span><span class="bash"> sbt</span>
 <span class="hljs-meta">&gt;</span><span class="bash"> ~tests/<span class="hljs-built_in">test</span></span>
 </code></pre>
@@ -57,7 +59,7 @@ IDE support.</p>
 <p>The input and output projects are regular sbt projects and can have custom
 library dependencies. To add library dependencies to the input project, add the
 following sbt settings</p>
-<pre><code class="hljs css languages- diff"> lazy val input = project.settings(
+<pre><code class="hljs css language-diff"> lazy val input = project.settings(
 <span class="hljs-addition">+  libraryDependencies += "org" %% "name" % "version"</span>
  )
 </code></pre>
@@ -86,7 +88,7 @@ artifact</p>
 <pre><code class="hljs"><span class="hljs-selector-tag">coursier</span> <span class="hljs-selector-tag">fetch</span> <span class="hljs-selector-tag">ch</span><span class="hljs-selector-class">.epfl</span><span class="hljs-selector-class">.scala</span><span class="hljs-selector-pseudo">:scalafix-testkit_2.12.6</span><span class="hljs-selector-pseudo">:0.6.0-M20</span>
 </code></pre>
 <p>Next, create a test suite that extends the class <code>SemanticRuleSuite</code></p>
-<pre><code class="hljs css languages- scala"><span class="hljs-keyword">package</span> myproject
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">package</span> myproject
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyTests</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">scalafix</span>.<span class="hljs-title">testkit</span>.<span class="hljs-title">SemanticRuleSuite</span> </span>{
   runAllTests()
 }
