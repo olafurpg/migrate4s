@@ -91,8 +91,8 @@ See [example project](#example-project) for a repository that demonstrates
 Great! You are all set to use Scalafix with sbt :)
 
 > Beware that the SemanticDB compiler plugin in combination with `-Yrangepos`
-> adds around overhead to compilation time. The amount of compilation overhead
-> depends on the codebase begin compiled and compiler options used. It's
+> adds around overhead to compilation time. The exact compilation overhead
+> depends on the codebase being compiled and compiler options used. It's
 > recommended to provide generous JVM memory and stack settings in the file
 > `.jvmopts`:
 >

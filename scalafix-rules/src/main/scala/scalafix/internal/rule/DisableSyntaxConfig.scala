@@ -17,6 +17,10 @@ case class DisableSyntaxConfig(
     @Description("Report error on usage of a given set of keywords.")
     @ExampleValue("[return, null]")
     keywords: Set[DisabledKeyword] = Set(),
+    @Description("Report error for usage of asInstanceOf[T] casts.")
+    noAsInstanceOf: Boolean = false,
+    @Description("Report error for usage of isInstanceOf[T] guars.")
+    noIsInstanceOf: Boolean = false,
     @Description("Report error on semicolon characters.")
     noSemicolons: Boolean = false,
     @Description("Report error on tab characters.")
