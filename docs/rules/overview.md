@@ -14,7 +14,7 @@ have access to important information such as symbols and types.
 **Semantic**: the rule can requires the source code to be compiled with the
 Scala compiler beforehand with the
 [SemanticDB](https://github.com/scalameta/scalameta/blob/master/semanticdb/semanticdb3/semanticdb3.md)
-compiler plugin. Semantic rulesa are more complicated to run and they are
+compiler plugin. Semantic rules are more complicated to run and they are
 typically slower but they can do more advanced analysis based on symbols and
 types.
 

@@ -149,15 +149,28 @@ great for constructing static tree nodes but pattern matching against named tree
 nodes like `Lit.Boolean(_)` can be more flexible when you need fine-grained
 control.
 
-Use `tree.structure` to find the name of a tree node
+To fine the name of a tree node you can use
+[AST Explorer](http://astexplorer.net/#/gist/ec56167ffafb20cbd8d68f24a37043a9/74efb238ad02abaa8fa69fc80342563efa8a1bdc)
+or `tree.structure`. First, make sure you have the following imports
+
+```scala mdoc:silent
+import scalafix.v1._
+import scala.meta._
+```
+
+Next, use the `.structure` and `.structure(width: Int)` extension methods on
+trees.
 
 ```scala mdoc
-import scalafix.v1._
+println(q"complete(true)".structure)     // line wrap at 80th column
+println(q"complete(true)".structure(30)) // line wrap at 30th column
+```
 
-import scala.meta._
+Alternatively, there is also `.structureLabeled` to include the field names
 
-val x = q"complete(true)"
-println(x.structure)
+```scala mdoc
+println(q"complete(true)".structureLabeled)     // line wrap at 80th column
+println(q"complete(true)".structureLabeled(30)) // line wrap at 30th column
 ```
 
 The next improvement is to ensure we only rewrite `true` literals that
