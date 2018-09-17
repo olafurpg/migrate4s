@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Setup · Scalafix</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Scalafix supports writing custom linter and rewrite rules. Custom rules have"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Setup · Scalafix"/><meta property="og:type" content="website"/><meta property="og:url" content="https://scalacenter.github.io//scalafix/index.html"/><meta property="og:description" content="Scalafix supports writing custom linter and rewrite rules. Custom rules have"/><meta property="og:image" content="https://scalacenter.github.io//scalafix/img/scalacenter2x.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://scalacenter.github.io//scalafix/img/scalacenter2x.png"/><link rel="shortcut icon" href="/scalafix/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><link rel="stylesheet" href="/scalafix/css/main.css"/></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/scalafix/"><img class="logo" src="/scalafix/img/scalacenter2x.png" alt="Scalafix"/><h2 class="headerTitleWithLogo">Scalafix</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/scalafix/docs/users/installation" target="_self">User guide</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/scalafix/docs/developers/setup" target="_self">Developer guide</a></li><li class=""><a href="https://github.com/scalacenter/scalafix" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Implementing rules</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Implementing rules</h3><ul><li class="navListItem navListItemActive"><a class="navItem" href="/scalafix/docs/developers/setup">Setup</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/before-you-begin">Before you write code</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/tutorial">Tutorial</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">API Reference</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/api">Overview</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/patch">Patch</a></li></ul></div></div></section></div><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Setup · Scalafix</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Scalafix supports writing custom linter and rewrite rules. Custom rules have"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Setup · Scalafix"/><meta property="og:type" content="website"/><meta property="og:url" content="https://scalacenter.github.io//scalafix/index.html"/><meta property="og:description" content="Scalafix supports writing custom linter and rewrite rules. Custom rules have"/><meta property="og:image" content="https://scalacenter.github.io//scalafix/img/scalacenter2x.png"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://scalacenter.github.io//scalafix/img/scalacenter2x.png"/><link rel="shortcut icon" href="/scalafix/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css"/><link rel="stylesheet" href="/scalafix/css/main.css"/></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/scalafix/"><img class="logo" src="/scalafix/img/scalacenter2x.png" alt="Scalafix"/><h2 class="headerTitleWithLogo">Scalafix</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/scalafix/docs/users/installation" target="_self">User guide</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/scalafix/docs/developers/setup" target="_self">Developer guide</a></li><li class=""><a href="https://github.com/scalacenter/scalafix" target="_blank">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><i></i></div><h2><i>›</i><span>Implementing rules</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Implementing rules</h3><ul><li class="navListItem navListItemActive"><a class="navItem" href="/scalafix/docs/developers/setup">Setup</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/before-you-begin">Before you write code</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/tutorial">Tutorial</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle">API Reference</h3><ul><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/api">Overview</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/patch">Patch</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/symbol-matcher">SymbolMatcher</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/scala-type">ScalaType</a></li><li class="navListItem"><a class="navItem" href="/scalafix/docs/developers/synthetic-tree">SyntheticTree</a></li></ul></div></div></section></div><script>
             document.addEventListener('DOMContentLoaded', function() {
               createToggler('#navToggler', '#docsNav', 'docsSliderActive');
               createToggler('#tocToggler', 'body', 'tocActive');
@@ -45,39 +45,22 @@ repository with dashes replaced by spaces.</p>
 </ul>
 <p>The template generates a <code>scalafix/</code> directory with four different sbt projects.</p>
 <pre><code class="hljs css language-scala">scalafix
-├── rules
-│   └── src
-│       └── main
-│           ├── resources
-│           │   └── <span class="hljs-type">META</span>-<span class="hljs-type">INF</span>
-│           │       └── services
-│           │           └── scalafix.v1.<span class="hljs-type">Rule</span> <span class="hljs-comment">// ServiceLoader configuration to load rule</span>
-│           └── scala
-│               └── fix
-│                   ├── <span class="hljs-type">Rewrite</span>.scala <span class="hljs-comment">// Implementation of a rewrite rule</span>
-│                   └── <span class="hljs-type">Linter</span>.scala <span class="hljs-comment">// Implementation of a linter rule</span>
-├── input
-│   └── src
-│       └── main
-│           └── scala
-│               └── test
-│                   ├── <span class="hljs-type">RewriteTest</span>.scala <span class="hljs-comment">// Unit test for rewrite rule,</span>
-│                   │                     <span class="hljs-comment">// must have corresponding file in output.</span>
-│                   └── <span class="hljs-type">LinterTest</span>.scala  <span class="hljs-comment">// Unit test for linter rule,</span>
-│                                         <span class="hljs-comment">// no corresponding output file needed.</span>
-├── output
-│   └── src
-│       └── main
-│           └── scala
-│               └── test
-│                   └── <span class="hljs-type">RewriteTest</span>.scala <span class="hljs-comment">// Expected output from running rewrite</span>
-│                                         <span class="hljs-comment">// on RewriteTest.scala from input project</span>
-└── tests
-    └── src
-        └── test
-            └── scala
-                └── fix
-                    └── <span class="hljs-type">RuleSuite</span>.scala
+├── rules/src/main
+│   ├── resources/<span class="hljs-type">META</span>-<span class="hljs-type">INF</span>/services
+│   │   └── scalafix.v1.<span class="hljs-type">Rule</span> <span class="hljs-comment">// ServiceLoader configuration to load rule</span>
+│   └── scala/fix
+│       ├── <span class="hljs-type">Rewrite</span>.scala <span class="hljs-comment">// Implementation of a rewrite rule</span>
+│       └── <span class="hljs-type">Linter</span>.scala <span class="hljs-comment">// Implementation of a linter rule</span>
+├── input/src/main/scala/test
+│   ├── <span class="hljs-type">RewriteTest</span>.scala <span class="hljs-comment">// Unit test for rewrite rule,</span>
+│   │                     <span class="hljs-comment">// must have corresponding file in output.</span>
+│   └── <span class="hljs-type">LinterTest</span>.scala  <span class="hljs-comment">// Unit test for linter rule,</span>
+│                         <span class="hljs-comment">// no corresponding output file needed.</span>
+├── output/src/main/scala/test
+│   └── <span class="hljs-type">RewriteTest</span>.scala <span class="hljs-comment">// Expected output from running rewrite</span>
+│                         <span class="hljs-comment">// on RewriteTest.scala from input project</span>
+└── tests/src/test/scala/fix
+    └── <span class="hljs-type">RuleSuite</span>.scala
 </code></pre>
 <ul>
 <li><code>rules</code>: contains rule implementations. This is the module that you will
