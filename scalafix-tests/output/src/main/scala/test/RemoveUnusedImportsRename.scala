@@ -32,7 +32,6 @@ package t5 {
 }
 
 package t6 {
-  import scala.concurrent.duration.{FiniteDuration => _}
   import scala.concurrent.duration._
 
   object UnusedRenameFollowedByUsedWildcardInDifferentImports {
@@ -42,7 +41,6 @@ package t6 {
 
 package t7 {
   import scala.io.StdIn._
-  import scala.io.StdIn.{readByte => _}
 
   object UnusedRenameFollowingUsedWildcardInDifferentImports {
     lazy val l = readLine()
@@ -50,7 +48,7 @@ package t7 {
 }
 
 package t8 {
-  import scala.io.{Source => _}, scala.io._
+  import scala.io._
 
   object UnusedRenameFollowedByUsedWildcardBetweenCommas {
     val c = Codec.UTF8
@@ -58,7 +56,6 @@ package t8 {
 }
 
 package t9 {
-  import java.util.concurrent.atomic.{AtomicInteger => _}
   import java.util
   import util.concurrent
   import concurrent.atomic
@@ -70,7 +67,6 @@ package t9 {
 }
 
 package t10 {
-  import java.util.concurrent.locks.{ReentrantLock => _}
   import java.{util => jutil}
   import jutil.{concurrent => jconcurrent}
   import jconcurrent.{locks => jlocks}
@@ -82,7 +78,6 @@ package t10 {
 }
 
 package t11 {
-  import java.time.{Clock => _}
 
   object UnusedRenameFollowedByUsedWildcardInNestedScope {
     def foo: Int = { 1 + 1 }
@@ -96,7 +91,6 @@ package t12 {
   import java.util.function._
 
   object UsedWildcardFollowedByUnusedRenameInNestedScope {
-    import java.util.function.{Predicate => _}
     new Consumer[String] {
       override def accept(t: String): Unit = ???
     }
