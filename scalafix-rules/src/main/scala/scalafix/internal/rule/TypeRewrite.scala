@@ -135,13 +135,18 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
             )
           else m.Importee.Name(ident)
         }
-        val head :: tail = pkg.ownerChain.reverse.tail // Skip root symbol
-          .map(sym => m.Term.Name(sym.name.toString()))
-        val ref = tail.foldLeft(head: m.Term.Ref) {
-          case (owner, name) =>
-            m.Term.Select(owner, name)
+        val ownerChain = pkg.ownerChain
+        if (ownerChain.isEmpty) {
+          v1.Patch.empty
+        } else {
+          val head :: tail = pkg.ownerChain.reverse.tail // Skip root symbol
+            .map(sym => m.Term.Name(sym.name.toString()))
+          val ref = tail.foldLeft(head: m.Term.Ref) {
+            case (owner, name) =>
+              m.Term.Select(owner, name)
+          }
+          v1.Patch.addGlobalImport(m.Importer(ref, List(importee)))
         }
-        v1.Patch.addGlobalImport(m.Importer(ref, List(importee)))
       }
       Some(v1.Patch.addRight(replace, s"$space: $short") ++ addImports)
     }

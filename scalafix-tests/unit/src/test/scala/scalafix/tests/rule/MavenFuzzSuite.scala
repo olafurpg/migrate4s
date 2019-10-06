@@ -37,6 +37,8 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
             try Files.copy(in.toNIO, stream)
             finally stream.close()
             result += out
+          } else {
+            pprint.log(errors)
           }
         }
       }
@@ -59,15 +61,32 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
 
   def check(rule: String): Unit = {
     test(rule) {
-      val dependencies = List(
+      val metals = Dependency(
+        Module(
+          Organization("org.scalameta"),
+          ModuleName("metals_2.12")
+        ),
+        "0.7.6"
+      )
+      // akka is a bad example since it has undeclared compile-time dependencies
+      // on "silencer"
+      val akka = Dependency(
+        Module(
+          Organization("com.typesafe.akka"),
+          ModuleName("akka-actor_2.12")
+        ),
+        "2.5.25"
+      )
+      val ammonite = List(
         Dependency(
           Module(
-            Organization("org.scalameta"),
-            ModuleName("metals_2.12")
+            Organization("com.lihaoyi"),
+            ModuleName("ammonite-repl_2.12.10")
           ),
-          "0.7.6"
+          "1.7.4-0-cdefbd9"
         )
       )
+      val dependencies = ammonite
       val fetch = Fetch()
       val classfiles = fetch
         .withDependencies(dependencies)
@@ -75,7 +94,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
         .map(_.toPath())
       val sources = fetch
         .withClassifiers(Set(Classifier("sources")))
-        .withDependencies(dependencies.map(_.withTransitive(false)))
+        .withDependencies(dependencies)
         .run()
         .map(_.toPath())
       val scalafix =
