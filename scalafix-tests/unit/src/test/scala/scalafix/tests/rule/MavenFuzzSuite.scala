@@ -84,6 +84,13 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
             ModuleName("ammonite-repl_2.12.10")
           ),
           "1.7.4-0-cdefbd9"
+        ),
+        Dependency(
+          Module(
+            Organization("com.lihaoyi"),
+            ModuleName("acyclic_2.12")
+          ),
+          "0.2.0"
         )
       )
       val dependencies = ammonite
@@ -97,6 +104,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
         .withDependencies(dependencies)
         .run()
         .map(_.toPath())
+        .filter(_.toString().contains("lihaoyi"))
       val scalafix =
         Scalafix.classloadInstance(this.getClass().getClassLoader())
       val tmp = Files.createTempDirectory("scalafix")
