@@ -11,8 +11,42 @@ import scala.meta.io.AbsolutePath
 import java.{util => ju}
 import java.nio.file.Path
 import scala.sys.process._
+import scala.meta.internal.pc.ScalaPresentationCompiler
+import scala.collection.mutable
+import scala.tools.nsc.reporters.StoreReporter
 
 class MavenFuzzSuite extends FunSuite with DiffAssertions {
+  private def getCompilingSources(
+      classfiles: Seq[Path],
+      sourceJars: Seq[Path],
+      tmp: Path
+  ): Seq[Path] = {
+    val result = mutable.ArrayBuffer.empty[Path]
+    val g = ScalaPresentationCompiler(classpath = classfiles).newCompiler()
+    sourceJars.foreach { jar =>
+      FileIO.withJarFileSystem(AbsolutePath(jar), false, true) { root =>
+        FileIO.listAllFilesRecursively(root).files.foreach { relpath =>
+          val in = root.resolve(relpath)
+          val out = tmp.resolve(relpath.toString())
+          Files.createDirectories(out.getParent())
+          val stream = Files.newOutputStream(out)
+          try Files.copy(in.toNIO, stream)
+          finally stream.close()
+          val reporter = new StoreReporter()
+          val run = new g.Run()
+          run.compile(List(out.toAbsolutePath().toString()))
+          val errors = reporter.infos.filter(_.severity.id == 2)
+          if (errors.isEmpty) {
+            result += out
+            pprint.log(out)
+          } else {
+            pprint.log(reporter.infos)
+          }
+        }
+      }
+    }
+    result
+  }
   def check(rule: String): Unit = {
     test(rule) {
       val dependencies = List(
@@ -41,28 +75,18 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       }
 
       tmp.toFile().deleteOnExit()
-      val paths = new ju.ArrayList[Path]()
-      sources.foreach { jar =>
-        FileIO.withJarFileSystem(AbsolutePath(jar.toPath()), false, true) {
-          root =>
-            FileIO.listAllFilesRecursively(root).files.foreach { relpath =>
-              val in = root.resolve(relpath)
-              val out = tmp.resolve(relpath.toString())
-              Files.createDirectories(out.getParent())
-              paths.add(out)
-              val stream = Files.newOutputStream(out)
-              try Files.copy(in.toNIO, stream)
-              finally stream.close()
-            }
-        }
-      }
+      val paths = getCompilingSources(
+        classfiles.map(_.toPath()),
+        sources.map(_.toPath()),
+        tmp
+      )
       // exec("git", "init")
       // exec("git", "add", ".")
       // exec("git", "commit", "-m", "first-commit")
       val args = scalafix
         .newArguments()
         .withSourceroot(tmp)
-        .withPaths(paths)
+        .withPaths(paths.asJava)
         .withRules(List(rule).asJava)
         .withClasspath(classfiles.map(_.toPath()).asJava)
       // .withMode(ScalafixMainMode.CHECK)
