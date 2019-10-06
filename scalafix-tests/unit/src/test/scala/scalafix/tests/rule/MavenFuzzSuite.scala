@@ -8,16 +8,13 @@ import scalafix.interfaces.Scalafix
 import java.nio.file.Files
 import scala.meta.internal.io.FileIO
 import scala.meta.io.AbsolutePath
-import java.{util => ju}
 import java.nio.file.Path
 import scala.sys.process._
 import scala.meta.internal.pc.ScalaPresentationCompiler
 import scala.collection.mutable
 import scala.tools.nsc.reporters.StoreReporter
 import scala.meta.internal.pc.MetalsGlobal
-import scala.reflect.io.VirtualFile
 import java.nio.charset.StandardCharsets
-import com.google.common.cache.AbstractCache.StatsCounter
 
 class MavenFuzzSuite extends FunSuite with DiffAssertions {
   private def getCompilingSources(
@@ -93,9 +90,10 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       val g = ScalaPresentationCompiler(classpath = classfiles)
         .newCompiler()
       val paths = getCompilingSources(g, classfiles, sources, tmp)
-      // exec("git", "init")
-      // exec("git", "add", ".")
-      // exec("git", "commit", "-m", "first-commit")
+      exec("git", "init")
+      exec("git", "add", ".")
+      exec("git", "commit", "-m", "first-commit")
+      pprint.log(paths.length)
       val args = scalafix
         .newArguments()
         .withSourceroot(tmp)
@@ -105,7 +103,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       // .withMode(ScalafixMainMode.CHECK)
       val exit = args.run()
       pprint.log(exit)
-      // exec("git", "diff")
+      exec("git", "diff")
       FileIO.listAllFilesRecursively(AbsolutePath(tmp)).foreach { path =>
         val text = FileIO.slurp(path, StandardCharsets.UTF_8)
         val errors = compileErrors(g, text, path.toString())
