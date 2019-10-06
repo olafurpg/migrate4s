@@ -52,49 +52,65 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       filename: String
   ): List[String] = {
     val reporter = new StoreReporter()
+    val old = g.reporter
+    g.reporter = reporter
     val run = new g.Run()
     val source = g.newSourceFile(code, filename)
     run.compileSources(List(source))
+    g.reporter = old
     val errors = reporter.infos.filter(_.severity.id == 2)
-    errors.toList.map(_.toString())
+    errors.toList.map { d =>
+      new StringBuilder()
+        .append(d.pos.source.path)
+        .append(":")
+        .append(d.pos.line)
+        .append(" ")
+        .append(d.msg)
+        .append("\n")
+        .append(d.pos.lineContent)
+        .append("\n")
+        .append(d.pos.lineCaret)
+        .toString()
+    }
   }
+
+  val metals = Dependency(
+    Module(
+      Organization("org.scalameta"),
+      ModuleName("metals_2.12")
+    ),
+    "0.7.6"
+  )
+  // akka is a bad example since it has undeclared compile-time dependencies
+  // on "silencer"
+  val akka = Dependency(
+    Module(
+      Organization("com.typesafe.akka"),
+      ModuleName("akka-actor_2.12")
+    ),
+    "2.5.25"
+  )
+  val ammonite = List(
+    Dependency(
+      Module(
+        Organization("com.lihaoyi"),
+        ModuleName("ammonite-repl_2.12.10")
+      ),
+      "1.7.4-0-cdefbd9"
+    ),
+    Dependency(
+      Module(
+        Organization("com.lihaoyi"),
+        ModuleName("acyclic_2.12")
+      ),
+      "0.2.0"
+    )
+  )
+  val dependencies = ammonite
+  val fetch = Fetch()
 
   def check(rule: String): Unit = {
     test(rule) {
-      val metals = Dependency(
-        Module(
-          Organization("org.scalameta"),
-          ModuleName("metals_2.12")
-        ),
-        "0.7.6"
-      )
-      // akka is a bad example since it has undeclared compile-time dependencies
-      // on "silencer"
-      val akka = Dependency(
-        Module(
-          Organization("com.typesafe.akka"),
-          ModuleName("akka-actor_2.12")
-        ),
-        "2.5.25"
-      )
-      val ammonite = List(
-        Dependency(
-          Module(
-            Organization("com.lihaoyi"),
-            ModuleName("ammonite-repl_2.12.10")
-          ),
-          "1.7.4-0-cdefbd9"
-        ),
-        Dependency(
-          Module(
-            Organization("com.lihaoyi"),
-            ModuleName("acyclic_2.12")
-          ),
-          "0.2.0"
-        )
-      )
-      val dependencies = ammonite
-      val fetch = Fetch()
       val classfiles = fetch
         .withDependencies(dependencies)
         .run()
@@ -142,5 +158,22 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       pprint.log(tmp)
     }
   }
-  check("ExplicitResultTypes")
+  // check("ExplicitResultTypes")
+  test("foo") {
+    val classfiles = fetch.withDependencies(ammonite).run().map(_.toPath())
+    val g = ScalaPresentationCompiler(classpath = classfiles)
+      .newCompiler()
+    pprint.log(
+      compileErrors(
+        g,
+        """
+          |package x
+          |object Foo {
+          | def foo: String = 42
+          |}
+          |""".stripMargin,
+        "Foo.scala"
+      )
+    )
+  }
 }
