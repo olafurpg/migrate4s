@@ -116,7 +116,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       "0.2.0"
     )
   )
-  val dependencies = metals // ammonite
+  val dependencies = ammonite // ammonite
   val fetch = Fetch()
 
   def check(rule: String): Unit = {
