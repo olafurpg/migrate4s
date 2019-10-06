@@ -59,9 +59,18 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
   ): Option[v1.Patch] = {
     val gpos = unit.position(pos.start)
     GlobalProxy.typedTreeAt(g, gpos)
-    val gsym = g.inverseSemanticdbSymbol(sym.value)
-    if (gsym == g.NoSymbol) None
-    else {
+    val gsym = g
+      .inverseSemanticdbSymbols(sym.value)
+      .find(s => g.semanticdbSymbol(s) == sym.value)
+      .getOrElse(g.NoSymbol)
+    if (gsym == g.NoSymbol) {
+      None
+    } else if (gsym.alternatives.length > 1) {
+      pprint.log(sym.value)
+      pprint.log(gsym)
+      pprint.log(gsym.info)
+      None
+    } else {
       val context = g.doLocateContext(gpos)
       val renames = g.renamedSymbols(context)
       val history = new g.ShortenedNames(
@@ -106,8 +115,17 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
         }
       }
 
+      if (gsym.name.toString() == "True") {
+        // pprint.log/inverse
+      }
       val shortT = g.shortType(loop(gsym.info).widen, history)
       val short = shortT.toString()
+      if (short == "IndexedParserInput") {
+        pprint.log(sym.value)
+        pprint.log(gsym)
+        pprint.log(gsym.alternatives)
+        pprint.log(gsym.info)
+      }
       val toImport = mutable.Map.empty[g.Symbol, List[g.ShortName]]
       val isRootSymbol = Set[g.Symbol](
         g.rootMirror.RootClass,

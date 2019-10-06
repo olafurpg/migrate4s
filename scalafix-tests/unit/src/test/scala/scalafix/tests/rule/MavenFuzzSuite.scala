@@ -15,6 +15,9 @@ import scala.collection.mutable
 import scala.tools.nsc.reporters.StoreReporter
 import scala.meta.internal.pc.MetalsGlobal
 import java.nio.charset.StandardCharsets
+import scala.meta.internal.mtags.MtagsEnrichments._
+import java.nio.file.FileSystems
+import java.nio.file.Paths
 
 class MavenFuzzSuite extends FunSuite with DiffAssertions {
   private def getCompilingSources(
@@ -24,21 +27,25 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       tmp: Path
   ): Seq[Path] = {
     val result = mutable.ArrayBuffer.empty[Path]
+    val matcher = FileSystems.getDefault().getPathMatcher("glob:*.scala")
     sourceJars.foreach { jar =>
       FileIO.withJarFileSystem(AbsolutePath(jar), false, true) { root =>
         FileIO.listAllFilesRecursively(root).files.foreach { relpath =>
           val in = root.resolve(relpath)
-          val text = FileIO.slurp(in, StandardCharsets.UTF_8)
-          val errors = compileErrors(g, text, relpath.toString())
-          if (errors.isEmpty) {
-            val out = tmp.resolve(relpath.toString())
-            Files.createDirectories(out.getParent())
-            val stream = Files.newOutputStream(out)
-            try Files.copy(in.toNIO, stream)
-            finally stream.close()
-            result += out
-          } else {
-            pprint.log(errors)
+          val filename = relpath.toNIO.getFileName().toString()
+          if (matcher.matches(Paths.get(filename))) {
+            val text = FileIO.slurp(in, StandardCharsets.UTF_8)
+            val errors = compileErrors(g, text, relpath.toString())
+            if (errors.isEmpty) {
+              val out = tmp.resolve(relpath.toString())
+              Files.createDirectories(out.getParent())
+              val stream = Files.newOutputStream(out)
+              try Files.copy(in.toNIO, stream)
+              finally stream.close()
+              result += out
+            } else {
+              pprint.log(errors)
+            }
           }
         }
       }
@@ -54,6 +61,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
     val reporter = new StoreReporter()
     val old = g.reporter
     g.reporter = reporter
+    g.settings.stopAfter.value = List("typer")
     val run = new g.Run()
     val source = g.newSourceFile(code, filename)
     run.compileSources(List(source))
@@ -74,12 +82,14 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
     }
   }
 
-  val metals = Dependency(
-    Module(
-      Organization("org.scalameta"),
-      ModuleName("metals_2.12")
-    ),
-    "0.7.6"
+  val metals = List(
+    Dependency(
+      Module(
+        Organization("org.scalameta"),
+        ModuleName("metals_2.12")
+      ),
+      "0.7.6"
+    )
   )
   // akka is a bad example since it has undeclared compile-time dependencies
   // on "silencer"
@@ -106,7 +116,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       "0.2.0"
     )
   )
-  val dependencies = ammonite
+  val dependencies = metals // ammonite
   val fetch = Fetch()
 
   def check(rule: String): Unit = {
@@ -146,34 +156,36 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       // .withMode(ScalafixMainMode.CHECK)
       val exit = args.run()
       pprint.log(exit)
-      exec("git", "diff")
+      // exec("git", "diff")
       FileIO.listAllFilesRecursively(AbsolutePath(tmp)).foreach { path =>
-        val text = FileIO.slurp(path, StandardCharsets.UTF_8)
-        val errors = compileErrors(g, text, path.toString())
-        if (errors.nonEmpty) {
-          pprint.log(path)
-          pprint.log(errors)
+        if (path.extension == "scala") {
+          val text = FileIO.slurp(path, StandardCharsets.UTF_8)
+          val errors = compileErrors(g, text, path.toString())
+          if (errors.nonEmpty) {
+            pprint.log(path)
+            pprint.log(errors)
+          }
         }
       }
       pprint.log(tmp)
     }
   }
-  // check("ExplicitResultTypes")
-  test("foo") {
-    val classfiles = fetch.withDependencies(ammonite).run().map(_.toPath())
-    val g = ScalaPresentationCompiler(classpath = classfiles)
-      .newCompiler()
-    pprint.log(
-      compileErrors(
-        g,
-        """
-          |package x
-          |object Foo {
-          | def foo: String = 42
-          |}
-          |""".stripMargin,
-        "Foo.scala"
-      )
-    )
-  }
+  check("ExplicitResultTypes")
+  // test("foo") {
+  //   val classfiles = fetch.withDependencies(ammonite).run().map(_.toPath())
+  //   val g = ScalaPresentationCompiler(classpath = classfiles)
+  //     .newCompiler()
+  //   pprint.log(
+  //     compileErrors(
+  //       g,
+  //       """
+  //         |package x
+  //         |object Foo {
+  //         | def foo: String = 42
+  //         |}
+  //         |""".stripMargin,
+  //       "Foo.scala"
+  //     )
+  //   )
+  // }
 }

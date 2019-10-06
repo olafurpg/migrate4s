@@ -23,5 +23,20 @@ object ExplicitResultTypesBug {
     val hasImport: ju.List[Int] = ju.Collections.emptyList[Int]()
   }
   val missingImport: ju.List[Int] = java.util.Collections.emptyList[Int]()
+
+  def o3: rsc.tests.testpkg.O3 = new rsc.tests.testpkg.O3()
+
+  def overload(a: Int): Int = a
+  def overload(a: String): String = a
+
+  abstract class ParserInput {
+    def apply(index: Int): Char
+  }
+  case class IndexedParserInput(data: String) extends ParserInput {
+    override def apply(index: Int): Char = data.charAt(index)
+  }
+  case class Foo(a: Int) {
+    def apply(x: Int): Int = x
+  }
 }
 
