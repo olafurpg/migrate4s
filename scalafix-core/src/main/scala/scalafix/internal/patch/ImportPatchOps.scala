@@ -78,7 +78,7 @@ object ImportPatchOps {
       if p2.is[Pkg]
     } yield importer.syntax).toSet
     val allImportees = allImporters.flatMap(_.importees)
-    val allNamedImports = allImportees.collect {
+    lazy val allNamedImports = allImportees.collect {
       case Importee.Name(n) if index.symbol(n).isDefined =>
         n.symbol
       // TODO(olafur) handle rename.

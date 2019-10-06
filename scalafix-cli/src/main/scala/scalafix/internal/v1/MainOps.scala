@@ -191,13 +191,21 @@ object MainOps {
       doc: SyntacticDocument
   ): Option[TextDocument] = {
     args.global.value.map { g =>
-      InteractiveSemanticdb
-        .toTextDocument(g, doc.input.text)
+      val result = InteractiveSemanticdb
+        .toTextDocument(
+          g,
+          doc.input.text,
+          doc.internal.input.syntax,
+          10000,
+          Nil
+        )
         .copy(
           md5 = FingerprintOps.md5(
             StandardCharsets.UTF_8.encode(CharBuffer.wrap(doc.input.chars))
           )
         )
+      g.unitOfFile.clear()
+      result
     }
   }
 
@@ -284,7 +292,7 @@ object MainOps {
   }
 
   def run(args: ValidatedArgs): ExitStatus = {
-    val files = this.files(args).take(3)
+    val files = this.files(args).take(6)
     var i = 0
     val N = files.length
     val width = N.toString.length

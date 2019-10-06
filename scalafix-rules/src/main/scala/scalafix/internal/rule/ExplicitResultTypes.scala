@@ -31,6 +31,9 @@ final class ExplicitResultTypes(
       if (config.scalacClasspath.isEmpty) LazyValue.now(None)
       else {
         LazyValue.fromUnsafe { () =>
+          pprint.log(
+            config.scalacClasspath.filter(_.toString().contains("metals"))
+          )
           ScalaPresentationCompiler(
             classpath = config.scalacClasspath.map(_.toNIO)
           ).newCompiler()
