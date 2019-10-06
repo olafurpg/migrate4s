@@ -284,7 +284,7 @@ object MainOps {
   }
 
   def run(args: ValidatedArgs): ExitStatus = {
-    val files = this.files(args)
+    val files = this.files(args).take(3)
     var i = 0
     val N = files.length
     val width = N.toString.length
