@@ -19,5 +19,11 @@ object ExplicitResultTypesBug {
   }
 
   val map = mut.Map.empty[Int, Int]
+
+  object Ignored {
+    import java.{util => ju}
+    val hasImport = ju.Collections.emptyList[Int]()
+  }
+  val missingImport = java.util.Collections.emptyList[Int]()
 }
 
