@@ -67,7 +67,9 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
       None
     } else {
       val context = g.doLocateContext(gpos)
-      val renames = g.renamedSymbols(context)
+      val renames = g.renamedSymbols(context).filterNot {
+        case (_, name) => name.toString() == "_"
+      }
       val history = new g.ShortenedNames(
         lookupSymbol = name => {
           context.lookupSymbol(name, _ => true) :: Nil
@@ -109,9 +111,9 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
           case tpe => tpe
         }
       }
-
       val shortT = g.shortType(loop(gsym.info).widen, history)
       val short = shortT.toString()
+
       val toImport = mutable.Map.empty[g.Symbol, List[g.ShortName]]
       val isRootSymbol = Set[g.Symbol](
         g.rootMirror.RootClass,
