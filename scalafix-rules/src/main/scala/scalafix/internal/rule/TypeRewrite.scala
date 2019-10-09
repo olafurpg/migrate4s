@@ -7,6 +7,7 @@ import scala.meta.internal.proxy.GlobalProxy
 import scala.collection.mutable
 import scala.reflect.internal.{Flags => gf}
 import scala.meta.internal.pc.Identifier
+import scala.reflect.internal.FatalError
 
 class TypeRewrite {
   def toPatch(
@@ -32,26 +33,26 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
   private lazy val unit =
     g.newCompilationUnit(ctx.input.text, ctx.input.syntax)
 
-  private def parentSymbols(context: Context): collection.Set[Symbol] = {
-    val isVisited = mutable.Set.empty[Symbol]
-    var cx = context
-    def expandParent(parent: Symbol): Unit = {
-      if (!isVisited(parent)) {
-        isVisited.add(parent)
-        parent.parentSymbols.foreach { parent =>
-          expandParent(parent)
-        }
-      }
-    }
-
-    while (cx != NoContext && !cx.owner.hasPackageFlag) {
-      expandParent(cx.owner)
-      cx = cx.outer
-    }
-    isVisited
-  }
-
   override def toPatch(
+      pos: m.Position,
+      sym: v1.Symbol,
+      replace: m.Token,
+      space: String
+  ): Option[v1.Patch] = {
+    try toPatchUnsafe(
+      pos,
+      sym,
+      replace,
+      space
+    )
+    catch {
+      case e: FatalError =>
+        // Ignore crashes inside the compiler
+        // e.printStackTrace()
+        None
+    }
+  }
+  def toPatchUnsafe(
       pos: m.Position,
       sym: v1.Symbol,
       replace: m.Token,
@@ -133,7 +134,7 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
         ref = pkg.owner
       } yield {
         val importee: m.Importee = {
-          val ident = m.Name.Indeterminate(Identifier(name.name))
+          val ident = m.Name.Indeterminate(name.name.toString())
           if (name.isRename)
             m.Importee.Rename(
               m.Name.Indeterminate(Identifier(name.symbol.name)),
@@ -156,5 +157,24 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
       }
       Some(v1.Patch.addRight(replace, s"$space: $short") ++ addImports)
     }
+  }
+
+  private def parentSymbols(context: Context): collection.Set[Symbol] = {
+    val isVisited = mutable.Set.empty[Symbol]
+    var cx = context
+    def expandParent(parent: Symbol): Unit = {
+      if (!isVisited(parent)) {
+        isVisited.add(parent)
+        parent.parentSymbols.foreach { parent =>
+          expandParent(parent)
+        }
+      }
+    }
+
+    while (cx != NoContext && !cx.owner.hasPackageFlag) {
+      expandParent(cx.owner)
+      cx = cx.outer
+    }
+    isVisited
   }
 }
