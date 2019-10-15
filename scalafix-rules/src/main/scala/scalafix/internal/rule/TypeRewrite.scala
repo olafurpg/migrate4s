@@ -135,6 +135,8 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
           )
         }
       val shortT = g.shortType(loop(seenFromType).widen, history)
+      pprint.log(seenFromType)
+      pprint.log(shortT)
       val short = shortT.toString()
       // if (gsym.nameString == "returnValueConverters") {
       //   pprint.log(shortT)

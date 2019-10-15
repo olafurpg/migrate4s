@@ -16,6 +16,12 @@ class ScalafixGlobal(
     settings: Settings,
     reporter: StoreReporter
 ) extends Global(settings, reporter) { compiler =>
+  def printTree(code: String): Unit = {
+    val unit = new RichCompilationUnit(newSourceFile(code))
+    typeCheck(unit)
+    pprint.log(unit.body)
+    pprint.log(unit.body.toString())
+  }
   def inverseSemanticdbSymbols(symbol: String): List[Symbol] = {
     import scala.meta.internal.semanticdb.Scala._
     if (!symbol.isGlobal) return Nil
@@ -440,6 +446,8 @@ object ScalafixGlobal {
     val classpath = cp.mkString(File.pathSeparator)
     val vd = new VirtualDirectory("(memory)", None)
     val settings = new Settings
+    settings.maxerrs.value = 1
+    settings.Xprint.value = List("typer")
     settings.Ymacroexpand.value = "discard"
     settings.outputDirs.setSingleOutput(vd)
     settings.classpath.value = classpath
