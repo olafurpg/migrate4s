@@ -129,10 +129,18 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
       val seenFromType =
         if (gsym == inverseSemanticdbSymbol) gsym.info
         else {
-          gsym.info.asSeenFrom(inverseSemanticdbSymbol.owner.info, gsym.owner)
+          gsym.info.asSeenFrom(
+            ThisType(inverseSemanticdbSymbol.owner),
+            gsym.owner
+          )
         }
       val shortT = g.shortType(loop(seenFromType).widen, history)
       val short = shortT.toString()
+      // if (gsym.nameString == "returnValueConverters") {
+      //   pprint.log(shortT)
+      //   pprint.log(seenFromType)
+      //   pprint.log(gsym.info)
+      // }
 
       val toImport = mutable.Map.empty[g.Symbol, List[g.ShortName]]
       val isRootSymbol = Set[g.Symbol](
