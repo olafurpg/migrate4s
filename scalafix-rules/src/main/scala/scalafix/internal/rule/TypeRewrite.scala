@@ -52,6 +52,7 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
         None
     }
   }
+  def isDebug = Set[String]("inPlace")
   def toPatchUnsafe(
       pos: m.Position,
       sym: v1.Symbol,
@@ -74,6 +75,9 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
     // supermethod, if it exists.
     val gsym = inverseSemanticdbSymbol.overrides.lastOption
       .getOrElse(inverseSemanticdbSymbol)
+    val isDebug = this.isDebug(gsym.name.toString())
+    if (isDebug) pprint.log(gsym.fullName)
+    if (isDebug) pprint.log(gsym.info)
     if (gsym == g.NoSymbol) {
       None
     } else {
@@ -122,7 +126,10 @@ class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
           case tpe => tpe
         }
       }
+      if (isDebug) pprint.log(loop(gsym.info))
       val shortT = g.shortType(loop(gsym.info).widen, history)
+      if (isDebug) pprint.log(shortT)
+      if (isDebug) pprint.log(shortT.toString())
       val short = shortT.toString()
 
       val toImport = mutable.Map.empty[g.Symbol, List[g.ShortName]]

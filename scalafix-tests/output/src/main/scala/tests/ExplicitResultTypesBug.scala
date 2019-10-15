@@ -47,5 +47,10 @@ object ExplicitResultTypesBug {
     val foo: Map[Int,String] = Map.empty
     val message: CharSequence = s"hello $foo"
   }
+
+  class Eval() {
+    def inPlace[T](e: String): T = apply[T](e)
+    def apply[T](e: String): T = ???
+  }
 }
 
