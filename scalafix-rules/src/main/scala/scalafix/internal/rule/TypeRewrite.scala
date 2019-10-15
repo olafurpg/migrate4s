@@ -83,7 +83,9 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
     } else {
       val context = g.doLocateContext(gpos)
       val renames = g.renamedSymbols(context).filterNot {
-        case (_, name) => name.toString() == "_"
+        case (sym, name) =>
+          sym == g.NoSymbol ||
+            name.toString() == "_"
       }
       val history = new g.ShortenedNames(
         lookupSymbol = name => {
