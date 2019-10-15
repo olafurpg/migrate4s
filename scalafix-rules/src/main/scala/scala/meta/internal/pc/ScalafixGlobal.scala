@@ -9,20 +9,106 @@ import java.io.File
 import scala.tools.nsc.reporters.StoreReporter
 import java.{util => ju}
 import scala.reflect.internal.{Flags => gf}
+import scala.meta.internal.semanticdb.scalac.SemanticdbOps
+import scala.util.control.NonFatal
 
 class ScalafixGlobal(
     settings: Settings,
     reporter: StoreReporter
-) extends Global(settings, reporter) {
-  def inverseSemanticdbSymbols(sym: String): List[Symbol] = Nil
+) extends Global(settings, reporter) { compiler =>
+  def inverseSemanticdbSymbols(symbol: String): List[Symbol] = {
+    import scala.meta.internal.semanticdb.Scala._
+    if (!symbol.isGlobal) return Nil
+
+    def loop(s: String): List[Symbol] = {
+      if (s.isNone || s.isRootPackage) rootMirror.RootPackage :: Nil
+      else if (s.isEmptyPackage) rootMirror.EmptyPackage :: Nil
+      else if (s.isPackage) {
+        try {
+          rootMirror.staticPackage(s.stripSuffix("/").replace("/", ".")) :: Nil
+        } catch {
+          case NonFatal(_) =>
+            Nil
+        }
+      } else {
+        val (desc, parent) = DescriptorParser(s)
+        val parentSymbol = loop(parent)
+
+        def tryMember(sym: Symbol): List[Symbol] =
+          sym match {
+            case NoSymbol =>
+              Nil
+            case owner =>
+              desc match {
+                case Descriptor.None =>
+                  Nil
+                case Descriptor.Type(value) =>
+                  val member = owner.info.decl(TypeName(value)) :: Nil
+                  if (sym.isJava) owner.info.decl(TermName(value)) :: member
+                  else member
+                case Descriptor.Term(value) =>
+                  owner.info.decl(TermName(value)) :: Nil
+                case Descriptor.Package(value) =>
+                  owner.info.decl(TermName(value)) :: Nil
+                case Descriptor.Parameter(value) =>
+                  owner.paramss.flatten.filter(_.name.containsName(value))
+                case Descriptor.TypeParameter(value) =>
+                  owner.typeParams.filter(_.name.containsName(value))
+                case Descriptor.Method(value, _) =>
+                  owner.info
+                    .decl(TermName(value))
+                    .alternatives
+                    .iterator
+                    .filter(sym => semanticdbSymbol(sym) == s)
+                    .toList
+              }
+          }
+
+        parentSymbol.flatMap(tryMember)
+      }
+    }
+
+    try loop(symbol).filterNot(_ == NoSymbol)
+    catch {
+      case NonFatal(e) =>
+        println(s"invalid SemanticDB symbol: $symbol\n${e.getMessage}")
+        Nil
+    }
+  }
+
+  class MetalsGlobalSemanticdbOps(val global: compiler.type)
+      extends SemanticdbOps
+  lazy val semanticdbOps = new MetalsGlobalSemanticdbOps(compiler)
+
+  def semanticdbSymbol(symbol: Symbol): String = {
+    import semanticdbOps._
+    symbol.toSemantic
+  }
   def inverseSemanticdbSymbol(sym: String): Symbol =
     inverseSemanticdbSymbols(sym).headOption.getOrElse(NoSymbol)
-  def semanticdbSymbol(sym: Symbol): String = ""
-  def renamedSymbols(context: Context): Map[Symbol, Name] = Map.empty
+
+  def renamedSymbols(context: Context): collection.Map[Symbol, Name] = {
+    val result = mutable.Map.empty[Symbol, Name]
+    context.imports.foreach { imp =>
+      lazy val pre = imp.qual.tpe
+      imp.tree.selectors.foreach { sel =>
+        if (sel.rename != null) {
+          val member = pre.member(sel.name)
+          result(member) = sel.rename
+          member.companion match {
+            case NoSymbol =>
+            case companion =>
+              result(companion) = sel.rename
+          }
+        }
+      }
+    }
+    result
+  }
   lazy val renameConfig: collection.Map[Symbol, Name] =
     Map[String, String](
       "scala/collection/mutable/" -> "mutable.",
-      "java/util" -> "ju."
+      "java/util/" -> "ju."
     ).map {
         case (sym, name) =>
           val nme =
