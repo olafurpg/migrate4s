@@ -6,13 +6,13 @@ import scalafix.patch.Patch
 import scalafix.v1._
 import scalafix.util.TokenOps
 import metaconfig.Configured
-import scala.meta.internal.pc.MetalsGlobal
+import scala.meta.internal.pc.ScalafixGlobal
 import scala.meta.internal.pc.ScalaPresentationCompiler
 import scalafix.internal.v1.LazyValue
 
 final class ExplicitResultTypes(
     config: ExplicitResultTypesConfig,
-    global: LazyValue[Option[MetalsGlobal]]
+    global: LazyValue[Option[ScalafixGlobal]]
 ) extends SemanticRule("ExplicitResultTypes") {
 
   def this() = this(ExplicitResultTypesConfig.default, LazyValue.now(None))
@@ -27,7 +27,7 @@ final class ExplicitResultTypes(
   }
 
   override def withConfiguration(config: Configuration): Configured[Rule] = {
-    val newGlobal: LazyValue[Option[MetalsGlobal]] =
+    val newGlobal: LazyValue[Option[ScalafixGlobal]] =
       if (config.scalacClasspath.isEmpty) LazyValue.now(None)
       else {
         LazyValue.fromUnsafe { () =>

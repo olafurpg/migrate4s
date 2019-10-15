@@ -13,7 +13,7 @@ import scala.sys.process._
 import scala.meta.internal.pc.ScalaPresentationCompiler
 import scala.collection.mutable
 import scala.tools.nsc.reporters.StoreReporter
-import scala.meta.internal.pc.MetalsGlobal
+import scala.meta.internal.pc.ScalafixGlobal
 import java.nio.charset.StandardCharsets
 import scala.meta.internal.mtags.MtagsEnrichments._
 import java.nio.file.FileSystems
@@ -21,7 +21,7 @@ import java.nio.file.Paths
 
 class MavenFuzzSuite extends FunSuite with DiffAssertions {
   private def getCompilingSources(
-      g: MetalsGlobal,
+      g: ScalafixGlobal,
       classfiles: Seq[Path],
       sourceJars: Seq[Path],
       tmp: Path
@@ -55,7 +55,7 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
   }
 
   def compileErrors(
-      g: MetalsGlobal,
+      g: ScalafixGlobal,
       code: String,
       filename: String
   ): List[String] = {
