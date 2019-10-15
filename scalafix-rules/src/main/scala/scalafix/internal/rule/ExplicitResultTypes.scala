@@ -31,9 +31,10 @@ final class ExplicitResultTypes(
       if (config.scalacClasspath.isEmpty) LazyValue.now(None)
       else {
         LazyValue.fromUnsafe { () =>
-          ScalaPresentationCompiler(
-            classpath = config.scalacClasspath.map(_.toNIO)
-          ).newCompiler()
+          ScalafixGlobal.newCompiler(
+            config.scalacClasspath,
+            config.scalacOptions
+          )
         }
       }
     config.conf // Support deprecated explicitReturnTypes config

@@ -2,13 +2,15 @@ package scala.meta.internal.pc
 
 import scala.collection.mutable
 import scala.tools.nsc.Settings
-import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.interactive.Global
+import scala.meta.io.AbsolutePath
+import scala.reflect.io.VirtualDirectory
+import java.io.File
+import scala.tools.nsc.reporters.StoreReporter
 
 class ScalafixGlobal(
     settings: Settings,
-    reporter: Reporter,
-    val buildTargetIdentifier: String
+    reporter: StoreReporter
 ) extends Global(settings, reporter) {
   def inverseSemanticdbSymbols(sym: String): List[Symbol] = Nil
   def inverseSemanticdbSymbol(sym: String): Symbol =
@@ -219,4 +221,28 @@ class ScalafixGlobal(
       else sym
   }
 
+}
+
+object ScalafixGlobal {
+
+  def newCompiler(
+      cp: List[AbsolutePath],
+      options: List[String]
+  ): ScalafixGlobal = {
+    val classpath = cp.mkString(File.pathSeparator)
+    val vd = new VirtualDirectory("(memory)", None)
+    val settings = new Settings
+    settings.Ymacroexpand.value = "discard"
+    settings.outputDirs.setSingleOutput(vd)
+    settings.classpath.value = classpath
+    settings.YpresentationAnyThread.value = true
+    if (classpath.isEmpty) {
+      settings.usejavacp.value = true
+    }
+    val (isSuccess, unprocessed) =
+      settings.processArguments(options, processAll = true)
+    require(isSuccess, unprocessed)
+    require(unprocessed.isEmpty, unprocessed)
+    new ScalafixGlobal(settings, new StoreReporter)
+  }
 }
