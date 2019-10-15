@@ -7,7 +7,6 @@ import scalafix.v1._
 import scalafix.util.TokenOps
 import metaconfig.Configured
 import scala.meta.internal.pc.ScalafixGlobal
-import scala.meta.internal.pc.ScalaPresentationCompiler
 import scalafix.internal.v1.LazyValue
 
 final class ExplicitResultTypes(

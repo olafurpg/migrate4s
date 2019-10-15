@@ -141,8 +141,8 @@ class MavenFuzzSuite extends FunSuite with DiffAssertions {
       }
 
       tmp.toFile().deleteOnExit()
-      val g = ScalaPresentationCompiler(classpath = classfiles)
-        .newCompiler()
+      val g =
+        ScalafixGlobal.newCompiler(classfiles.map(AbsolutePath(_)).toList, Nil)
       val paths = getCompilingSources(g, classfiles, sources, tmp)
       exec("git", "init")
       exec("git", "add", ".")
