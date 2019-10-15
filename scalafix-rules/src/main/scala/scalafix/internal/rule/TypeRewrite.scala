@@ -1,6 +1,6 @@
 package scalafix.internal.rule
 
-import scala.meta.internal.pc.MetalsGlobal
+import scala.meta.internal.pc.ScalafixGlobal
 import scalafix.v1
 import scala.{meta => m}
 import scala.meta.internal.proxy.GlobalProxy
@@ -19,7 +19,7 @@ class TypeRewrite {
 }
 object TypeRewrite {
   def apply(
-      global: Option[MetalsGlobal]
+      global: Option[ScalafixGlobal]
   )(implicit ctx: v1.SemanticDocument): TypeRewrite =
     global match {
       case None => new TypeRewrite
@@ -27,7 +27,7 @@ object TypeRewrite {
     }
 }
 
-class CompilerTypeRewrite(g: MetalsGlobal)(implicit ctx: v1.SemanticDocument)
+class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
     extends TypeRewrite {
   import g._
   private lazy val unit =
