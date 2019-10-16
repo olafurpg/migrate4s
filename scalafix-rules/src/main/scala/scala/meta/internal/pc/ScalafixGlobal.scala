@@ -154,6 +154,12 @@ class ScalafixGlobal(
                     sym.newErrorSymbol(rename),
                     args.map(arg => loop(arg, None))
                   )
+                case _ if history.nameResolvesToSymbol(sym) =>
+                  TypeRef(
+                    NoPrefix,
+                    sym,
+                    args.map(arg => loop(arg, None))
+                  )
                 case _ =>
                   if (sym.isAliasType &&
                     (sym.isAbstract ||
@@ -183,7 +189,7 @@ class ScalafixGlobal(
               }
           }
         case SingleType(pre, sym) =>
-          if (sym.hasPackageFlag) {
+          if (sym.hasPackageFlag || sym.isPackageObjectOrClass) {
             if (history.tryShortenName(name)) NoPrefix
             else tpe
           } else {
@@ -267,7 +273,7 @@ class ScalafixGlobal(
     }
 
     def topSymbolResolves(sym: Symbol): Boolean = {
-      // Returns the package `a` for the symbol `_root_.a.b.c`
+      // Returns the package `a` for the symbol `_root_/a/b.c`
       def topPackage(s: Symbol): Symbol = {
         val owner = s.owner
         if (s.isRoot || s.isRootPackage || s == NoSymbol || s.owner.isEffectiveRoot || s == owner) {

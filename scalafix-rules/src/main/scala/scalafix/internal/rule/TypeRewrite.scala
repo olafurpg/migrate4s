@@ -87,6 +87,7 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
       }
       val history = new g.ShortenedNames(
         lookupSymbol = name => {
+          val result = context.lookupSymbol(name, _ => true)
           context.lookupSymbol(name, _ => true) :: Nil
         },
         renames = renames,
@@ -135,14 +136,7 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
           )
         }
       val shortT = g.shortType(loop(seenFromType).widen, history)
-      pprint.log(seenFromType)
-      pprint.log(shortT)
       val short = shortT.toString()
-      // if (gsym.nameString == "returnValueConverters") {
-      //   pprint.log(shortT)
-      //   pprint.log(seenFromType)
-      //   pprint.log(gsym.info)
-      // }
 
       val toImport = mutable.Map.empty[g.Symbol, List[g.ShortName]]
       val isRootSymbol = Set[g.Symbol](
@@ -179,7 +173,8 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
             .map(sym => m.Term.Name(sym.name.toString()))
           val ref = tail.foldLeft(head: m.Term.Ref) {
             case (owner, name) =>
-              m.Term.Select(owner, name)
+              if (name.value == "package") owner
+              else m.Term.Select(owner, name)
           }
           v1.Patch.addGlobalImport(m.Importer(ref, List(importee)))
         }

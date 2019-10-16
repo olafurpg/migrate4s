@@ -56,5 +56,7 @@ object ExplicitResultTypesBug {
   class IntOpt extends Opt[Int] {
     def get(e: Int) = e
   }
+
+  val o4 = null.asInstanceOf[List[rsc.tests.testpkg.O4]]
 }
 
