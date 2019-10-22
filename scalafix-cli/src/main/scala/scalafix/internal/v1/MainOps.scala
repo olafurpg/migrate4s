@@ -191,21 +191,27 @@ object MainOps {
       doc: SyntacticDocument
   ): Option[TextDocument] = {
     args.global.value.map { g =>
-      val result = InteractiveSemanticdb
-        .toTextDocument(
-          g,
-          doc.input.text,
-          doc.internal.input.syntax,
-          10000,
-          Nil
+      pprint.log(doc.input.syntax)
+      TextDocument(
+        md5 = FingerprintOps.md5(
+          StandardCharsets.UTF_8.encode(CharBuffer.wrap(doc.input.chars))
         )
-        .copy(
-          md5 = FingerprintOps.md5(
-            StandardCharsets.UTF_8.encode(CharBuffer.wrap(doc.input.chars))
-          )
-        )
-      g.unitOfFile.clear()
-      result
+      )
+    // val result = InteractiveSemanticdb
+    //   .toTextDocument(
+    //     g,
+    //     doc.input.text,
+    //     doc.internal.input.syntax,
+    //     10000,
+    //     Nil
+    //   )
+    //   .copy(
+    //     md5 = FingerprintOps.md5(
+    //       StandardCharsets.UTF_8.encode(CharBuffer.wrap(doc.input.chars))
+    //     )
+    //   )
+    // g.unitOfFile.clear()
+    // result
     }
   }
 

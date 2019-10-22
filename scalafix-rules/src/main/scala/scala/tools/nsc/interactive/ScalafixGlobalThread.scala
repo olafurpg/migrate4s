@@ -20,6 +20,16 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
         compiler.scheduler.waitForMoreWork(); true
       })
       compiler.pollForWork(compiler.NoPosition)
+      while (compiler.isOutOfDate) {
+        try {
+          pprint.log("backgroundCompile()")
+          compiler.backgroundCompile()
+        } catch {
+          case ex: FreshRunReq =>
+            compiler.debugLog("fresh run req caught, starting new pass")
+        }
+        compiler.log.flush()
+      }
     } catch {
       case ex @ ShutdownReq =>
         compiler.debugLog("exiting presentation compiler")
@@ -29,7 +39,6 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
         compiler = null
       case ex: Throwable =>
         compiler.log.flush()
-        pprint.log(ex)
 
         ex match {
           // + scalac deviation
@@ -47,8 +56,7 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
               "validate exception caught outside presentation compiler loop; ignored"
             )
           case _ =>
-            ex.printStackTrace();
-            compiler.informIDE("Fatal Error: " + ex)
+            ex.printStackTrace(); compiler.informIDE("Fatal Error: " + ex)
         }
     }
   }

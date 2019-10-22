@@ -70,8 +70,10 @@ final class ExplicitResultTypes(
     }
   }
   def unsafeFix()(implicit ctx: SemanticDocument): Patch = {
-    global.restart()
-    lazy val types = TypeRewrite(global.value)
+    lazy val types = {
+      pprint.log(global.value.map(_.isHijacked()))
+      TypeRewrite(global.value)
+    }
     ctx.tree.collect {
       case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body)
           if isRuleCandidate(t, name, mods, body) =>
