@@ -22,7 +22,10 @@ final class ExplicitResultTypes(
   override def isExperimental: Boolean = true
 
   override def afterComplete(): Unit = {
-    global.foreach(_.foreach(_.askShutdown()))
+    global.foreach(_.foreach(g => {
+      g.askShutdown()
+      g.close()
+    }))
   }
 
   override def withConfiguration(config: Configuration): Configured[Rule] = {
@@ -44,6 +47,19 @@ final class ExplicitResultTypes(
   }
 
   override def fix(implicit ctx: SemanticDocument): Patch = {
+    try unsafeFix()
+    catch {
+      case _: CompilerException =>
+        global.restart()
+        try unsafeFix()
+        catch {
+          case _: CompilerException =>
+            // Ignore compiler crashes.
+            Patch.empty
+        }
+    }
+  }
+  def unsafeFix()(implicit ctx: SemanticDocument): Patch = {
     lazy val types = TypeRewrite(global.value)
     ctx.tree.collect {
       case t @ Defn.Val(mods, Pat.Var(name) :: Nil, None, body)
