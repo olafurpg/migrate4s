@@ -20,15 +20,6 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
         compiler.scheduler.waitForMoreWork(); true
       })
       compiler.pollForWork(compiler.NoPosition)
-      while (compiler.isOutOfDate) {
-        try {
-          compiler.backgroundCompile()
-        } catch {
-          case ex: FreshRunReq =>
-            compiler.debugLog("fresh run req caught, starting new pass")
-        }
-        compiler.log.flush()
-      }
     } catch {
       case ex @ ShutdownReq =>
         compiler.debugLog("exiting presentation compiler")

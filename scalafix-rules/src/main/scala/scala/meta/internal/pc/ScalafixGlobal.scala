@@ -19,6 +19,8 @@ class ScalafixGlobal(
 ) extends Global(settings, reporter)
     with ScalafixGlobalProxy { compiler =>
   hijackPresentationCompilerThread()
+
+  def backgroundCompile(): Unit = ()
   def printTree(code: String): Unit = {
     val unit = new RichCompilationUnit(newSourceFile(code))
     typeCheck(unit)
