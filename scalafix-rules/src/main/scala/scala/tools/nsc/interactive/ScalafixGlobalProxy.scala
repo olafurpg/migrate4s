@@ -7,6 +7,8 @@ import scala.meta.internal.pc.ScalafixGlobal
 trait ScalafixGlobalProxy { this: ScalafixGlobal =>
   def presentationCompilerThread: Thread = this.compileRunner
   def hijackPresentationCompilerThread(): Unit = newRunnerThread()
+  def isHijacked(): Boolean =
+    presentationCompilerThread.isInstanceOf[ScalafixGlobalThread]
 
   def metalsAsk[T](fn: Response[T] => Unit): T = {
     val r = new Response[T]
@@ -39,6 +41,7 @@ trait ScalafixGlobalProxy { this: ScalafixGlobal =>
     compileRunner = new ScalafixGlobalThread(this, "Metals")
     compileRunner.setDaemon(true)
     compileRunner.start()
+    pprint.log("hijack!!")
     compileRunner
   }
 }
