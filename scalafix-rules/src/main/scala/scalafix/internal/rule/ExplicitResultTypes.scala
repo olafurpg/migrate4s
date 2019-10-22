@@ -8,6 +8,7 @@ import scalafix.util.TokenOps
 import metaconfig.Configured
 import scala.meta.internal.pc.ScalafixGlobal
 import scalafix.internal.v1.LazyValue
+import scala.util.control.NonFatal
 
 final class ExplicitResultTypes(
     config: ExplicitResultTypesConfig,
@@ -22,9 +23,17 @@ final class ExplicitResultTypes(
   override def isExperimental: Boolean = true
 
   override def afterComplete(): Unit = {
+    shutdownCompiler()
+  }
+
+  private def shutdownCompiler(): Unit = {
     global.foreach(_.foreach(g => {
-      g.askShutdown()
-      g.close()
+      try {
+        g.askShutdown()
+        g.close()
+      } catch {
+        case NonFatal(_) =>
+      }
     }))
   }
 
@@ -50,6 +59,7 @@ final class ExplicitResultTypes(
     try unsafeFix()
     catch {
       case _: CompilerException =>
+        shutdownCompiler()
         global.restart()
         try unsafeFix()
         catch {

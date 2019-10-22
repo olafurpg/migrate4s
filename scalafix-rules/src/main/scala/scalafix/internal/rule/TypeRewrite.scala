@@ -50,9 +50,7 @@ class CompilerTypeRewrite(g: ScalafixGlobal)(implicit ctx: v1.SemanticDocument)
       space
     )
     catch {
-      case NonFatal(e) =>
-        throw CompilerException(e)
-      case e: FatalError =>
+      case e: Throwable =>
         throw CompilerException(e)
     }
   }
