@@ -286,7 +286,14 @@ object MainOps {
       case NonFatal(e) =>
         val ex = FileException(file, e)
         trimStackTrace(ex, untilMethod = "handleFile")
-        ex.printStackTrace(args.args.out)
+        e match {
+          case _: java.lang.AssertionError
+              if e.getMessage() != null &&
+                e.getMessage().startsWith("assertion failed:") &&
+                e.getMessage().contains("reconstructed args: ") =>
+          case _ =>
+            ex.printStackTrace(args.args.out)
+        }
         ExitStatus.UnexpectedError
     }
   }
