@@ -38,6 +38,7 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
         compiler = null
       case ex: Throwable =>
         compiler.log.flush()
+        pprint.log(ex)
 
         ex match {
           // + scalac deviation
@@ -55,7 +56,8 @@ final class ScalafixGlobalThread(var compiler: Global, name: String = "")
               "validate exception caught outside presentation compiler loop; ignored"
             )
           case _ =>
-            ex.printStackTrace(); compiler.informIDE("Fatal Error: " + ex)
+            ex.printStackTrace();
+            compiler.informIDE("Fatal Error: " + ex)
         }
     }
   }
