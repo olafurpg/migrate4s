@@ -3,7 +3,7 @@ package scalafix.internal.rule
 import scalafix.v1._
 import scala.meta._
 
-class ScalatestUpgrade extends SemanticRule("ScalafixUpgrade") {
+class ScalatestUpgrade extends SemanticRule("ScalatestUpgrade") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
     val replaceDeprecatedClassesPatch = Patch.replaceSymbols(

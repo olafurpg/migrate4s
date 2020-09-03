@@ -8,6 +8,7 @@ import scalafix.patch.Patch
 import scalafix.patch.Patch.internal.ReplaceSymbol
 import scalafix.syntax._
 import scalafix.v0._
+import scalafix.internal.util.SymbolOps
 
 object ReplaceSymbolOps {
   private object Select {
@@ -37,14 +38,19 @@ object ReplaceSymbolOps {
             (Symbol.Global(qual, Signature.Type(name)).syntax -> to) ::
             Nil
       }.toMap
-    def loop(ref: Ref, sym: Symbol): (Patch, Symbol) = {
+    def loop(ref: Ref, sym: Symbol, isImport: Boolean): (Patch, Symbol) = {
       (ref, sym) match {
         // same length
         case (a @ Name(_), Symbol.Global(Symbol.None, SignatureName(b))) =>
           ctx.replaceTree(a, b) -> Symbol.None
         // ref is shorter
-        case (a @ Name(_), sym @ Symbol.Global(_, SignatureName(b))) =>
-          ctx.replaceTree(a, b) -> sym
+        case (a @ Name(_), sym @ Symbol.Global(owner, SignatureName(b))) =>
+          if (isImport) {
+            val qual = SymbolOps.toTermRef(sym)
+            ctx.replaceTree(a, qual.syntax) -> Symbol.None
+          } else {
+            ctx.replaceTree(a, b) -> sym
+          }
         // ref is longer
         case (
             Select(qual, Name(_)),
@@ -56,7 +62,7 @@ object ReplaceSymbolOps {
             Select(qual: Ref, a @ Name(_)),
             Symbol.Global(symQual, SignatureName(b))
             ) =>
-          val (patch, toImport) = loop(qual, symQual)
+          val (patch, toImport) = loop(qual, symQual, isImport)
           (patch + ctx.replaceTree(a, b)) -> toImport
       }
     }
@@ -89,7 +95,8 @@ object ReplaceSymbolOps {
           case Some(i @ Importee.Name(_)) =>
             ctx.removeImportee(i)
           case Some(parent @ Select(_, `n`)) if isSelected =>
-            val (patch, imp) = loop(parent, to)
+            val (patch, imp) =
+              loop(parent, to, isImport = n.parents.exists(_.is[Import]))
             ctx.addGlobalImport(imp) + patch
           case Some(_) =>
             val addImport =
