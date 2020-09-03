@@ -141,7 +141,10 @@ lazy val testsInput = project
     scalacOptions += warnUnusedImports.value, // For RemoveUnused
     scalacOptions += "-Ywarn-unused", // For RemoveUnusedTerms
     logLevel := Level.Error, // avoid flood of compiler warnings
-    libraryDependencies += bijectionCore,
+    libraryDependencies ++= List(
+      bijectionCore,
+      scalatest
+    ),
     testsInputOutputSetting,
     coverageEnabled := false
   )
