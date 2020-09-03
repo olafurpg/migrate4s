@@ -47,6 +47,9 @@ import scalafix.v1.{Rule, SemanticDocument, SyntacticDocument}
 
 import scala.meta.interactive.InteractiveSemanticdb
 import scala.util.{Failure, Success, Try}
+import scala.reflect.internal.util.BatchSourceFile
+import scala.reflect.io.VirtualFile
+import scala.collection.mutable
 
 object MainOps {
 
@@ -296,7 +299,11 @@ object MainOps {
     }
   }
 
-  def unsafeHandleFile(args: ValidatedArgs, file: AbsolutePath): ExitStatus = {
+  def unsafeHandleFile(
+      args: ValidatedArgs,
+      file: AbsolutePath,
+      fixedBuffer: mutable.ArrayBuffer[Input.VirtualFile]
+  ): ExitStatus = {
     val input = args.input(file)
     val result =
       getPatchesAndDiags(args, input, file)
@@ -321,6 +328,9 @@ object MainOps {
         args.args.out.println(diff)
         ExitStatus.TestError
       }
+    } else if (args.args.checkCompile) {
+      fixedBuffer += Input.VirtualFile(input.syntax, fixed)
+      ExitStatus.Ok
     } else if (args.args.stdout) {
       args.args.out.println(fixed)
       ExitStatus.Ok
@@ -406,9 +416,13 @@ object MainOps {
     } else Success(ExitStatus.Ok)
   }
 
-  def handleFile(args: ValidatedArgs, file: AbsolutePath): ExitStatus = {
+  def handleFile(
+      args: ValidatedArgs,
+      file: AbsolutePath,
+      fixedBuffer: mutable.ArrayBuffer[Input.VirtualFile]
+  ): ExitStatus = {
     try {
-      unsafeHandleFile(args, file)
+      unsafeHandleFile(args, file, fixedBuffer)
     } catch {
       case e: ParseException =>
         args.config.reporter.error(e.shortMessage, e.pos)
@@ -444,6 +458,8 @@ object MainOps {
     val width = N.toString.length
     var exit = ExitStatus.Ok
 
+    val fixedBuffer = mutable.ArrayBuffer.empty[Input.VirtualFile]
+
     args.rules.rules.foreach(_.beforeStart())
 
     files.foreach { file =>
@@ -452,13 +468,36 @@ object MainOps {
         args.config.reporter.info(message)
         i += 1
       }
-      val next = handleFile(args, file)
+      val next = handleFile(args, file, fixedBuffer)
       exit = ExitStatus.merge(exit, next)
     }
 
     args.rules.rules.foreach(_.afterComplete())
 
-    adjustExitCode(args, exit, files)
+    val checkCompile: ExitStatus =
+      if (args.args.checkCompile && fixedBuffer.nonEmpty) {
+        args.checkCompileGlobal.value match {
+          case Some(global) =>
+            val run = new global.Run()
+            val sources = fixedBuffer.map { input =>
+              val file = new VirtualFile(input.syntax)
+              if (args.args.verbose) {
+                args.args.out.println(s"Check compiling ${input.syntax}")
+              }
+              new BatchSourceFile(file, input.chars)
+            }
+            run.compileSources(sources.toList)
+            if (global.reporter.hasErrors) ExitStatus.CompileError
+            else ExitStatus.Ok
+          case None =>
+            args.args.out
+              .println("Unable to --check-compile due to missing compiler")
+            ExitStatus.UnexpectedError
+        }
+      } else {
+        ExitStatus.Ok
+      }
+    adjustExitCode(args, ExitStatus.merge(exit, checkCompile), files)
   }
 
   def version =

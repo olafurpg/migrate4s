@@ -32,6 +32,8 @@ object Dependencies {
   def bijectionCore = "com.twitter" %% "bijection-core" % "0.9.7"
   def scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.3"
   def collectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.2.0"
+  def bspVersion = "2.0.0-M12"
+  def bsp4j = "ch.epfl.scala" % "bsp4j" % bspVersion
 
   def testsDeps = List(
     // integration property tests

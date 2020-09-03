@@ -11,6 +11,7 @@ import scalafix.internal.diff.DiffDisable
 import scala.meta.internal.symtab.SymbolTable
 import scalafix.internal.config.FilterMatcher
 import scala.tools.nsc.interactive.Global
+import scala.tools.nsc
 
 case class ValidatedArgs(
     args: Args,
@@ -23,9 +24,9 @@ case class ValidatedArgs(
     diffDisable: DiffDisable,
     callback: DelegatingMainCallback,
     semanticdbFileFilter: FilterMatcher,
-    global: LazyValue[Option[Global]]
+    global: LazyValue[Option[Global]],
+    checkCompileGlobal: LazyValue[Option[nsc.Global]]
 ) {
-
   def input(file: AbsolutePath): Input = {
     Input.VirtualFile(file.toString(), FileIO.slurp(file, args.charset))
   }

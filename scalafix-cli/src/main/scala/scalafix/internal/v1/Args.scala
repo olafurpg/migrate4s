@@ -1,5 +1,7 @@
 package scalafix.internal.v1
 
+import scala.language.higherKinds
+
 import java.io.File
 import java.io.PrintStream
 import java.net.URI
@@ -26,6 +28,7 @@ import scala.meta.io.Classpath
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scalafix.bsp.Bsp
 import scalafix.interfaces.ScalafixMainCallback
 import scalafix.internal.config.FilterMatcher
 import scalafix.internal.config.PrintStreamReporter
@@ -36,9 +39,16 @@ import scalafix.internal.jgit.JGitDiff
 import scalafix.internal.reflect.ClasspathOps
 import scalafix.v1.Configuration
 import scalafix.v1.RuleDecoder
+import scala.tools.nsc
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.ConsoleReporter
+import java.io.PrintWriter
+import java.nio.file.Files
+import org.scalameta.adt.none
+import scala.meta.internal.io.FileIO
+import java.util.jar.JarFile
+import java.util.zip.ZipException
 
 class Section(val name: String) extends StaticAnnotation
 
@@ -66,6 +76,10 @@ case class Args(
     )
     @ExtraName("test")
     check: Boolean = false,
+    @Description(
+      "Check that the fixed output compiles, exiting with non-zero code on violations."
+    )
+    checkCompile: Boolean = false,
     @Description("Print fixed output to stdout instead of writing in-place.")
     stdout: Boolean = false,
     @Description(
@@ -140,7 +154,6 @@ case class Args(
          |""".stripMargin
     )
     zsh: Boolean = false,
-    // TODO: --sbt
     @Section("Less common options")
     @Description(
       "Unix-style glob for files to exclude from fixing. " +
@@ -171,6 +184,9 @@ case class Args(
       "Insert /* scalafix:ok */ suppressions instead of reporting linter errors."
     )
     autoSuppressLinterErrors: Boolean = false,
+    @Hidden
+    checkCompileExtraClasspath: Option[String] = None,
+    checkCompileExcludeClasspath: Option[String] = None,
     @Description("The current working directory")
     cwd: AbsolutePath,
     @Hidden
@@ -181,7 +197,9 @@ case class Args(
     @Hidden
     ls: Ls = Ls.Find,
     @Hidden
-    callback: ScalafixMainCallback
+    callback: ScalafixMainCallback,
+    @Hidden
+    bsp: Boolean = false
 ) {
 
   override def toString: String = ConfEncoder[Args].write(this).toString()
@@ -196,7 +214,7 @@ case class Args(
       case Success(symtab) =>
         Configured.ok(symtab)
       case Failure(e) =>
-        ConfError.message(s"Unable to load symbol table: ${e.getMessage}").notOk
+        ConfError.exception(e).notOk
     }
   }
 
@@ -251,6 +269,10 @@ case class Args(
     } else {
       Conf.Lst(rules.map(Conf.fromString))
     }
+  }
+
+  def configuredScalacOptions: List[String] = {
+    scalacOptions ++ bspClient.toList.flatMap(_.scalacOptions)
   }
 
   def configuredRules(
@@ -326,7 +348,8 @@ case class Args(
       } else {
         classpath
       }
-    baseClasspath ++ targetroot
+    val bspClasspath = bspClient.map(_.classpaths).getOrElse(Classpath(Nil))
+    baseClasspath ++ targetroot ++ bspClasspath
   }
 
   def classLoader: ClassLoader =
@@ -356,9 +379,56 @@ case class Args(
       val settings = new Settings()
       settings.YpresentationAnyThread.value = true
       settings.classpath.value = validatedClasspath.syntax
+      settings.processArguments(configuredScalacOptions, processAll = true)
       val reporter = new ConsoleReporter(settings)
       LazyValue.fromUnsafe(() => new Global(settings, reporter))
     }
+
+  def configuredCheckCompileGlobal: Configured[LazyValue[Option[nsc.Global]]] =
+    Configured.ok {
+      if (checkCompile) {
+        val settings = new Settings()
+        settings.YpresentationAnyThread.value = true
+        val filter = checkCompileExcludeClasspath.getOrElse("$^").r
+        val baseClasspath = validatedClasspath.entries.filterNot(p =>
+          filter.findFirstIn(p.toURI.toString()).isDefined
+        )
+        val classpath = Classpath(
+          baseClasspath ++ Classpath(checkCompileExtraClasspath.getOrElse("")).entries
+        )
+        val nonexistent =
+          classpath.entries.filter(_.toString().endsWith(".jar"))
+        settings.classpath.value = classpath.syntax
+        settings.stopBefore.value = List("jvm")
+        val nonLintingOptions = configuredScalacOptions.filterNot { o =>
+          o.startsWith("-Xlint") ||
+          o.startsWith("-Ywarn") ||
+          o.startsWith("-W")
+        }
+        settings.processArguments(nonLintingOptions, true)
+        val reporter =
+          new ConsoleReporter(settings, Console.in, new PrintWriter(out, true))
+        LazyValue.fromUnsafe(() => new nsc.Global(settings, reporter))
+      } else {
+        LazyValue.now(None)
+      }
+    }
+
+  lazy val bspClient: Option[Bsp] = {
+    if (bsp) {
+      val client = Try(
+        Bsp.create(
+          workspace = configuredSourceroot.get.toNIO,
+          files.map(_.toNIO),
+          out
+        )
+      )
+      client.failed.foreach(_.printStackTrace())
+      client.toOption
+    } else {
+      None
+    }
+  }
 
   def validate: Configured[ValidatedArgs] = {
     baseConfig.andThen {
@@ -369,11 +439,12 @@ case class Args(
             configuredRules(base, scalafixConfig) |@|
             resolvedPathReplace |@|
             configuredDiffDisable |@|
-            configuredGlobal
+            configuredGlobal |@|
+            configuredCheckCompileGlobal
         ).map {
           case (
-              ((((root, symtab), rulez), pathReplace), diffDisable),
-              global
+              (((((root, symtab), rulez), pathReplace), diffDisable), global),
+              checkCompileGlobal
               ) =>
             ValidatedArgs(
               this,
@@ -386,7 +457,8 @@ case class Args(
               diffDisable,
               delegator,
               semanticdbFilterMatcher,
-              global
+              global,
+              checkCompileGlobal
             )
         }
     }

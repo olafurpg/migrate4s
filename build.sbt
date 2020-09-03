@@ -72,6 +72,7 @@ lazy val rules = project
   .settings(
     moduleName := "scalafix-rules",
     buildInfoKeys ++= Seq[BuildInfoKey](
+      "bspVersion" -> bspVersion,
       "supportedScalaVersions" -> (scalaVersion.value +:
         testedPreviousScalaVersions
           .getOrElse(scalaVersion.value, Nil)),
@@ -104,12 +105,14 @@ lazy val cli = project
   .settings(
     moduleName := "scalafix-cli",
     isFullCrossVersion,
+    mainClass in Compile := Some("scalafix.v1.Main"),
     mainClass in assembly := Some("scalafix.v1.Main"),
     assemblyJarName in assembly := "scalafix.jar",
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-java8-compat" % "0.9.0",
       "com.martiansoftware" % "nailgun-server" % "0.9.1",
       jgit,
+      bsp4j,
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.apache.commons" % "commons-text" % "1.9"
     )
@@ -131,6 +134,8 @@ val warnAdaptedArgs = Def.setting {
   else "-Ywarn-adapted-args"
 }
 
+def scalatest31 = "org.scalatest" %% "scalatest" % "3.1.4"
+def scalatest32 = "org.scalatest" %% "scalatest" % "3.2.2"
 lazy val testsInput = project
   .in(file("scalafix-tests/input"))
   .settings(
@@ -141,7 +146,10 @@ lazy val testsInput = project
     scalacOptions += warnUnusedImports.value, // For RemoveUnused
     scalacOptions += "-Ywarn-unused", // For RemoveUnusedTerms
     logLevel := Level.Error, // avoid flood of compiler warnings
-    libraryDependencies += bijectionCore,
+    libraryDependencies ++= List(
+      bijectionCore,
+      scalatest31
+    ),
     testsInputOutputSetting,
     coverageEnabled := false
   )
@@ -157,7 +165,10 @@ lazy val testsOutput = project
     ),
     testsInputOutputSetting,
     coverageEnabled := false,
-    libraryDependencies += bijectionCore
+    libraryDependencies ++= List(
+      bijectionCore,
+      scalatest32
+    )
   )
 
 lazy val testkit = project
