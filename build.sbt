@@ -131,6 +131,8 @@ val warnAdaptedArgs = Def.setting {
   else "-Ywarn-adapted-args"
 }
 
+def scalatest31 = "org.scalatest" %% "scalatest" % "3.1.4"
+def scalatest32 = "org.scalatest" %% "scalatest" % "3.2.2"
 lazy val testsInput = project
   .in(file("scalafix-tests/input"))
   .settings(
@@ -143,7 +145,7 @@ lazy val testsInput = project
     logLevel := Level.Error, // avoid flood of compiler warnings
     libraryDependencies ++= List(
       bijectionCore,
-      scalatest
+      scalatest31
     ),
     testsInputOutputSetting,
     coverageEnabled := false
@@ -160,7 +162,10 @@ lazy val testsOutput = project
     ),
     testsInputOutputSetting,
     coverageEnabled := false,
-    libraryDependencies += bijectionCore
+    libraryDependencies ++= List(
+      bijectionCore,
+      scalatest32
+    )
   )
 
 lazy val testkit = project
